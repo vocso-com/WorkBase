@@ -25,9 +25,9 @@ clean path to optional cloud sync later.
 
 ## 3. Non-goals (v1)
 
-Accounts, cloud sync, sharing/collaboration, notifications, recurring tasks,
-calendar integration, mobile build. Drag-to-reorder is deferred to v1.1 (a
-move/reorder menu covers v1).
+Accounts/login, cloud sync, sharing/collaboration, notifications, recurring
+tasks, calendar integration, mobile build. The avatar menu is Profile +
+Settings only (no logout — there is no account to log out of yet).
 
 ## 4. Tech stack
 
@@ -85,24 +85,45 @@ type Store = {
 
 ## 6. Screens & navigation
 
-Drill-down model with a breadcrumb.
+Drill-down model with a persistent top bar (logo left, avatar menu right) and a
+breadcrumb.
 
-1. **Home (projects board):** responsive grid of project cards on a dotted
-   canvas. Each card: colored top accent, icon, title, optional description,
-   progress ring, status dot, footer meta ("3 modules · 12 tasks"). A dashed
-   "New project" card at the end.
-2. **Project view (modules board):** breadcrumb `Projects › SampleRoom`. The
-   project's children as module cards, each with a progress bar and its top few
-   checklist items. "New module" card at the end.
+1. **Home (projects board), grouped by status:** project cards laid out in
+   status swimlanes — `In progress`, `Planned`, `On hold`, `Done` — each a
+   labelled section with a count. A "Group by" control allows Status (default)
+   or None (flat grid). Each card: colored top accent, icon, title, optional
+   description, progress ring, status dot, footer meta ("3 modules · 12 tasks").
+   A dashed "New project" card ends the relevant lane.
+2. **Project overview page:** breadcrumb `Projects › SampleRoom`. Opens with an
+   overview header — large progress ring + name/description on the left, and a
+   row of stat tiles on the right (Modules, Tasks, Done, In progress, Blocked),
+   plus a thin status-breakdown bar. Below the header is a **view toggle:
+   Board | Kanban**.
+   - **Board view:** the project's children as module cards (progress bar + top
+     checklist items + tag labels), drill-in on click. "New module" card at end.
+   - **Kanban view:** the project's tasks laid out as columns by status
+     (`To do / In progress / Done / Blocked`); task cards are dragged between
+     columns to change status. Column headers show counts.
 3. **Deeper levels:** because nesting is infinite, entering *any* card whose
-   children themselves have children shows another card board. Cards whose
-   children are all leaves show those leaves as a checklist inside the card.
+   children themselves have children shows another card board (with its own
+   Board/Kanban toggle). Cards whose children are all leaves show those leaves
+   as a checklist inside the card.
 4. **Leaf items:** plain checkbox rows (checkbox + title + optional tags/pills).
+
+### Avatar menu (top-right)
+Avatar (initials or photo) opens a dropdown: profile header (name), Settings
+(theme, data-file location), Export / Import, About. No login/logout in v1.
 
 ### Detail panel (enrich)
 Clicking an item's title opens a right-side detail panel: edit title,
-description, status, priority, due date, tags, notes, color/icon (for
+description, status, priority, due date, tags/labels, notes, color/icon (for
 project/module-level nodes). Empty fields are never rendered on the cards/rows.
+
+## 6a. Tags / labels
+
+Tags are colored labels (name + color). A per-store tag palette is reused across
+items. Tags render as small pills on cards and in Kanban; the detail panel
+manages add/remove. Filtering by tag is v1.1.
 
 ## 7. Card visual language
 
@@ -126,7 +147,9 @@ Matches the reference card the user provided:
 - Open: click title → detail panel.
 - Collapse: n/a on boards; checklist groups inside a card can collapse.
 - Rename inline; delete with confirm.
-- Reorder: move up/down / move-to menu (drag deferred to v1.1).
+- **Drag and drop:** reorder cards within a board, drag a card onto another to
+  re-nest it, and drag task cards between Kanban columns to change status.
+  (Library: dnd-kit for accessible, smooth pointer/keyboard DnD.)
 - Export / Import: write/read the full JSON document (backup + sync bridge).
 
 ## 9. Persistence
@@ -147,7 +170,8 @@ Matches the reference card the user provided:
 
 ## 11. Open items / future (v1.1+)
 
-- Drag-to-reorder and drag-to-re-nest.
+- Filter/search by tag, priority, due date.
 - Optional canvas view with connector lines between cards (mind-map feel,
   matching the notebook sketch and the reference card's connector arrow).
-- Optional cloud sync + accounts (Option B), reusing the same JSON model.
+- Optional cloud sync + accounts + login/logout (Option B), reusing the same
+  JSON model.
