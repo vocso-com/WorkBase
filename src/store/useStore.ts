@@ -6,6 +6,12 @@ import { newNode } from '../lib/factory'
 import { projectPrefix, nextShortId } from '../lib/shortid'
 import { addChild, updateNode, deleteNode, moveNode, reorderChildren, findNode } from '../lib/tree'
 import { PROJECT_ICONS } from '../theme'
+import { sampleDoc } from '../lib/seed'
+
+const SEEDED_KEY = 'manage.seeded'
+function isTauri(): boolean {
+  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+}
 
 const PALETTE: ColorKey[] = ['blue', 'teal', 'coral', 'violet', 'amber']
 
@@ -45,7 +51,12 @@ export const useStore = create<State>((set, get) => ({
   adapter: pickAdapter(),
   async init(adapter) {
     const a = adapter ?? get().adapter
-    const doc = await a.load()
+    let doc = await a.load()
+    if (doc.roots.length === 0 && isTauri() && localStorage.getItem(SEEDED_KEY) !== '1') {
+      doc = sampleDoc()
+      await a.save(doc)
+      localStorage.setItem(SEEDED_KEY, '1')
+    }
     set({ doc, adapter: a, ready: true })
   },
   addProject(name) {
