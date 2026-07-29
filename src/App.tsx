@@ -6,6 +6,7 @@ import { Breadcrumb } from './components/Breadcrumb'
 import { ProjectsHome } from './components/ProjectsHome'
 import ProjectPage from './components/ProjectPage'
 import { DetailPanel } from './components/DetailPanel'
+import { exportDoc, importDoc } from './lib/transfer'
 
 export default function App() {
   const ready = useStore(s => s.ready)
@@ -18,7 +19,17 @@ export default function App() {
   return (
     <div style={{ display: 'flex', alignItems: 'stretch', minHeight: '100vh' }}>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <TopBar onExport={() => {}} onImport={() => {}} />
+        <TopBar
+          onExport={() => exportDoc(useStore.getState().doc)}
+          onImport={async () => {
+            try {
+              const d = await importDoc()
+              if (d) useStore.getState().replaceDoc(d)
+            } catch (e) {
+              alert((e as Error).message)
+            }
+          }}
+        />
         <Breadcrumb roots={roots} path={path}
           onHome={() => useNav.getState().home()} onGoto={i => useNav.getState().goto(i)} />
         <div style={{ padding: '12px 28px 70px', maxWidth: 1120 }}>
