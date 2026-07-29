@@ -84,4 +84,3 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .tcard .tt{font-size:13.5px;font-weight:500;margin-bottom:7px;line-height:1.35;}
 .tcard .meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .tcard .who{width:20px;height:20px;border-radius:50%;font-size:9.5px;font-weight:600;color:#fff;display:flex;align-items:center;justify-content:center;margin-left:auto;}
-.due{font-size:10.5px;color:var(--muted);display:inline-flex;align-items:center;gap:3px;}

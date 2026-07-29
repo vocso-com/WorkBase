@@ -15,3 +15,10 @@ test('nextShortId increments per prefix', () => {
   expect(nextShortId(roots, 'SR')).toBe('SR-4')
   expect(nextShortId(roots, 'PG')).toBe('PG-1')
 })
+
+test('nextShortId does not throw for a regex-metacharacter prefix', () => {
+  const prefix = projectPrefix('(alpha) beta')
+  const roots: Node[] = []
+  expect(() => nextShortId(roots, prefix)).not.toThrow()
+  expect(nextShortId(roots, prefix)).toBe(`${prefix}-1`)
+})

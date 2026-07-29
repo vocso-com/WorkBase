@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useStore } from './store/useStore'
 import { useNav } from './hooks/useNav'
+import { useDetail } from './hooks/useDetail'
 import { TopBar } from './components/TopBar'
 import { Breadcrumb } from './components/Breadcrumb'
 import { ProjectsHome } from './components/ProjectsHome'
@@ -20,11 +21,21 @@ export default function App() {
     <div style={{ display: 'flex', alignItems: 'stretch', minHeight: '100vh' }}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <TopBar
-          onExport={() => exportDoc(useStore.getState().doc)}
+          onExport={async () => {
+            try {
+              await exportDoc(useStore.getState().doc)
+            } catch (e) {
+              alert((e as Error).message)
+            }
+          }}
           onImport={async () => {
             try {
               const d = await importDoc()
-              if (d) useStore.getState().replaceDoc(d)
+              if (d) {
+                useStore.getState().replaceDoc(d)
+                useNav.getState().home()
+                useDetail.getState().close()
+              }
             } catch (e) {
               alert((e as Error).message)
             }

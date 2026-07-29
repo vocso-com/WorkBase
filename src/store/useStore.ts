@@ -29,15 +29,23 @@ interface State {
   remove: (id: string) => void
   move: (id: string, newParentId: string | null, index: number) => void
   reorder: (parentId: string | null, from: number, to: number) => void
-  setNodeStatusByDrag: (id: string, status: Status) => void
   replaceDoc: (doc: StoreDoc) => void
-  getDoc: () => StoreDoc
 }
 
 let timer: ReturnType<typeof setTimeout> | null = null
 function schedulePersist(get: () => State) {
   if (timer) clearTimeout(timer)
   timer = setTimeout(() => { void get().adapter.save(get().doc) }, 300)
+}
+
+let flushListenerAdded = false
+function ensureFlushOnUnload(get: () => State) {
+  if (flushListenerAdded || typeof window === 'undefined') return
+  flushListenerAdded = true
+  window.addEventListener('beforeunload', () => {
+    if (timer) clearTimeout(timer)
+    void get().adapter.save(get().doc)
+  })
 }
 
 function rootPrefixFor(roots: Node[], id: string): string {
@@ -58,6 +66,7 @@ export const useStore = create<State>((set, get) => ({
       localStorage.setItem(SEEDED_KEY, '1')
     }
     set({ doc, adapter: a, ready: true })
+    ensureFlushOnUnload(get)
   },
   addProject(name) {
     const roots = get().doc.roots
@@ -100,10 +109,8 @@ export const useStore = create<State>((set, get) => ({
     set(s => ({ doc: { ...s.doc, roots: reorderChildren(s.doc.roots, parentId, from, to) } }))
     schedulePersist(get)
   },
-  setNodeStatusByDrag(id, status) { get().setStatus(id, status) },
   replaceDoc(doc) {
     set({ doc })
     schedulePersist(get)
   },
-  getDoc() { return get().doc },
 }))

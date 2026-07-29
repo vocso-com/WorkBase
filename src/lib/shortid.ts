@@ -14,12 +14,17 @@ function collect(roots: Node[], out: string[]): void {
   }
 }
 
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 export function nextShortId(roots: Node[], prefix: string): string {
   const ids: string[] = []
   collect(roots, ids)
+  const esc = escapeRegExp(prefix)
   let max = 0
   for (const id of ids) {
-    const m = id.match(new RegExp(`^${prefix}-(\\d+)$`))
+    const m = id.match(new RegExp(`^${esc}-(\\d+)$`))
     if (m) max = Math.max(max, Number(m[1]))
   }
   return `${prefix}-${max + 1}`

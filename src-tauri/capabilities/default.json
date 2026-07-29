@@ -7,9 +7,36 @@
     "core:default",
     "dialog:default",
     "fs:default",
-    { "identifier": "fs:allow-write-file", "allow": [{ "path": "$APPDATA/**" }] },
-    { "identifier": "fs:allow-read-file", "allow": [{ "path": "$APPDATA/**" }] },
+    {
+      "identifier": "fs:allow-write-file",
+      "allow": [
+        { "path": "$APPDATA/**" },
+        { "path": "$HOME/**" },
+        { "path": "$DOWNLOAD/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$DOCUMENT/**" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-read-file",
+      "allow": [
+        { "path": "$APPDATA/**" },
+        { "path": "$HOME/**" },
+        { "path": "$DOWNLOAD/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$DOCUMENT/**" }
+      ]
+    },
     { "identifier": "fs:allow-mkdir", "allow": [{ "path": "$APPDATA/**" }] },
-    { "identifier": "fs:allow-exists", "allow": [{ "path": "$APPDATA/**" }] }
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [
+        { "path": "$APPDATA/**" },
+        { "path": "$HOME/**" },
+        { "path": "$DOWNLOAD/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$DOCUMENT/**" }
+      ]
+    }
   ]
 }
