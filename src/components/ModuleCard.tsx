@@ -24,9 +24,14 @@ export function ModuleCard({ node, onOpen }: { node: Node; onOpen: () => void })
   const total = node.children.length
   const done = node.children.filter(isChildDone).length
   const pc = progressOf(node)
+  const canDrillIn = node.children.length > 0
 
   return (
-    <div className="card mcard" onClick={onOpen}>
+    <div
+      className="card mcard"
+      onClick={canDrillIn ? onOpen : undefined}
+      style={{ cursor: canDrillIn ? 'pointer' : 'default' }}
+    >
       <div className="accent" style={{ background: COLORS[color] }} />
       <div className="pad">
         <div className="row1">
