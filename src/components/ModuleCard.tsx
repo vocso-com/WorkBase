@@ -3,6 +3,7 @@ import { COLORS } from '../theme'
 import { progressOf } from '../lib/progress'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { useStore } from '../store/useStore'
+import { useDetail } from '../hooks/useDetail'
 import { Icon } from './ui/Icon'
 import { Checkbox } from './ui/Checkbox'
 import { Tag } from './ui/Tag'
@@ -39,7 +40,12 @@ export function ModuleCard({ node, onOpen }: { node: Node; onOpen: () => void })
             <div className="ic" style={{ width: 32, height: 32, fontSize: 17, background: tagBg(color), color: tagFg(color) }}>
               <Icon name={node.icon ?? 'ti-folder'} />
             </div>
-            <div style={{ fontSize: 14.5, fontWeight: 600 }}>{node.title}</div>
+            <div
+              style={{ fontSize: 14.5, fontWeight: 600, cursor: canDrillIn ? 'inherit' : 'pointer' }}
+              onClick={canDrillIn ? undefined : e => { e.stopPropagation(); useDetail.getState().open(node.id) }}
+            >
+              {node.title}
+            </div>
           </div>
           <span style={{ fontSize: 11.5, color: 'var(--faint)' }}>{done}/{total}</span>
         </div>
@@ -49,7 +55,13 @@ export function ModuleCard({ node, onOpen }: { node: Node; onOpen: () => void })
         {node.children.map(child => (
           <div key={child.id} className={`check ${child.status === 'done' ? 'done' : ''}`} onClick={e => e.stopPropagation()}>
             <Checkbox status={child.status} color={color} onToggle={() => useStore.getState().toggleDone(child.id)} />
-            <span className="grow">{child.title}</span>
+            <span
+              className="grow"
+              style={{ cursor: 'pointer' }}
+              onClick={e => { e.stopPropagation(); useDetail.getState().open(child.id) }}
+            >
+              {child.title}
+            </span>
             {(child.tags ?? []).map(t => (
               <Tag key={t.name} tag={t} />
             ))}

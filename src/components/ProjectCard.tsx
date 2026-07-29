@@ -3,6 +3,7 @@ import { STATUS, COLORS } from '../theme'
 import { progressOf } from '../lib/progress'
 import { leaves } from '../lib/tree'
 import { tagBg, tagFg } from '../lib/colorMode'
+import { useDetail } from '../hooks/useDetail'
 import { ProgressRing } from './ui/ProgressRing'
 import { Tag } from './ui/Tag'
 import { Icon } from './ui/Icon'
@@ -19,7 +20,12 @@ export function ProjectCard({ node, onOpen }: { node: Node; onOpen: () => void }
           </div>
           <div className="dot" style={{ background: STATUS[node.status].dot }} />
         </div>
-        <div className="title">{node.title}</div>
+        <div
+          className="title"
+          onClick={e => { e.stopPropagation(); useDetail.getState().open(node.id) }}
+        >
+          {node.title}
+        </div>
         {node.description ? <div className="sub">{node.description}</div> : null}
         {node.tags && node.tags.length > 0 ? (
           <div className="tags">

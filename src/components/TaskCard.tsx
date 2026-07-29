@@ -2,6 +2,7 @@ import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import type { ColorKey, Node } from '../types'
 import { COLORS } from '../theme'
+import { useDetail } from '../hooks/useDetail'
 import { Tag } from './ui/Tag'
 
 export function TaskCard({ node, color }: { node: Node; color: ColorKey }) {
@@ -17,7 +18,9 @@ export function TaskCard({ node, color }: { node: Node; color: ColorKey }) {
 
   return (
     <div ref={setNodeRef} className="tcard" style={style} {...listeners} {...attributes}>
-      <div className="tt">{node.title}</div>
+      <div className="tt" onClick={e => { e.stopPropagation(); useDetail.getState().open(node.id) }}>
+        {node.title}
+      </div>
       <div className="meta">
         {tags.map(t => (
           <Tag key={t.name} tag={t} />
