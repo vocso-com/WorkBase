@@ -23,3 +23,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
   min-height:100vh;-webkit-font-smoothing:antialiased;}
 
 .avatar-menu-item:hover{background:var(--chip);}
+
+.crumb{display:flex;align-items:center;gap:7px;padding:16px 28px 2px;font-size:13.5px;color:var(--muted);}
+.crumb b{color:var(--ink);font-weight:600;}
+.crumb .link{cursor:pointer;display:inline-flex;align-items:center;gap:5px;}
+.crumb .link:hover{color:var(--ink);}
