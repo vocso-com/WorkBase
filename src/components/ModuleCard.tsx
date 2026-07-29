@@ -41,8 +41,9 @@ export function ModuleCard({ node, onOpen }: { node: Node; onOpen: () => void })
               <Icon name={node.icon ?? 'ti-folder'} />
             </div>
             <div
-              style={{ fontSize: 14.5, fontWeight: 600, cursor: canDrillIn ? 'inherit' : 'pointer' }}
-              onClick={canDrillIn ? undefined : e => { e.stopPropagation(); useDetail.getState().open(node.id) }}
+              data-testid="module-card-title"
+              style={{ fontSize: 14.5, fontWeight: 600, cursor: 'pointer' }}
+              onClick={e => { e.stopPropagation(); useDetail.getState().open(node.id) }}
             >
               {node.title}
             </div>

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import ProjectPage from './ProjectPage'
 import { useStore } from '../store/useStore'
 import { useNav } from '../hooks/useNav'
+import { useDetail } from '../hooks/useDetail'
 import { emptyDocument } from '../lib/serialize'
 
 beforeEach(async () => {
@@ -25,7 +26,21 @@ function buildFixture() {
   return { pid, moduleWithChildId, leafModuleId }
 }
 
-test('clicking a module card with children drills into it', async () => {
+test('clicking a module card body with children drills into it', async () => {
+  const user = userEvent.setup()
+  const { pid, moduleWithChildId } = buildFixture()
+  act(() => { useNav.getState().open(pid) })
+  render(<ProjectPage />)
+
+  // Click the done/total counter (card body), not the title — the title
+  // always opens the detail panel now, so drill-in is exercised via a
+  // non-title part of the card.
+  await user.click(screen.getByText('0/1'))
+
+  expect(useNav.getState().path).toEqual([pid, moduleWithChildId])
+})
+
+test('clicking a module title always opens the detail panel, even with children', async () => {
   const user = userEvent.setup()
   const { pid, moduleWithChildId } = buildFixture()
   act(() => { useNav.getState().open(pid) })
@@ -33,7 +48,8 @@ test('clicking a module card with children drills into it', async () => {
 
   await user.click(screen.getByText('Has Children'))
 
-  expect(useNav.getState().path).toEqual([pid, moduleWithChildId])
+  expect(useDetail.getState().openId).toBe(moduleWithChildId)
+  expect(useNav.getState().path).toEqual([pid])
 })
 
 test('clicking a module card with no children does not drill in', async () => {
