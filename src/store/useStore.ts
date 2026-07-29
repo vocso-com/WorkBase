@@ -59,11 +59,20 @@ export const useStore = create<State>((set, get) => ({
   adapter: pickAdapter(),
   async init(adapter) {
     const a = adapter ?? get().adapter
-    let doc = await a.load()
+    let doc = emptyDocument()
+    try {
+      doc = await a.load()
+    } catch (e) {
+      console.error('Manage: failed to load data, starting empty', e)
+    }
     if (doc.roots.length === 0 && isTauri() && localStorage.getItem(SEEDED_KEY) !== '1') {
       doc = sampleDoc()
-      await a.save(doc)
-      localStorage.setItem(SEEDED_KEY, '1')
+      try {
+        await a.save(doc)
+        localStorage.setItem(SEEDED_KEY, '1')
+      } catch (e) {
+        console.error('Manage: failed to persist seed data (showing it in-memory)', e)
+      }
     }
     set({ doc, adapter: a, ready: true })
     ensureFlushOnUnload(get)
