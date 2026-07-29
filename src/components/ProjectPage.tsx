@@ -7,6 +7,7 @@ import { COLORS } from '../theme'
 import { ProjectOverview } from './ProjectOverview'
 import { ViewToggle, type ViewKind } from './ViewToggle'
 import { BoardView } from './BoardView'
+import { KanbanView } from './KanbanView'
 import { ProgressRing } from './ui/ProgressRing'
 
 export default function ProjectPage() {
@@ -32,13 +33,7 @@ export default function ProjectPage() {
         </div>
       )}
       <ViewToggle view={view} onChange={setView} />
-      {view === 'board' ? (
-        <BoardView node={node} />
-      ) : (
-        <div data-testid="kanban-placeholder" style={{ color: 'var(--muted)', padding: '20px 0' }}>
-          Kanban view
-        </div>
-      )}
+      {view === 'board' ? <BoardView node={node} /> : <KanbanView node={node} />}
     </div>
   )
 }

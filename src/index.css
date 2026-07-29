@@ -72,3 +72,16 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .check{display:flex;align-items:center;gap:9px;font-size:13.5px;padding:3px 0;color:var(--ink);}
 .check .box{font-size:18px;color:var(--faint);} .check.done{color:var(--faint);} .check.done span{text-decoration:line-through;} .check .grow{flex:1;}
 .mini{font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:20px;}
+
+.kb{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:start;}
+.col{background:var(--panel);border-radius:14px;padding:10px;min-height:120px;border:1px solid var(--line);transition:background .12s;}
+.col.drag{background:color-mix(in srgb,var(--blue) 10%, var(--panel));outline:2px dashed var(--blue);outline-offset:-4px;}
+.colhead{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--muted);padding:4px 6px 10px;}
+.colhead .cnt{margin-left:auto;background:var(--chip);border-radius:20px;padding:1px 8px;font-size:11px;color:var(--faint);}
+.tcard{background:var(--card);border-radius:11px;box-shadow:var(--shadow-sm);padding:11px 12px;margin-bottom:9px;cursor:grab;
+       border-left:3px solid var(--blue);transition:box-shadow .1s;}
+.tcard:active{cursor:grabbing;} .tcard.dragging{opacity:.4;}
+.tcard .tt{font-size:13.5px;font-weight:500;margin-bottom:7px;line-height:1.35;}
+.tcard .meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.tcard .who{width:20px;height:20px;border-radius:50%;font-size:9.5px;font-weight:600;color:#fff;display:flex;align-items:center;justify-content:center;margin-left:auto;}
+.due{font-size:10.5px;color:var(--muted);display:inline-flex;align-items:center;gap:3px;}
