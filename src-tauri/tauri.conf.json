@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Manage",
+  "version": "0.1.0",
+  "identifier": "com.deepak.manage",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      { "title": "Manage", "width": 1200, "height": 820, "minWidth": 720, "minHeight": 560 }
+    ],
+    "security": { "csp": null }
+  },
+  "bundle": { "active": true, "targets": "app", "icon": ["icons/icon.png"] }
+}
