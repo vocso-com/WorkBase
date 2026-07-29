@@ -13,7 +13,7 @@
     "windows": [
       { "title": "Manage", "width": 1200, "height": 820, "minWidth": 720, "minHeight": 560 }
     ],
-    "security": { "csp": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; script-src 'self'" }
+    "security": { "csp": "default-src 'self'; connect-src 'self' ipc: http://ipc.localhost; img-src 'self' data: asset: http://asset.localhost; style-src 'self' 'unsafe-inline'; font-src 'self' data:; script-src 'self'" }
   },
   "bundle": { "active": true, "targets": "app", "icon": ["icons/icon.png"] }
 }
