@@ -2,3 +2,6 @@ node_modules
 dist
 target
 .DS_Store
+
+# Tauri auto-generated schemas (regenerated on every build)
+src-tauri/gen/
