@@ -50,3 +50,25 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .newcard{border:1.5px dashed var(--dot);background:transparent;border-radius:14px;box-shadow:none;
       display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--faint);min-height:150px;gap:6px;font-size:13.5px;}
 .newcard:hover{transform:translateY(-3px);box-shadow:none;color:var(--muted);border-color:var(--muted);}
+
+.over{display:flex;gap:22px;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:20px 22px;margin:8px 0 18px;flex-wrap:wrap;}
+.over .left{display:flex;align-items:center;gap:18px;min-width:230px;flex:1;}
+.over .name{font-size:21px;font-weight:700;letter-spacing:-.02em;margin:0 0 3px;}
+.over .desc{font-size:13.5px;color:var(--muted);}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;flex:2;min-width:300px;}
+.stat{background:var(--panel);border-radius:11px;padding:11px 13px;border:1px solid var(--line);}
+.stat .n{font-size:22px;font-weight:700;letter-spacing:-.02em;}
+.stat .l{font-size:11.5px;color:var(--muted);margin-top:2px;}
+.sbar{display:flex;height:8px;border-radius:20px;overflow:hidden;margin-top:16px;width:100%;background:var(--chip);}
+
+.toggle{display:inline-flex;background:var(--chip);border-radius:10px;padding:3px;gap:2px;margin:2px 0 16px;}
+.toggle button{border:none;background:transparent;font:inherit;font-size:13px;font-weight:600;color:var(--muted);
+     padding:6px 15px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.toggle button.on{background:var(--card);color:var(--ink);box-shadow:var(--shadow-sm);}
+
+.mcard .pad{padding:15px 16px;}
+.bar2{height:6px;border-radius:20px;background:var(--chip);overflow:hidden;margin:10px 0 12px;}
+.bar2>span{display:block;height:100%;border-radius:20px;}
+.check{display:flex;align-items:center;gap:9px;font-size:13.5px;padding:3px 0;color:var(--ink);}
+.check .box{font-size:18px;color:var(--faint);} .check.done{color:var(--faint);} .check.done span{text-decoration:line-through;} .check .grow{flex:1;}
+.mini{font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:20px;}
