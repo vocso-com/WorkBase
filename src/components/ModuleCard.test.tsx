@@ -1,4 +1,4 @@
-import { render, screen, act } from '@testing-library/react'
+import { render, screen, act, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ProjectPage from './ProjectPage'
 import { useStore } from '../store/useStore'
@@ -75,4 +75,26 @@ test('toggling a checklist checkbox updates done/total and does not drill in', a
 
   expect(screen.getByText('1/1')).toBeInTheDocument()
   expect(useNav.getState().path).toEqual([pid])
+})
+
+test('a non-leaf child row has no toggle checkbox, a leaf child row does', async () => {
+  let pid = ''
+  let moduleId = ''
+  let nonLeafChildId = ''
+  let leafChildId = ''
+  act(() => {
+    pid = useStore.getState().addProject('SampleRoom')
+    moduleId = useStore.getState().addChildNode(pid, 'Module')
+    nonLeafChildId = useStore.getState().addChildNode(moduleId, 'Has Grandchild')
+    useStore.getState().addChildNode(nonLeafChildId, 'Grandchild')
+    leafChildId = useStore.getState().addChildNode(moduleId, 'Leaf Child')
+  })
+  act(() => { useNav.getState().open(pid) })
+  render(<ProjectPage />)
+
+  const nonLeafRow = screen.getByTestId(`child-row-${nonLeafChildId}`)
+  expect(within(nonLeafRow).queryByRole('button', { name: 'toggle done' })).not.toBeInTheDocument()
+
+  const leafRow = screen.getByTestId(`child-row-${leafChildId}`)
+  expect(within(leafRow).getByRole('button', { name: 'toggle done' })).toBeInTheDocument()
 })

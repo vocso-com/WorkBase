@@ -3,6 +3,7 @@ import type { Priority, Status } from '../types'
 import { STATUS, STATUS_ORDER } from '../theme'
 import { useStore } from '../store/useStore'
 import { useDetail } from '../hooks/useDetail'
+import { useNav } from '../hooks/useNav'
 import { findNode } from '../lib/tree'
 import { Icon } from './ui/Icon'
 import { Tag } from './ui/Tag'
@@ -55,6 +56,16 @@ export function DetailPanel() {
   function removeTag(name: string) {
     if (!node) return
     useStore.getState().patch(node.id, { tags: tags.filter(t => t.name !== name) })
+  }
+
+  function handleDelete() {
+    if (!node) return
+    if (window.confirm(`Delete "${node.title}" and all its sub-items? This cannot be undone.`)) {
+      const id = node.id
+      useStore.getState().remove(id)
+      useDetail.getState().close()
+      if (useNav.getState().path.includes(id)) useNav.getState().home()
+    }
   }
 
   return (
@@ -160,6 +171,18 @@ export function DetailPanel() {
         rows={4}
         style={{ ...fieldStyle, resize: 'vertical', fontFamily: 'inherit' }}
       />
+
+      <button
+        aria-label="Delete"
+        onClick={handleDelete}
+        style={{
+          marginTop: 20, alignSelf: 'flex-start', border: 'none', background: 'none', cursor: 'pointer',
+          color: 'var(--red)', fontSize: 12.5, fontWeight: 600, padding: '6px 0', display: 'flex', alignItems: 'center', gap: 6,
+        }}
+      >
+        <Icon name="ti-trash" />
+        Delete
+      </button>
     </div>
   )
 }

@@ -7,7 +7,7 @@ import { KanbanColumn } from './KanbanColumn'
 
 export function KanbanView({ node }: { node: Node }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
-  const tasks = leaves(node)
+  const tasks = node.children.length === 0 ? [] : leaves(node).filter(t => t.id !== node.id)
 
   function onDragEnd(e: DragEndEvent) {
     if (e.over && STATUS_ORDER.includes(e.over.id as Status)) {

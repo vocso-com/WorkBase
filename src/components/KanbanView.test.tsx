@@ -20,3 +20,20 @@ test('renders columns and a task under its status', () => {
   expect(screen.getByText('Done')).toBeInTheDocument()
   expect(screen.getByText('SMTP')).toBeInTheDocument()
 })
+
+test('an empty project renders no task cards, just empty columns', () => {
+  let pid = ''
+  act(() => { pid = useStore.getState().addProject('Empty') })
+  const node = findNode(useStore.getState().doc.roots, pid)!
+  render(<KanbanView node={node} />)
+
+  expect(screen.getByText('To do')).toBeInTheDocument()
+  expect(screen.getByText('In progress')).toBeInTheDocument()
+  expect(screen.getByText('Done')).toBeInTheDocument()
+  expect(screen.getByText('Blocked')).toBeInTheDocument()
+  // The project itself must not appear as a self-card.
+  expect(screen.queryByText('Empty')).not.toBeInTheDocument()
+  expect(screen.queryAllByRole('button', { name: 'toggle done' })).toHaveLength(0)
+  // Every column count should read 0.
+  expect(screen.getAllByText('0')).toHaveLength(4)
+})

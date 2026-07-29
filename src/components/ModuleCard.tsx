@@ -53,24 +53,37 @@ export function ModuleCard({ node, onOpen }: { node: Node; onOpen: () => void })
         <div className="bar2">
           <span style={{ width: `${pc}%`, background: COLORS[color] }} />
         </div>
-        {node.children.map(child => (
-          <div key={child.id} className={`check ${child.status === 'done' ? 'done' : ''}`} onClick={e => e.stopPropagation()}>
-            <Checkbox status={child.status} color={color} onToggle={() => useStore.getState().toggleDone(child.id)} />
-            <span
-              className="grow"
-              style={{ cursor: 'pointer' }}
-              onClick={e => { e.stopPropagation(); useDetail.getState().open(child.id) }}
-            >
-              {child.title}
-            </span>
-            {(child.tags ?? []).map(t => (
-              <Tag key={t.name} tag={t} />
-            ))}
-            {child.status === 'blocked' ? (
-              <span className="mini" style={{ background: tagBg('red'), color: tagFg('red') }}>Blocked</span>
-            ) : null}
-          </div>
-        ))}
+        {node.children.map(child => {
+          const isLeaf = child.children.length === 0
+          return (
+            <div key={child.id} data-testid={`child-row-${child.id}`} className={`check ${child.status === 'done' ? 'done' : ''}`} onClick={e => e.stopPropagation()}>
+              {isLeaf ? (
+                <Checkbox status={child.status} color={color} onToggle={() => useStore.getState().toggleDone(child.id)} />
+              ) : (
+                <span
+                  aria-hidden="true"
+                  title={`${progressOf(child)}% complete`}
+                  style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 18, fontSize: 10.5, fontWeight: 600, color: 'var(--faint)' }}
+                >
+                  {progressOf(child)}%
+                </span>
+              )}
+              <span
+                className="grow"
+                style={{ cursor: 'pointer' }}
+                onClick={e => { e.stopPropagation(); useDetail.getState().open(child.id) }}
+              >
+                {child.title}
+              </span>
+              {(child.tags ?? []).map(t => (
+                <Tag key={t.name} tag={t} />
+              ))}
+              {child.status === 'blocked' ? (
+                <span className="mini" style={{ background: tagBg('red'), color: tagFg('red') }}>Blocked</span>
+              ) : null}
+            </div>
+          )
+        })}
         <div className="check" style={{ color: 'var(--faint)', marginTop: 4 }} onClick={e => addItem(node, e)}>
           <Icon name="ti-plus" className="box" />
           <span>New item</span>
