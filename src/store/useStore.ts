@@ -300,7 +300,12 @@ export const useStore = create<State>((set, get) => ({
     schedulePersist(get)
   },
   remove(id) {
+    const roots = get().doc.roots
+    const n = findNode(roots, id)
+    const parent = n ? findParent(roots, id) : null
     set(s => ({ doc: { ...s.doc, roots: deleteNode(s.doc.roots, id) } }))
+    // Log the removal on the surviving parent so it shows in its activity feed.
+    if (n && parent) get().logActivity(parent.id, `Removed “${n.title}”`)
     schedulePersist(get)
   },
   move(id, newParentId, index) {

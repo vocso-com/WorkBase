@@ -5,12 +5,14 @@ import { progressOf } from '../lib/progress'
 import { leaves } from '../lib/tree'
 import { useStore } from '../store/useStore'
 import { useDetail } from '../hooks/useDetail'
+import { useVocab } from '../hooks/useVocab'
 import { toText } from '../lib/text'
 import { Tag } from './ui/Tag'
 import { Icon } from './ui/Icon'
 
 export function ProjectCard({ node, onOpen }: { node: Node; onOpen: (e: MouseEvent) => void }) {
   const color = node.color ?? 'gray'
+  const v = useVocab()
   const stages = useStore(s => s.doc.stages)
   const sm = stageMeta(stages, node.status)
   const pct = progressOf(node)
@@ -51,7 +53,7 @@ export function ProjectCard({ node, onOpen }: { node: Node; onOpen: (e: MouseEve
           : segments.map(s => <span key={s.id} style={{ width: `${(counts[s.id] / total) * 100}%`, background: COLORS[s.color] }} />)}
       </div>
       <div className="foot">
-        <Icon name="ti-stack-2" /> {node.children.length} modules · {leaves(node).length} tasks
+        <Icon name="ti-stack-2" /> {node.children.length} {node.children.length === 1 ? v.module : v.modules} · {leaves(node).length} {leaves(node).length === 1 ? v.task : v.tasks}
         <span style={{ flex: 1 }} />
         <span className="pcard-id">{node.shortId}</span>
         <span className="pcard-pct" style={{ color: hex(color) }}>{pct}%</span>

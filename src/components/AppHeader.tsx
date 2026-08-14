@@ -9,6 +9,7 @@ import { useNav } from '../hooks/useNav'
 import { useDetail } from '../hooks/useDetail'
 import { useView, type ViewKind } from '../hooks/useView'
 import { useNewProject } from '../hooks/useNewProject'
+import { useVocab } from '../hooks/useVocab'
 import { AvatarMenu } from './AvatarMenu'
 import { WorkspaceSwitcher } from './WorkspaceSwitcher'
 import { TabBar } from './TabBar'
@@ -91,9 +92,11 @@ export function AppHeader({
 
 function ProjectChip({ node }: { node: Node }) {
   const color = node.color ?? 'gray'
+  const v = useVocab()
   const isTemplate = useStore(s => s.doc.templates.some(t => t.name === node.title))
   const hasModules = node.children.some(c => c.children.length > 0)
-  const meta = hasModules ? `${node.children.length} modules · ${leaves(node).length} tasks` : `${leaves(node).length} tasks`
+  const taskN = leaves(node).length
+  const meta = hasModules ? `${node.children.length} ${node.children.length === 1 ? v.module : v.modules} · ${taskN} ${taskN === 1 ? v.task : v.tasks}` : `${taskN} ${taskN === 1 ? v.task : v.tasks}`
   return (
     <button className="phead-proj" onClick={() => useDetail.getState().open(node.id)} title="Open details">
       {node.image ? (

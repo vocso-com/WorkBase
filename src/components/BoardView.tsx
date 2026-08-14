@@ -5,6 +5,8 @@ import type { Node } from '../types'
 import { useStore } from '../store/useStore'
 import { useNav } from '../hooks/useNav'
 import { findNode } from '../lib/tree'
+import { cap } from '../lib/vocab'
+import { useVocab } from '../hooks/useVocab'
 import { ModuleCard } from './ModuleCard'
 import { Icon } from './ui/Icon'
 
@@ -18,6 +20,7 @@ const collisionDetection: CollisionDetection = args => {
 }
 
 function AddModuleCard({ node }: { node: Node }) {
+  const v = useVocab()
   const [adding, setAdding] = useState(false)
   const [val, setVal] = useState('')
   const submit = () => {
@@ -32,7 +35,7 @@ function AddModuleCard({ node }: { node: Node }) {
     return (
       <div className="card newcard" onClick={() => setAdding(true)}>
         <Icon name="ti-plus" style={{ fontSize: 24 }} />
-        New module
+        New {v.module}
       </div>
     )
   }
@@ -40,13 +43,13 @@ function AddModuleCard({ node }: { node: Node }) {
     <div className="newcard-box">
       <input
         autoFocus
-        placeholder="Module name…"
+        placeholder={`${cap(v.module)} name…`}
         value={val}
         onChange={e => setVal(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') { setAdding(false); setVal('') } }}
       />
       <div className="newcard-row">
-        <button className="col-add-go" onClick={submit}>Add module</button>
+        <button className="col-add-go" onClick={submit}>Add {v.module}</button>
         <button className="col-add-x" onClick={() => { setAdding(false); setVal('') }} aria-label="Cancel"><Icon name="ti-x" /></button>
       </div>
     </div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { getCloud, setCloud, uploadFile } from '../lib/uploads'
 import { useStore } from '../store/useStore'
 import { useSettings } from '../hooks/useSettings'
+import { VOCAB, VOCAB_KEYS } from '../lib/vocab'
 import { Icon } from './ui/Icon'
 
 export function SettingsModal() {
@@ -68,6 +69,22 @@ export function SettingsModal() {
                 <input type="file" accept="image/*" hidden onChange={onImg('orgLogo')} />
               </label>
               <input className="set-input" placeholder="Organization name" value={profile?.orgName ?? ''} onChange={e => useStore.getState().setProfile({ orgName: e.target.value })} />
+            </div>
+          </div>
+
+          <div className="set-sec">
+            <div className="set-sec-h">Vocabulary</div>
+            <div className="set-vocab">
+              {VOCAB_KEYS.map(k => {
+                const vk = VOCAB[k]
+                const on = (profile?.vocab ?? 'general') === k
+                return (
+                  <button key={k} className={`set-vocab-opt${on ? ' on' : ''}`} onClick={() => useStore.getState().setProfile({ vocab: k })}>
+                    <span className="set-vocab-name">{vk.label}</span>
+                    <span className="set-vocab-hint">{vk.hint}</span>
+                  </button>
+                )
+              })}
             </div>
           </div>
 

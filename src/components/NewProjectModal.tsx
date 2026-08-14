@@ -6,6 +6,7 @@ import { useNewProject } from '../hooks/useNewProject'
 import { BUILTIN_TEMPLATES } from '../lib/templates'
 import { hex } from '../theme'
 import { tagBg, tagFg } from '../lib/colorMode'
+import { useVocab } from '../hooks/useVocab'
 import { Icon } from './ui/Icon'
 
 function taskCount(tpl: Template): number {
@@ -16,6 +17,7 @@ export function NewProjectModal() {
   const open = useNewProject(s => s.open)
   const hide = useNewProject(s => s.hide)
   const custom = useStore(s => s.doc.templates)
+  const v = useVocab()
   const [name, setName] = useState('')
 
   useEffect(() => {
@@ -53,8 +55,8 @@ export function NewProjectModal() {
       <div className="modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
         <div className="modal-head">
           <div>
-            <div className="modal-title">New project</div>
-            <div className="modal-desc">Start blank or pick a template to pre-seed modules and tasks.</div>
+            <div className="modal-title">New {v.project}</div>
+            <div className="modal-desc">Start blank or pick a template to pre-seed {v.modules} and {v.tasks}.</div>
           </div>
           <button className="modal-x" onClick={hide} aria-label="Close">
             <Icon name="ti-x" />
@@ -76,8 +78,8 @@ export function NewProjectModal() {
           <div className="tpl-blank" onClick={createBlank}>
             <div className="tpl-blank-ic"><Icon name="ti-plus" /></div>
             <div>
-              <div className="tpl-blank-t">Blank project</div>
-              <div className="tpl-blank-s">Start from scratch with no modules</div>
+              <div className="tpl-blank-t">Blank {v.project}</div>
+              <div className="tpl-blank-s">Start from scratch with no {v.modules}</div>
             </div>
             <Icon name="ti-arrow-right" style={{ marginLeft: 'auto', color: 'var(--faint)' }} />
           </div>
