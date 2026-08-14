@@ -17,7 +17,6 @@ export function TaskCard({ node, color, label }: { node: Node; color: string; la
   const base = CSS.Translate.toString(transform)
 
   const style: React.CSSProperties = {
-    borderLeftColor: hex(color),
     transform: isDragging ? `${base ?? ''} rotate(3deg) scale(1.03)` : base,
     zIndex: isDragging ? 50 : undefined,
     position: isDragging ? 'relative' : undefined,

@@ -1,6 +1,6 @@
 import type { MouseEvent } from 'react'
 import type { Node } from '../types'
-import { hex, stageMeta } from '../theme'
+import { COLORS, hex, mergedStages, stageMeta } from '../theme'
 import { progressOf } from '../lib/progress'
 import { leaves } from '../lib/tree'
 import { useStore } from '../store/useStore'
@@ -14,6 +14,14 @@ export function ProjectCard({ node, onOpen }: { node: Node; onOpen: (e: MouseEve
   const stages = useStore(s => s.doc.stages)
   const sm = stageMeta(stages, node.status)
   const pct = progressOf(node)
+
+  // Progress bar segmented by stage color (matches the header roll-up).
+  const allStages = mergedStages(stages)
+  const ls = leaves(node)
+  const total = ls.length
+  const counts: Record<string, number> = {}
+  for (const l of ls) counts[l.status] = (counts[l.status] ?? 0) + 1
+  const segments = allStages.filter(s => (counts[s.id] ?? 0) > 0)
 
   return (
     <div className="card pcard" onClick={onOpen}>
@@ -37,7 +45,11 @@ export function ProjectCard({ node, onOpen }: { node: Node; onOpen: (e: MouseEve
           </div>
         ) : null}
       </div>
-      <div className="pcard-prog"><span style={{ width: `${pct}%`, background: hex(color) }} /></div>
+      <div className="pcard-prog">
+        {total === 0
+          ? <span style={{ width: '100%', background: 'var(--chip)' }} />
+          : segments.map(s => <span key={s.id} style={{ width: `${(counts[s.id] / total) * 100}%`, background: COLORS[s.color] }} />)}
+      </div>
       <div className="foot">
         <Icon name="ti-stack-2" /> {node.children.length} modules · {leaves(node).length} tasks
         <span style={{ flex: 1 }} />

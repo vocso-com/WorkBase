@@ -103,13 +103,38 @@ export const useTabs = create<TabsState>((set, get) => ({
   },
 }))
 
+const TABS_KEY = 'wb.tabs'
+
+// Persist the open tabs so a refresh/relaunch restores them instead of
+// collapsing back to a single tab.
+function persistTabs(s: TabsState) {
+  try { localStorage.setItem(TABS_KEY, JSON.stringify({ tabs: s.tabs, activeId: s.activeId })) } catch { /* ignore */ }
+}
+
 // Seed the first tab from the current location and keep the active tab synced.
 export function initTabs() {
   const st = useTabs.getState()
   if (st.tabs.length === 0) {
-    const id = nanoid(6)
-    useTabs.setState({ tabs: [{ id, path: useNav.getState().path, view: useView.getState().view }], activeId: id })
+    const roots = useStore.getState().doc.roots
+    let restored: { tabs: Tab[]; activeId: string } | null = null
+    try {
+      const raw = localStorage.getItem(TABS_KEY)
+      if (raw) restored = JSON.parse(raw)
+    } catch { /* ignore */ }
+    // Keep only tabs whose whole drill path still resolves (projects may have
+    // been deleted since last session); Home tabs (empty path) always survive.
+    const valid = restored?.tabs?.filter(t => Array.isArray(t.path) && t.path.every(id => findNode(roots, id)))
+    if (valid && valid.length) {
+      const activeId = valid.some(t => t.id === restored!.activeId) ? restored!.activeId : valid[0].id
+      useTabs.setState({ tabs: valid, activeId })
+      const active = valid.find(t => t.id === activeId)!
+      applyTab(active)
+    } else {
+      const id = nanoid(6)
+      useTabs.setState({ tabs: [{ id, path: useNav.getState().path, view: useView.getState().view }], activeId: id })
+    }
   }
+  useTabs.subscribe(persistTabs)
   useNav.subscribe(s => useTabs.getState().save(s.path, useView.getState().view))
   useView.subscribe(s => useTabs.getState().save(useNav.getState().path, s.view))
 

@@ -73,8 +73,11 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .pcover-status .sdot{width:7px;height:7px;border-radius:50%;box-shadow:0 0 0 1.5px rgba(255,255,255,.5);}
 .pcard .pad{padding:15px 18px 8px;}
 .pcard .title{margin-top:0;font-size:18px;}
-.pcard-prog{height:8px;margin:12px 18px 0;border-radius:20px;background:var(--chip);overflow:hidden;}
-.pcard-prog>span{display:block;height:100%;border-radius:20px;}
+.pcard-prog{display:flex;height:8px;margin:12px 18px 0;border-radius:20px;background:var(--chip);overflow:hidden;}
+.pcard-prog>span{display:block;height:100%;}
+.pcard-prog>span:first-child{border-radius:20px 0 0 20px;}
+.pcard-prog>span:last-child{border-radius:0 20px 20px 0;}
+.pcard-prog>span:only-child{border-radius:20px;}
 .pcard-id{font-size:11.5px;color:var(--faint);font-weight:500;}
 .pcard-pct{font-size:17px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
 .pcard .foot{padding:12px 18px;}
@@ -104,13 +107,13 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 /* Desktop tabs — connected "folder tab" strip: active tab is a raised surface
    that sits on the baseline and breaks through it to join the content below. */
 .tabbar{position:sticky;top:54px;z-index:29;display:flex;align-items:flex-end;gap:2px;
-  padding:7px 12px 0;background:var(--bg);border-bottom:1px solid color-mix(in srgb,var(--ink) 8%,var(--line));overflow-x:auto;}
+  padding:7px 12px 0;background:var(--bg);overflow-x:auto;}
 .tab{display:flex;align-items:center;gap:8px;max-width:200px;padding:8px 11px;cursor:pointer;
   color:var(--muted);font-size:13px;font-weight:600;flex-shrink:0;
   border:1px solid transparent;border-bottom:none;border-radius:9px 9px 0 0;margin-bottom:-1px;
   transition:background .12s,color .12s,border-color .12s;}
 .tab:hover:not(.on){background:color-mix(in srgb,var(--card) 55%,transparent);color:var(--ink);}
-.tab.on{background:var(--card);color:var(--ink);border-color:var(--line);}
+.tab.on{background:var(--card);color:var(--ink);border-color:var(--line);position:relative;z-index:1;margin-bottom:-2px;padding-bottom:10px;}
 .tab.dragging{opacity:.45;}
 .tab.dropbefore{box-shadow:inset 2px 0 0 var(--ink);}
 .tab-ic{width:20px;height:20px;flex-shrink:0;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--muted);}
@@ -287,8 +290,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .col-add-go:hover{opacity:.86;}
 .col-add-x{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:17px;display:flex;padding:4px;border-radius:7px;}
 .col-add-x:hover{background:var(--chip);color:var(--ink);}
-.tcard{position:relative;background:var(--card);border-radius:10px;border:1px solid color-mix(in srgb, var(--ink) 6%, var(--line));
-  border-left:3px solid var(--blue);box-shadow:var(--shadow-flat);padding:10px 12px;margin-bottom:8px;cursor:grab;
+.tcard{position:relative;background:var(--card);border-radius:11px;border:1px solid color-mix(in srgb, var(--ink) 9%, var(--line));
+  box-shadow:var(--shadow-flat);padding:11px 13px;margin-bottom:8px;cursor:grab;
   transition:box-shadow .16s ease, transform .16s ease, border-color .16s;}
 .tcard:hover{transform:translateY(-1px);box-shadow:var(--shadow-flat-hover);border-color:color-mix(in srgb, var(--ink) 12%, var(--line));}
 .tcard:active{cursor:grabbing;}
@@ -628,8 +631,18 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .cm-sec-btn{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:12px;font-weight:600;color:var(--ink);background:var(--btn);border:none;border-radius:7px;padding:5px 9px;cursor:pointer;transition:background .12s;}
 .cm-sec-btn .ti{font-size:14px;color:var(--muted);}
 .cm-sec-btn:hover{background:var(--btn-h);}
-.cm-tpl-menu{position:absolute;bottom:calc(100% + 6px);right:0;z-index:20;width:270px;max-height:340px;overflow-y:auto;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-flat-hover);padding:6px;}
+.cm-tpl-menu{position:absolute;bottom:calc(100% + 6px);right:0;z-index:20;width:326px;max-width:calc(100vw - 48px);background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-flat-hover);padding:8px;display:flex;flex-direction:column;max-height:420px;}
 .cm-tpl-head{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);padding:6px 8px 7px;}
+.cm-tpl-search-wrap{position:relative;flex-shrink:0;margin-bottom:6px;}
+.cm-tpl-search-ic{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--faint);pointer-events:none;}
+.cm-tpl-search{width:100%;font:inherit;font-size:13px;color:var(--ink);background:var(--panel);border:1px solid var(--edge);border-radius:9px;padding:8px 10px 8px 31px;outline:none;transition:border-color .12s,box-shadow .12s;}
+.cm-tpl-search:focus{border-color:var(--edge-h);box-shadow:0 0 0 3px color-mix(in srgb,var(--ink) 6%,transparent);}
+.cm-tpl-scroll{flex:1;min-height:0;overflow-y:auto;}
+.cm-tpl-group{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);padding:9px 8px 4px;position:sticky;top:0;background:var(--card);}
+.cm-tpl-empty{font-size:12.5px;color:var(--muted);padding:14px 8px;text-align:center;}
+/* Portaled to body so the scrolling modal body can't clip it */
+.cm-tpl-backdrop{position:fixed;inset:0;z-index:119;}
+.cm-tpl-menu-fixed{position:fixed;top:auto;left:auto;z-index:120;}
 .cm-tpl-item{display:flex;align-items:center;gap:10px;width:100%;font:inherit;text-align:left;background:none;border:none;border-radius:9px;padding:8px;cursor:pointer;transition:background .12s;}
 .cm-tpl-item:hover{background:var(--chip);}
 .cm-tpl-ic{width:32px;height:32px;flex-shrink:0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;

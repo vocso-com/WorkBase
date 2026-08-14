@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { ColorKey, Priority, Status } from '../types'
 import { COLORS, ICON_CHOICES, PRIORITY_META, hex, mergedStages, stageMeta } from '../theme'
 import { useStore } from '../store/useStore'
@@ -40,6 +41,8 @@ export function CardModal() {
   const tagPalette = useStore(s => s.doc.tagPalette)
   const customStages = useStore(s => s.doc.stages)
   const profile = useStore(s => s.doc.profile)
+  const workspaces = useStore(s => s.doc.workspaces)
+  const templates = useStore(s => s.doc.templates)
   const node = openId ? findNode(roots, openId) : null
 
   const [item, setItem] = useState('')
@@ -52,7 +55,24 @@ export function CardModal() {
   const [moveQuery, setMoveQuery] = useState('')
   const [details, setDetails] = useState(false)
   const [clTpl, setClTpl] = useState(false)
+  const [tplQuery, setTplQuery] = useState('')
+  const [tplPos, setTplPos] = useState<{ bottom: number; right: number; maxH: number } | null>(null)
+  const tplBtnRef = useRef<HTMLButtonElement>(null)
   const titleRef = useRef<HTMLTextAreaElement>(null)
+
+  // Open the checklist-template picker, anchored above its button (portaled to
+  // body so the scrolling modal body can't clip the search field).
+  const toggleTpl = () => {
+    setTplQuery('')
+    setClTpl(v => {
+      const open = !v
+      if (open && tplBtnRef.current) {
+        const r = tplBtnRef.current.getBoundingClientRect()
+        setTplPos({ bottom: window.innerHeight - r.top + 6, right: window.innerWidth - r.right, maxH: Math.min(440, r.top - 24) })
+      }
+      return open
+    })
+  }
 
   const sizeTitle = () => {
     const el = titleRef.current
@@ -71,6 +91,7 @@ export function CardModal() {
     setMoveQuery('')
     setDetails(false)
     setClTpl(false)
+    setTplQuery('')
     setNewTag('')
     if (!openId) return
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') useDetail.getState().close() }
@@ -186,6 +207,38 @@ export function CardModal() {
 
   const kind = isProject ? 'project' : isContainer ? 'module' : 'task'
   const curColor = isContainer ? node.color : node.labelColor
+
+  // Searchable checklist sources: built-in templates, any project/module's
+  // checklist reused from across all hubs, and saved project templates.
+  type ClSource = { key: string; name: string; sub: string; icon: string; items: string[] }
+  const q = tplQuery.trim().toLowerCase()
+  const clMatches = (s: ClSource) => !q || s.name.toLowerCase().includes(q) || s.sub.toLowerCase().includes(q) || s.items.some(i => i.toLowerCase().includes(q))
+  const builtinSources: ClSource[] = CHECKLIST_TEMPLATES.map(t => ({ key: `b:${t.id}`, name: t.name, sub: `${t.items.length} items`, icon: t.icon, items: t.items })).filter(clMatches)
+  const wsName = (wid?: string) => workspaces.find(w => w.id === (wid ?? ''))?.name ?? 'WorkBase'
+  const projectSources: ClSource[] = []
+  const walkCl = (n: typeof node, rootTitle: string, ws: string) => {
+    if (n.children.length > 0 && !blocked.has(n.id)) {
+      const items = n.children.map(c => c.title).filter(Boolean)
+      if (items.length) projectSources.push({ key: `p:${n.id}`, name: n.title, sub: `${items.length} items · ${ws} › ${rootTitle}`, icon: n.icon ?? 'ti-list-tree', items })
+    }
+    n.children.forEach(c => walkCl(c, rootTitle, ws))
+  }
+  roots.forEach(r => walkCl(r, r.title, wsName(r.workspace)))
+  const projFiltered = projectSources.filter(clMatches).slice(0, 40)
+  const templateSources: ClSource[] = templates.flatMap(t =>
+    t.modules.filter(m => m.items.length).map((m, i) => ({ key: `t:${t.id}:${i}`, name: m.name, sub: `${m.items.length} items · ${t.name} template`, icon: m.icon ?? 'ti-template', items: m.items.map(it => it.title) })),
+  ).filter(clMatches)
+  const noClMatches = !builtinSources.length && !projFiltered.length && !templateSources.length
+  const renderClSource = (s: ClSource) => (
+    <button key={s.key} className="cm-tpl-item" onClick={() => applyChecklistTemplate(s.items)}>
+      <span className="cm-tpl-ic"><Icon name={s.icon} /></span>
+      <span className="cm-tpl-info">
+        <span className="cm-tpl-name">{s.name}</span>
+        <span className="cm-tpl-sub">{s.sub}</span>
+      </span>
+      <Icon name="ti-plus" className="cm-tpl-add" />
+    </button>
+  )
 
   const userName = profile?.userName?.trim() || 'You'
   const userAvatar = profile?.userAvatar
@@ -495,26 +548,39 @@ export function CardModal() {
                 <Icon name="ti-checklist" /> Checklist
                 {children.length > 0 ? <span className="cm-sec-count">{doneChildren}/{children.length}</span> : null}
                 <div className="cm-tpl-wrap">
-                  <button className="cm-sec-btn" onClick={() => setClTpl(v => !v)}>
+                  <button ref={tplBtnRef} className="cm-sec-btn" onClick={toggleTpl}>
                     <Icon name="ti-template" /> Templates <Icon name="ti-chevron-down" className="cm-qp-caret" />
                   </button>
-                  {clTpl ? (
+                  {clTpl ? createPortal(
                     <>
-                      <div className="cm-menu-backdrop" onClick={() => setClTpl(false)} />
-                      <div className="cm-tpl-menu" onClick={e => e.stopPropagation()}>
-                        <div className="cm-tpl-head">Add a checklist</div>
-                        {CHECKLIST_TEMPLATES.map(t => (
-                          <button key={t.id} className="cm-tpl-item" onClick={() => applyChecklistTemplate(t.items)}>
-                            <span className="cm-tpl-ic"><Icon name={t.icon} /></span>
-                            <span className="cm-tpl-info">
-                              <span className="cm-tpl-name">{t.name}</span>
-                              <span className="cm-tpl-sub">{t.items.length} items</span>
-                            </span>
-                            <Icon name="ti-plus" className="cm-tpl-add" />
-                          </button>
-                        ))}
+                      <div className="cm-tpl-backdrop" onClick={() => setClTpl(false)} />
+                      <div
+                        className="cm-tpl-menu cm-tpl-menu-fixed"
+                        onClick={e => e.stopPropagation()}
+                        style={tplPos ? { bottom: tplPos.bottom, right: tplPos.right, maxHeight: tplPos.maxH } : undefined}
+                      >
+                        <div className="cm-tpl-search-wrap">
+                          <Icon name="ti-search" className="cm-tpl-search-ic" />
+                          <input
+                            className="cm-tpl-search"
+                            autoFocus
+                            placeholder="Search checklists, projects, templates…"
+                            value={tplQuery}
+                            onChange={e => setTplQuery(e.target.value)}
+                          />
+                        </div>
+                        <div className="cm-tpl-scroll">
+                          {builtinSources.length ? <div className="cm-tpl-group">Checklist templates</div> : null}
+                          {builtinSources.map(renderClSource)}
+                          {projFiltered.length ? <div className="cm-tpl-group">From your projects</div> : null}
+                          {projFiltered.map(renderClSource)}
+                          {templateSources.length ? <div className="cm-tpl-group">Project templates</div> : null}
+                          {templateSources.map(renderClSource)}
+                          {noClMatches ? <div className="cm-tpl-empty">No matches{q ? ` for “${tplQuery.trim()}”` : ''}.</div> : null}
+                        </div>
                       </div>
-                    </>
+                    </>,
+                    document.body,
                   ) : null}
                 </div>
               </div>
