@@ -4,11 +4,14 @@ import { useNav } from './useNav'
 import { useView, type ViewKind } from './useView'
 import { useStore } from '../store/useStore'
 import { findNode } from '../lib/tree'
+import { DEFAULT_WORKSPACE_ID } from '../lib/serialize'
 
 export interface Tab {
   id: string
   path: string[]
   view: ViewKind
+  // The WorkBase this tab belongs to; tabs are scoped per WorkBase.
+  workspace: string
 }
 
 // True while we're pushing a tab's saved location into nav/view, so the
@@ -22,15 +25,30 @@ function applyTab(tab: Tab) {
   applying = false
 }
 
+function activeWs(): string {
+  return useStore.getState().doc.activeWorkspace ?? DEFAULT_WORKSPACE_ID
+}
+
+// The WorkBase a project belongs to (Home tabs use the active WorkBase).
+function wsOf(rootId: string | undefined): string {
+  if (!rootId) return activeWs()
+  const root = findNode(useStore.getState().doc.roots, rootId)
+  return root?.workspace ?? DEFAULT_WORKSPACE_ID
+}
+
 interface TabsState {
   tabs: Tab[]
   activeId: string
+  // Last active tab per WorkBase, so switching back restores where you were.
+  activeByWs: Record<string, string>
   newTab: () => void
   // Open a project. From a Home tab it navigates in place (browser-like);
   // forceNew (⌘/Ctrl-click) always opens a new tab. Re-opening focuses.
   openProject: (rootId: string, forceNew?: boolean) => void
-  // Go to the project list — focus a Home tab, else send the current tab home.
+  // Go to the project list — focus a Home tab in the active WorkBase.
   goHome: () => void
+  // Switch WorkBase: change the store's active WorkBase and focus one of its tabs.
+  switchWorkspace: (wsId: string) => void
   activate: (id: string) => void
   close: (id: string) => void
   reorder: (from: number, to: number) => void
@@ -41,9 +59,10 @@ interface TabsState {
 export const useTabs = create<TabsState>((set, get) => ({
   tabs: [],
   activeId: '',
+  activeByWs: {},
   newTab: () => {
-    const tab: Tab = { id: nanoid(6), path: [], view: 'board' }
-    set(s => ({ tabs: [...s.tabs, tab], activeId: tab.id }))
+    const tab: Tab = { id: nanoid(6), path: [], view: 'board', workspace: activeWs() }
+    set(s => ({ tabs: [...s.tabs, tab], activeId: tab.id, activeByWs: { ...s.activeByWs, [tab.workspace]: tab.id } }))
     applyTab(tab)
   },
   openProject: (rootId, forceNew = false) => {
@@ -51,41 +70,60 @@ export const useTabs = create<TabsState>((set, get) => ({
     if (existing) { get().activate(existing.id); return }
     const root = findNode(useStore.getState().doc.roots, rootId)
     const view = (root?.view as ViewKind) ?? 'board'
+    const ws = root?.workspace ?? DEFAULT_WORKSPACE_ID
     const active = get().tabs.find(t => t.id === get().activeId)
-    // From a blank Home tab, navigate in place; otherwise open a new tab.
-    if (!forceNew && active && active.path.length === 0) {
+    // From a blank Home tab in this WorkBase, navigate in place; else open a tab.
+    if (!forceNew && active && active.path.length === 0 && active.workspace === ws) {
       useNav.getState().set([rootId])
       useView.getState().setView(view)
       return
     }
-    const tab: Tab = { id: nanoid(6), path: [rootId], view }
-    set(s => ({ tabs: [...s.tabs, tab], activeId: tab.id }))
+    const tab: Tab = { id: nanoid(6), path: [rootId], view, workspace: ws }
+    set(s => ({ tabs: [...s.tabs, tab], activeId: tab.id, activeByWs: { ...s.activeByWs, [ws]: tab.id } }))
     applyTab(tab)
   },
   goHome: () => {
-    const home = get().tabs.find(t => t.path.length === 0)
+    const ws = activeWs()
+    const home = get().tabs.find(t => t.workspace === ws && t.path.length === 0)
     if (home) { get().activate(home.id); return }
-    // No home tab open — send the current tab back to the project list.
+    // No Home tab in this WorkBase — send the current tab back to the project list.
     useNav.getState().set([])
+  },
+  switchWorkspace: wsId => {
+    useStore.getState().setActiveWorkspace(wsId)
+    const { tabs, activeByWs } = get()
+    const inWs = tabs.filter(t => t.workspace === wsId)
+    let target = inWs.find(t => t.id === activeByWs[wsId]) ?? inWs[0]
+    if (!target) {
+      target = { id: nanoid(6), path: [], view: 'board', workspace: wsId }
+      set(s => ({ tabs: [...s.tabs, target as Tab] }))
+    }
+    set(s => ({ activeId: target!.id, activeByWs: { ...s.activeByWs, [wsId]: target!.id } }))
+    applyTab(target)
   },
   activate: id => {
     const tab = get().tabs.find(t => t.id === id)
     if (!tab || id === get().activeId) return
-    set({ activeId: id })
+    if (tab.workspace !== activeWs()) useStore.getState().setActiveWorkspace(tab.workspace)
+    set(s => ({ activeId: id, activeByWs: { ...s.activeByWs, [tab.workspace]: id } }))
     applyTab(tab)
   },
   close: id => {
     const { tabs, activeId } = get()
-    if (tabs.length <= 1) return
-    const idx = tabs.findIndex(t => t.id === id)
+    const closing = tabs.find(t => t.id === id)
+    if (!closing) return
+    const wsTabs = tabs.filter(t => t.workspace === closing.workspace)
+    if (wsTabs.length <= 1) return // always keep at least one tab per WorkBase
     const remaining = tabs.filter(t => t.id !== id)
     let nextActive = activeId
     if (activeId === id) {
-      const neighbor = remaining[Math.min(idx, remaining.length - 1)]
+      const idx = wsTabs.findIndex(t => t.id === id)
+      const wsRemaining = wsTabs.filter(t => t.id !== id)
+      const neighbor = wsRemaining[Math.min(idx, wsRemaining.length - 1)]
       nextActive = neighbor.id
       applyTab(neighbor)
     }
-    set({ tabs: remaining, activeId: nextActive })
+    set(s => ({ tabs: remaining, activeId: nextActive, activeByWs: { ...s.activeByWs, [closing.workspace]: nextActive } }))
   },
   reorder: (from, to) => {
     if (from === to) return
@@ -116,37 +154,48 @@ export function initTabs() {
   const st = useTabs.getState()
   if (st.tabs.length === 0) {
     const roots = useStore.getState().doc.roots
-    let restored: { tabs: Tab[]; activeId: string } | null = null
+    let restored: { tabs: Partial<Tab>[]; activeId: string } | null = null
     try {
       const raw = localStorage.getItem(TABS_KEY)
       if (raw) restored = JSON.parse(raw)
     } catch { /* ignore */ }
-    // Keep only tabs whose whole drill path still resolves (projects may have
-    // been deleted since last session); Home tabs (empty path) always survive.
-    const valid = restored?.tabs?.filter(t => Array.isArray(t.path) && t.path.every(id => findNode(roots, id)))
+    // Keep only tabs whose whole drill path still resolves; tag each with its
+    // WorkBase (older saves predate the field).
+    const valid = restored?.tabs
+      ?.filter(t => Array.isArray(t.path) && t.path!.every(id => findNode(roots, id)))
+      .map(t => ({ id: t.id ?? nanoid(6), path: t.path ?? [], view: (t.view ?? 'board') as ViewKind, workspace: t.workspace ?? wsOf(t.path?.[0]) })) as Tab[] | undefined
     if (valid && valid.length) {
-      const activeId = valid.some(t => t.id === restored!.activeId) ? restored!.activeId : valid[0].id
-      useTabs.setState({ tabs: valid, activeId })
-      const active = valid.find(t => t.id === activeId)!
+      const activeById = valid.some(t => t.id === restored!.activeId) ? restored!.activeId : valid[0].id
+      const activeByWs: Record<string, string> = {}
+      for (const t of valid) activeByWs[t.workspace] = t.id
+      const active = valid.find(t => t.id === activeById)!
+      activeByWs[active.workspace] = active.id
+      useTabs.setState({ tabs: valid, activeId: activeById, activeByWs })
+      if (active.workspace !== activeWs()) useStore.getState().setActiveWorkspace(active.workspace)
       applyTab(active)
     } else {
       const id = nanoid(6)
-      useTabs.setState({ tabs: [{ id, path: useNav.getState().path, view: useView.getState().view }], activeId: id })
+      const tab: Tab = { id, path: useNav.getState().path, view: useView.getState().view, workspace: activeWs() }
+      useTabs.setState({ tabs: [tab], activeId: id, activeByWs: { [tab.workspace]: id } })
     }
   }
   useTabs.subscribe(persistTabs)
   useNav.subscribe(s => useTabs.getState().save(s.path, useView.getState().view))
   useView.subscribe(s => useTabs.getState().save(useNav.getState().path, s.view))
 
-  // Desktop keyboard shortcuts: ⌘/Ctrl+T new tab, ⌘/Ctrl+W close, ⌘/Ctrl+1–9 switch.
+  // Desktop keyboard shortcuts: ⌘/Ctrl+T new tab, ⌘/Ctrl+W close, ⌘/Ctrl+1–9
+  // switch (within the active WorkBase).
   if (typeof window !== 'undefined') {
     window.addEventListener('keydown', e => {
       if (!(e.metaKey || e.ctrlKey) || e.altKey) return
       const t = useTabs.getState()
       if (e.key === 't' || e.key === 'T') { e.preventDefault(); t.newTab() }
-      else if (e.key === 'w' || e.key === 'W') { if (t.tabs.length > 1) { e.preventDefault(); t.close(t.activeId) } }
-      else if (e.key >= '1' && e.key <= '9') {
-        const tab = t.tabs[Number(e.key) - 1]
+      else if (e.key === 'w' || e.key === 'W') {
+        const ws = activeWs()
+        if (t.tabs.filter(x => x.workspace === ws).length > 1) { e.preventDefault(); t.close(t.activeId) }
+      } else if (e.key >= '1' && e.key <= '9') {
+        const ws = activeWs()
+        const tab = t.tabs.filter(x => x.workspace === ws)[Number(e.key) - 1]
         if (tab) { e.preventDefault(); t.activate(tab.id) }
       }
     })

@@ -17,15 +17,14 @@ export function WorkspaceSwitcher() {
   if (!active) return null
 
   const pick = (id: string) => {
-    useStore.getState().setActiveWorkspace(id)
-    useTabs.getState().goHome()
+    useTabs.getState().switchWorkspace(id)
     setOpen(false)
   }
   const create = () => {
     const n = name.trim()
     if (!n) return
     useStore.getState().addWorkspace(n)
-    useTabs.getState().goHome()
+    useTabs.getState().switchWorkspace(useStore.getState().doc.activeWorkspace)
     setName('')
     setAdding(false)
     setOpen(false)

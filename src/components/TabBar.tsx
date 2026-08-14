@@ -12,16 +12,20 @@ import { Icon } from './ui/Icon'
 export function TabBar() {
   const tabs = useTabs(s => s.tabs)
   const activeId = useTabs(s => s.activeId)
+  const activeWorkspace = useStore(s => s.doc.activeWorkspace)
   const roots = useStore(s => s.doc.roots)
   const [drag, setDrag] = useState<number | null>(null)
   const [over, setOver] = useState<number | null>(null)
 
-  // Only surface tabs once you're actually juggling more than one thing.
-  if (tabs.length < 2) return null
+  // Tabs are scoped to the active WorkBase; only surface them once you're
+  // juggling more than one thing in this WorkBase.
+  const visible = tabs.filter(t => t.workspace === activeWorkspace)
+  if (visible.length < 2) return null
 
   return (
     <div className="tabbar">
-      {tabs.map((t, i) => {
+      {visible.map(t => {
+        const i = tabs.indexOf(t)
         const root = t.path[0] ? findNode(roots, t.path[0]) : null
         const active = t.id === activeId
         const label = root?.title ?? 'Home'
