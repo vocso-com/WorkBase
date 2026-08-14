@@ -13,12 +13,16 @@ import { TabBar } from './components/TabBar'
 import { exportDoc, importDoc } from './lib/transfer'
 import { initRouter } from './lib/router'
 import { initTabs, useTabs } from './hooks/useTabs'
+import { initTheme, useTheme } from './hooks/useTheme'
 
 export default function App() {
   const ready = useStore(s => s.ready)
   const roots = useStore(s => s.doc.roots)
   const path = useNav(s => s.path)
-  useEffect(() => { void useStore.getState().init().then(() => { initRouter(); initTabs() }) }, [])
+  // Subscribe so a Light/Dark/System change re-renders the tree and refreshes
+  // JS-computed tint colors (tags, avatars) alongside the CSS variables.
+  useTheme(s => s.dark)
+  useEffect(() => { initTheme(); void useStore.getState().init().then(() => { initRouter(); initTabs() }) }, [])
 
   if (!ready) return <div style={{ padding: 40, color: 'var(--muted)' }}>Loading…</div>
 

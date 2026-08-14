@@ -1,11 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../store/useStore'
 import { useSettings } from '../hooks/useSettings'
+import { useTheme, type ThemeMode } from '../hooks/useTheme'
 import { Icon } from './ui/Icon'
+
+const THEME_OPTS: { mode: ThemeMode; icon: string; label: string }[] = [
+  { mode: 'light', icon: 'ti-sun', label: 'Light' },
+  { mode: 'dark', icon: 'ti-moon', label: 'Dark' },
+  { mode: 'system', icon: 'ti-device-desktop', label: 'System' },
+]
 
 export function AvatarMenu({ onExport, onImport }: { onExport: () => void; onImport: () => void }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const themeMode = useTheme(s => s.mode)
   const profile = useStore(s => s.doc.profile)
   const name = profile?.userName?.trim() || 'You'
   const initials = name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'U'
@@ -54,6 +62,13 @@ export function AvatarMenu({ onExport, onImport }: { onExport: () => void; onImp
               <div style={{ fontSize: 13.5, fontWeight: 600 }}>{name}</div>
               <div style={{ fontSize: 11.5, color: 'var(--muted)' }}>{profile?.orgName || 'Local workspace'}</div>
             </div>
+          </div>
+          <div style={{ display: 'flex', gap: 4, padding: '2px 4px 8px', borderBottom: '1px solid var(--line)', marginBottom: 4 }}>
+            {THEME_OPTS.map(o => (
+              <button key={o.mode} className={`thm-seg${themeMode === o.mode ? ' on' : ''}`} onClick={() => useTheme.getState().setMode(o.mode)}>
+                <Icon name={o.icon} /> {o.label}
+              </button>
+            ))}
           </div>
           <div className="avatar-menu-item" onClick={() => { setOpen(false); useSettings.getState().show() }}
             style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 8px', borderRadius: 8, fontSize: 13.5, color: 'var(--ink)', cursor: 'pointer' }}>

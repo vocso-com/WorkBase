@@ -1,7 +1,9 @@
 import { TINT, TINT_DARK, isPaletteColor } from '../theme'
+import { useTheme } from '../hooks/useTheme'
 
+// Honours the user's Light/Dark/System choice (falls back to the OS setting).
 export function prefersDark(): boolean {
-  return typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
+  return useTheme.getState().dark
 }
 
 // Accept a palette key or a raw hex. For palette keys we use the curated tints;
