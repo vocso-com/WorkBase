@@ -193,11 +193,42 @@ export function CardModal() {
   const avStyle = userAvatar ? { backgroundImage: `url(${userAvatar})` } : undefined
   const Avatar = () => <span className={`cm-av${userAvatar ? ' cm-av-img' : ''}`} style={avStyle}>{userAvatar ? '' : avInitial}</span>
 
+  // Editable title — reused in the project brand band and the normal title row.
+  const titleField = (
+    <textarea
+      ref={titleRef}
+      aria-label="Title"
+      className="cm-title"
+      rows={1}
+      value={node.title}
+      onChange={e => { useStore.getState().rename(node.id, e.target.value); sizeTitle() }}
+      onInput={sizeTitle}
+    />
+  )
+  // Project-level "at a glance" line for the brand band.
+  const moduleTotal = children.filter(c => c.children.length > 0).length
+  const taskTotal = leaves(node).length
+  const bandMeta = [
+    moduleTotal ? `${moduleTotal} module${moduleTotal > 1 ? 's' : ''}` : null,
+    `${taskTotal} task${taskTotal === 1 ? '' : 's'}`,
+    taskTotal ? `${progressOf(node)}% done` : null,
+  ].filter(Boolean).join(' · ')
+  const iconPicker = pick === 'icon' ? (
+    <>
+      <div className="cm-menu-backdrop" onClick={() => setPick(null)} />
+      <div className="cm-qp-pop cm-icons cm-icons-pop" onClick={e => e.stopPropagation()}>
+        {ICON_CHOICES.map(ic => (
+          <button key={ic} className={`cm-ic${(node.icon ?? 'ti-stack-2') === ic ? ' on' : ''}`} onClick={() => { useStore.getState().patch(node.id, { icon: ic }); setPick(null) }} aria-label={ic}><Icon name={ic} /></button>
+        ))}
+      </div>
+    </>
+  ) : null
+
   return (
     <div className="card-overlay" onClick={close}>
       <div className="cardmodal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" style={{ ['--cm-accent' as string]: hex(color) }}>
         <div className="cm-accent" />
-        {node.image ? (
+        {!isProject && node.image ? (
           <div className="cm-cover" style={{ backgroundImage: `url(${node.image})` }}>
             <button className="cm-cover-del" onClick={() => useStore.getState().patch(node.id, { image: undefined })}>
               <Icon name="ti-photo-off" /> Remove cover
@@ -268,41 +299,52 @@ export function CardModal() {
           </div>
         </div>
 
+        {isProject ? (
+          <div className="cm-brandband">
+            <div className="cm-title-ic-wrap">
+              {node.image ? (
+                <button className="cm-bb-logo" onClick={() => setPick(p => (p === 'icon' ? null : 'icon'))} title="Change icon">
+                  <img className="cm-bb-logo-img" src={node.image} alt="" />
+                  <span className="cm-title-ic-edit"><Icon name="ti-pencil" /></span>
+                </button>
+              ) : (
+                <button className="cm-bb-ic" style={{ background: tagBg(color), color: tagFg(color) }} onClick={() => setPick(p => (p === 'icon' ? null : 'icon'))} title="Change icon">
+                  <Icon name={node.icon ?? 'ti-folder'} />
+                  <span className="cm-title-ic-edit"><Icon name="ti-pencil" /></span>
+                </button>
+              )}
+              {iconPicker}
+            </div>
+            <div className="cm-bb-text">
+              {titleField}
+              {bandMeta ? <span className="cm-bb-meta">{bandMeta}</span> : null}
+            </div>
+            <span className="cm-bb-status" style={{ background: tagBg(sm.color), color: tagFg(sm.color) }}>
+              <span className="sdot" style={{ background: sm.dot }} /> {sm.label}
+            </span>
+          </div>
+        ) : null}
+
         <div className="cm-body">
           <div className="cm-main">
-            <div className="cm-titlerow">
-              {isContainer ? (
-                <div className="cm-title-ic-wrap">
-                  <button className="cm-title-ic" style={{ background: tagBg(color), color: tagFg(color) }} onClick={() => setPick(p => (p === 'icon' ? null : 'icon'))} title="Change icon">
-                    <Icon name={node.icon ?? 'ti-stack-2'} />
-                    <span className="cm-title-ic-edit"><Icon name="ti-pencil" /></span>
-                  </button>
-                  {pick === 'icon' ? (
-                    <>
-                      <div className="cm-menu-backdrop" onClick={() => setPick(null)} />
-                      <div className="cm-qp-pop cm-icons cm-icons-pop" onClick={e => e.stopPropagation()}>
-                        {ICON_CHOICES.map(ic => (
-                          <button key={ic} className={`cm-ic${(node.icon ?? 'ti-stack-2') === ic ? ' on' : ''}`} onClick={() => { useStore.getState().patch(node.id, { icon: ic }); setPick(null) }} aria-label={ic}><Icon name={ic} /></button>
-                        ))}
-                      </div>
-                    </>
-                  ) : null}
-                </div>
-              ) : (
-                <span className="cm-title-check">
-                  <Checkbox status={node.status} onToggle={() => useStore.getState().toggleDone(node.id)} />
-                </span>
-              )}
-              <textarea
-                ref={titleRef}
-                aria-label="Title"
-                className="cm-title"
-                rows={1}
-                value={node.title}
-                onChange={e => { useStore.getState().rename(node.id, e.target.value); sizeTitle() }}
-                onInput={sizeTitle}
-              />
-            </div>
+            {!isProject ? (
+              <div className="cm-titlerow">
+                {isContainer ? (
+                  <div className="cm-title-ic-wrap">
+                    <button className="cm-title-ic" style={{ background: tagBg(color), color: tagFg(color) }} onClick={() => setPick(p => (p === 'icon' ? null : 'icon'))} title="Change icon">
+                      <Icon name={node.icon ?? 'ti-stack-2'} />
+                      <span className="cm-title-ic-edit"><Icon name="ti-pencil" /></span>
+                    </button>
+                    {iconPicker}
+                  </div>
+                ) : (
+                  <span className="cm-title-check">
+                    <Checkbox status={node.status} onToggle={() => useStore.getState().toggleDone(node.id)} />
+                  </span>
+                )}
+                {titleField}
+              </div>
+            ) : null}
 
             <div className="cm-quickprops">
               <div className="cm-qp-wrap">

@@ -39,8 +39,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 /* Project page tinted with the project's own color */
 /* Full-bleed under the header: cancel the app's content padding, re-inset inside */
 .proj-page{margin:-16px -32px -28px;padding:16px 32px 24px;min-height:calc(100vh - 56px);
-  background-color:color-mix(in srgb,var(--proj,var(--blue)) 12%,var(--bg));
-  background-image:radial-gradient(color-mix(in srgb,var(--proj,var(--blue)) 34%,var(--dot)) 1.3px,transparent 1.3px);
+  background-color:color-mix(in srgb,var(--proj,var(--blue)) 5%,var(--bg));
+  background-image:radial-gradient(color-mix(in srgb,var(--proj,var(--blue)) 22%,var(--dot)) 1.3px,transparent 1.3px);
   background-size:22px 22px;}
 
 .crumb{display:flex;align-items:center;gap:7px;padding:16px 28px 2px;font-size:13.5px;color:var(--muted);}
@@ -104,7 +104,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 /* Desktop tabs — connected "folder tab" strip: active tab is a raised surface
    that sits on the baseline and breaks through it to join the content below. */
 .tabbar{position:sticky;top:54px;z-index:29;display:flex;align-items:flex-end;gap:2px;
-  padding:7px 12px 0;background:var(--chip);border-bottom:1px solid var(--line);overflow-x:auto;}
+  padding:7px 12px 0;background:var(--bg);border-bottom:1px solid color-mix(in srgb,var(--ink) 8%,var(--line));overflow-x:auto;}
 .tab{display:flex;align-items:center;gap:8px;max-width:200px;padding:8px 11px;cursor:pointer;
   color:var(--muted);font-size:13px;font-weight:600;flex-shrink:0;
   border:1px solid transparent;border-bottom:none;border-radius:9px 9px 0 0;margin-bottom:-1px;
@@ -515,6 +515,29 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .cm-icons-pop .cm-ic{font-size:18px;border-radius:9px;}
 .cm-title{flex:1;min-width:0;font:inherit;font-size:21px;font-weight:700;letter-spacing:-.02em;line-height:1.3;color:var(--ink);border:none;background:transparent;padding:2px 6px;border-radius:8px;resize:none;overflow:hidden;display:block;white-space:pre-wrap;word-break:break-word;}
 .cm-title:focus{outline:none;background:var(--panel);box-shadow:inset 0 0 0 1px var(--line);}
+
+/* Project brand band: logo/icon + name + status, tinted in the project color */
+.cm-brandband{display:flex;align-items:center;gap:15px;padding:16px 24px;flex-shrink:0;
+  background:color-mix(in srgb,var(--cm-accent) 11%,var(--card));
+  border-bottom:1px solid color-mix(in srgb,var(--cm-accent) 22%,var(--line));}
+.cm-brandband .cm-title-ic-wrap{margin-top:0;}
+.cm-bb-ic{position:relative;width:50px;height:50px;flex-shrink:0;border:none;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;font-size:25px;cursor:pointer;
+  transition:box-shadow .12s,transform .1s;}
+.cm-bb-ic:hover{box-shadow:var(--shadow-flat);transform:translateY(-1px);}
+.cm-bb-ic .cm-title-ic-edit{right:-5px;bottom:-5px;}
+.cm-bb-ic:hover .cm-title-ic-edit{opacity:1;}
+/* Logo: fixed height, flexible width so the aspect ratio is preserved */
+.cm-bb-logo{position:relative;flex-shrink:0;border:none;background:none;cursor:pointer;padding:0;display:flex;align-items:center;}
+.cm-bb-logo-img{height:46px;width:auto;max-width:220px;object-fit:contain;display:block;border-radius:8px;}
+.cm-bb-logo .cm-title-ic-edit{right:-6px;bottom:-6px;opacity:0;}
+.cm-bb-logo:hover .cm-title-ic-edit{opacity:1;}
+.cm-bb-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;}
+.cm-bb-text .cm-title{font-size:23px;padding:1px 6px;margin-left:-6px;}
+.cm-bb-meta{font-size:12.5px;font-weight:600;color:color-mix(in srgb,var(--cm-accent) 60%,var(--muted));padding:0 6px;}
+.cm-bb-status{flex-shrink:0;display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;
+  padding:6px 13px;border-radius:20px;white-space:nowrap;}
+.cm-bb-status .sdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 
 /* Two-panel body: white content | gray comments rail (full height) */
 .cm-body{flex:1;min-height:0;display:grid;grid-template-columns:1fr minmax(340px,400px);}
