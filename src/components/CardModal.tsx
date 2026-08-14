@@ -126,9 +126,9 @@ export function CardModal() {
   const blocked = new Set<string>()
   const markSub = (n: typeof node) => { blocked.add(n.id); n.children.forEach(markSub) }
   markSub(node)
-  const moveTargets: { id: string; label: string }[] = []
+  const moveTargets: { id: string; label: string; node: typeof node }[] = []
   const walkTargets = (n: typeof node, trail: string[]) => {
-    if (!blocked.has(n.id) && n.id !== parent?.id) moveTargets.push({ id: n.id, label: [...trail, n.title].join(' › ') })
+    if (!blocked.has(n.id) && n.id !== parent?.id) moveTargets.push({ id: n.id, label: [...trail, n.title].join(' › '), node: n })
     n.children.forEach(c => walkTargets(c, [...trail, n.title]))
   }
   roots.forEach(r => walkTargets(r, []))
@@ -184,7 +184,14 @@ export function CardModal() {
                         <div className="cm-move-list">
                           <button className="cm-menu-item" onClick={() => { moveTo('__root__'); setMenu(false); setMoveOpen(false) }}>— Top level (project) —</button>
                           {moveTargets.filter(t => t.label.toLowerCase().includes(moveQuery.toLowerCase())).slice(0, 40).map(t => (
-                            <button key={t.id} className="cm-menu-item" onClick={() => { moveTo(t.id); setMenu(false); setMoveOpen(false) }}>{t.label}</button>
+                            <button key={t.id} className="cm-menu-item cm-move-item" onClick={() => { moveTo(t.id); setMenu(false); setMoveOpen(false) }}>
+                              {t.node.image ? (
+                                <span className="cm-move-ic cm-move-img" style={{ backgroundImage: `url(${t.node.image})` }} />
+                              ) : (
+                                <span className="cm-move-ic" style={{ background: tagBg(t.node.color ?? 'gray'), color: tagFg(t.node.color ?? 'gray') }}><Icon name={t.node.icon ?? 'ti-folder'} /></span>
+                              )}
+                              <span className="cm-move-lbl">{t.label}</span>
+                            </button>
                           ))}
                         </div>
                       </div>

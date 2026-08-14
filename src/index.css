@@ -425,10 +425,12 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .cm-moveto .cm-field-l{margin:0 0 6px;display:block;}
 .cm-main-foot{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line);}
 .cm-main-foot .cm-side-btn{margin-top:0;}
-/* Comments & activity rail (right column) */
-.cm-rail{align-self:flex-start;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;}
-.cm-rail-h{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--ink);margin-bottom:12px;}
-.cm-rail-h .ti{color:var(--muted);font-size:16px;}
+/* Comments & activity rail (full-height right pane, Trello-style) */
+.cm-rail{align-self:stretch;display:flex;flex-direction:column;min-height:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;}
+.cm-rail-h{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:var(--ink);margin-bottom:14px;flex-shrink:0;}
+.cm-rail-h .ti{color:var(--muted);font-size:17px;}
+.cm-rail .cm-compose{flex-shrink:0;}
+.cm-rail .cm-comments{flex:1;min-height:120px;overflow-y:auto;}
 .cm-rail .cm-compose-box textarea,.cm-rail .cm-comment-text{background:var(--card);}
 .cm-act{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--faint);margin-top:10px;}
 .cm-act-dot{width:6px;height:6px;border-radius:50%;background:var(--dot);flex-shrink:0;}
@@ -471,8 +473,12 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .cm-move-back{border:none;background:var(--chip);width:24px;height:24px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);}
 .cm-move-input{font:inherit;font-size:13px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:0 2px 6px;}
 .cm-move-input:focus{outline:none;border-color:color-mix(in srgb,var(--ink) 20%,var(--line));}
-.cm-move-list{max-height:260px;overflow-y:auto;}
+.cm-move-list{max-height:300px;overflow-y:auto;}
 .cm-move-list .cm-menu-item{font-size:12.5px;}
+.cm-move-item{align-items:center;gap:10px;}
+.cm-move-ic{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.cm-move-img{background-size:cover;background-position:center;border:1px solid var(--line);}
+.cm-move-lbl{min-width:0;overflow:hidden;text-overflow:ellipsis;line-height:1.3;}
 .cm-sec-h{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--ink);margin-bottom:10px;}
 .cm-sec-h .ti{color:var(--muted);font-size:16px;}
 .cm-sec-count{background:var(--chip);color:var(--muted);border-radius:20px;padding:0 8px;font-size:11px;font-weight:700;}
