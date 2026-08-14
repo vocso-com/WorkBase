@@ -5,9 +5,9 @@ import { pickAdapter, type StorageAdapter } from '../lib/storage'
 import { emptyDocument } from '../lib/serialize'
 import { newNode } from '../lib/factory'
 import { projectPrefix, nextShortId } from '../lib/shortid'
-import { addChild, updateNode, deleteNode, moveNode, reorderChildren, findNode } from '../lib/tree'
+import { addChild, updateNode, deleteNode, moveNode, reorderChildren, findNode, findParent } from '../lib/tree'
 import { instantiateTemplate, projectToTemplate } from '../lib/templates'
-import { PROJECT_ICONS } from '../theme'
+import { PROJECT_ICONS, mergedStages } from '../theme'
 import { sampleDoc } from '../lib/seed'
 
 const SEEDED_KEY = 'manage.seeded'
@@ -27,6 +27,7 @@ interface State {
   saveAsTemplate: (nodeId: string) => string | null
   deleteTemplate: (id: string) => void
   addChildNode: (parentId: string, title: string) => string
+  logActivity: (id: string, text: string) => void
   rename: (id: string, title: string) => void
   setStatus: (id: string, status: Status) => void
   toggleDone: (id: string) => void
@@ -135,14 +136,38 @@ export const useStore = create<State>((set, get) => ({
     const prefix = rootPrefixFor(get().doc.roots, parentId)
     node.shortId = nextShortId(get().doc.roots, prefix)
     set(s => ({ doc: { ...s.doc, roots: addChild(s.doc.roots, parentId, node) } }))
+    get().logActivity(parentId, `Added “${title.trim()}”`)
     schedulePersist(get)
     return node.id
   },
+  logActivity(id, text) {
+    const n = findNode(get().doc.roots, id)
+    if (!n) return
+    const entry = { id: nanoid(), text, at: new Date().toISOString() }
+    const activities = [...(n.activities ?? []), entry].slice(-60)
+    set(s => ({ doc: { ...s.doc, roots: updateNode(s.doc.roots, id, { activities }) } }))
+    schedulePersist(get)
+  },
   rename(id, title) { get().patch(id, { title }) },
-  setStatus(id, status) { get().patch(id, { status }) },
+  setStatus(id, status) {
+    const n = findNode(get().doc.roots, id)
+    get().patch(id, { status })
+    if (n && n.status !== status) {
+      const label = mergedStages(get().doc.stages).find(st => st.id === status)?.label ?? status
+      get().logActivity(id, `Moved to ${label}`)
+    }
+  },
   toggleDone(id) {
     const n = findNode(get().doc.roots, id)
-    get().patch(id, { status: n && n.status === 'done' ? 'todo' : 'done' })
+    if (!n) return
+    const done = n.status === 'done'
+    get().patch(id, { status: done ? 'todo' : 'done' })
+    // Log on the checklist owner (parent) so ticking an item shows in its card,
+    // and on the item itself for its own history.
+    const verb = done ? 'Unchecked' : 'Checked'
+    const parent = findParent(get().doc.roots, id)
+    if (parent) get().logActivity(parent.id, `${verb} “${n.title}”`)
+    get().logActivity(id, done ? 'Marked not done' : 'Marked complete')
   },
   patch(id, patch) {
     const stamped = { ...patch, updatedAt: new Date().toISOString() }
@@ -164,6 +189,7 @@ export const useStore = create<State>((set, get) => ({
     const n = findNode(get().doc.roots, id)
     const att = { id: nanoid(), name: file.name, type: file.type, dataUrl: file.dataUrl, at: new Date().toISOString() }
     get().patch(id, { attachments: [...(n?.attachments ?? []), att] })
+    get().logActivity(id, `Attached “${file.name}”`)
   },
   removeAttachment(id, attId) {
     const n = findNode(get().doc.roots, id)

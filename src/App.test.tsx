@@ -12,6 +12,6 @@ test('renders the app shell once the store is ready', async () => {
     render(<App />)
   })
 
-  expect(screen.getByText('Manage')).toBeInTheDocument()
+  expect(screen.getByText('WorkBase')).toBeInTheDocument()
   expect(screen.getByTestId('projects-home')).toBeInTheDocument()
 })

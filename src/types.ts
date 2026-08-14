@@ -23,6 +23,12 @@ export interface Comment {
   at: string
 }
 
+export interface Activity {
+  id: string
+  text: string
+  at: string
+}
+
 export interface Attachment {
   id: string
   name: string
@@ -49,9 +55,11 @@ export interface Node {
   tags?: Tag[]
   notes?: string
   comments?: Comment[]
+  activities?: Activity[]
   pos?: { x: number; y: number }
   collapsed?: boolean
   view?: 'board' | 'kanban' | 'flow'
+  flowOrientation?: 'h' | 'v'
   createdAt: string
   updatedAt: string
 }

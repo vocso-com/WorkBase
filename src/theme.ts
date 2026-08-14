@@ -92,10 +92,29 @@ export const PROJECT_ICONS = ['ti-cloud', 'ti-building-store', 'ti-users', 'ti-b
 
 // Icon/logo choices offered in the detail modal.
 export const ICON_CHOICES = [
-  'ti-folder', 'ti-cloud', 'ti-rocket', 'ti-building-store', 'ti-users', 'ti-broadcast',
-  'ti-briefcase', 'ti-bulb', 'ti-flame', 'ti-device-mobile', 'ti-code', 'ti-palette',
-  'ti-chart-bar', 'ti-target', 'ti-star', 'ti-heart', 'ti-bolt', 'ti-world',
-  'ti-book', 'ti-calendar', 'ti-settings', 'ti-shopping-cart', 'ti-message', 'ti-camera',
-  'ti-music', 'ti-plane', 'ti-leaf', 'ti-flask', 'ti-trophy', 'ti-map-2',
-  'ti-stack-2', 'ti-checklist', 'ti-git-branch', 'ti-server', 'ti-lock', 'ti-coin',
+  // General / work
+  'ti-folder', 'ti-folder-open', 'ti-stack-2', 'ti-box', 'ti-package', 'ti-archive',
+  'ti-briefcase', 'ti-building', 'ti-building-store', 'ti-building-bank', 'ti-building-skyscraper', 'ti-home',
+  'ti-users', 'ti-user', 'ti-user-circle', 'ti-affiliate', 'ti-presentation', 'ti-school',
+  // Product / dev
+  'ti-rocket', 'ti-code', 'ti-terminal', 'ti-api', 'ti-git-branch', 'ti-server',
+  'ti-cpu', 'ti-device-mobile', 'ti-device-laptop', 'ti-device-desktop', 'ti-cloud', 'ti-broadcast',
+  'ti-bug', 'ti-tools', 'ti-hammer', 'ti-shield', 'ti-shield-check', 'ti-lock',
+  // Data / docs
+  'ti-chart-bar', 'ti-chart-pie', 'ti-chart-line', 'ti-target', 'ti-clipboard', 'ti-checklist',
+  'ti-notebook', 'ti-note', 'ti-file-text', 'ti-book', 'ti-key', 'ti-tag',
+  // Marketing / creative
+  'ti-bulb', 'ti-flame', 'ti-palette', 'ti-brush', 'ti-paint', 'ti-wand',
+  'ti-sparkles', 'ti-bolt', 'ti-star', 'ti-heart', 'ti-bookmark', 'ti-flag',
+  'ti-camera', 'ti-photo', 'ti-video', 'ti-movie', 'ti-microphone', 'ti-headphones',
+  'ti-music', 'ti-message', 'ti-mail', 'ti-phone', 'ti-world', 'ti-compass',
+  // Money / commerce
+  'ti-shopping-cart', 'ti-wallet', 'ti-credit-card', 'ti-cash', 'ti-coin', 'ti-diamond',
+  'ti-gift', 'ti-crown', 'ti-medal', 'ti-award', 'ti-trophy', 'ti-puzzle',
+  // Ops / life / places
+  'ti-calendar', 'ti-settings', 'ti-map-2', 'ti-map-pin', 'ti-pin', 'ti-anchor',
+  'ti-car', 'ti-truck', 'ti-bike', 'ti-ship', 'ti-plane', 'ti-run',
+  'ti-leaf', 'ti-tree', 'ti-plant-2', 'ti-droplet', 'ti-sun', 'ti-moon',
+  'ti-coffee', 'ti-flask', 'ti-atom', 'ti-microscope', 'ti-dna', 'ti-heartbeat',
+  'ti-stethoscope', 'ti-pill', 'ti-barbell', 'ti-ball-football', 'ti-ghost', 'ti-3d-cube-sphere',
 ]

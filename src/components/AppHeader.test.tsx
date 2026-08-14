@@ -16,7 +16,7 @@ function headerFor(path: string[]) {
 
 test('shows the wordmark at home and no breadcrumb', () => {
   render(headerFor([]))
-  expect(screen.getByText('Manage')).toBeInTheDocument()
+  expect(screen.getByText('WorkBase')).toBeInTheDocument()
   expect(screen.queryByText('Projects')).not.toBeInTheDocument()
 })
 

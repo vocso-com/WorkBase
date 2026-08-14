@@ -5,6 +5,68 @@ import { projectPrefix, nextShortId } from './shortid'
 const tag = (name: string, color: ColorKey): Tag => ({ name, color })
 
 /**
+ * Reusable checklist templates — a named set of items you can drop into any
+ * card's checklist. Purpose-built for common processes, not just software.
+ */
+export interface ChecklistTemplate {
+  id: string
+  name: string
+  icon: string
+  items: string[]
+}
+
+export const CHECKLIST_TEMPLATES: ChecklistTemplate[] = [
+  {
+    id: 'cl-interview',
+    name: 'Interview process',
+    icon: 'ti-user-search',
+    items: ['Resume screen', 'Phone / intro screen', 'Technical / skills round', 'Team & culture fit', 'Reference check', 'Offer & negotiation'],
+  },
+  {
+    id: 'cl-onboarding',
+    name: 'New-hire onboarding',
+    icon: 'ti-user-plus',
+    items: ['Send welcome email', 'Create accounts & access', 'Hardware & workspace ready', 'Assign buddy / mentor', 'Set 30 / 60 / 90-day goals', 'Schedule intro meetings'],
+  },
+  {
+    id: 'cl-dod',
+    name: 'Definition of done',
+    icon: 'ti-circle-check',
+    items: ['Code complete', 'Tests written & passing', 'Peer reviewed', 'Docs updated', 'QA verified', 'Deployed to production'],
+  },
+  {
+    id: 'cl-bug',
+    name: 'Bug triage',
+    icon: 'ti-bug',
+    items: ['Reproduce the issue', 'Assess severity & priority', 'Assign an owner', 'Implement the fix', 'Add a regression test', 'Verify & close'],
+  },
+  {
+    id: 'cl-content',
+    name: 'Content publish',
+    icon: 'ti-pencil',
+    items: ['Draft written', 'Edited & proofread', 'SEO title & metadata', 'Images & assets added', 'Reviewed & approved', 'Scheduled / published'],
+  },
+  {
+    id: 'cl-event',
+    name: 'Event planning',
+    icon: 'ti-calendar-event',
+    items: ['Set date & venue', 'Budget approved', 'Invites sent', 'Vendors booked', 'Run-of-show ready', 'Post-event follow-up'],
+  },
+  {
+    id: 'cl-sales',
+    name: 'Sales deal',
+    icon: 'ti-businessplan',
+    items: ['Discovery call done', 'Needs documented', 'Demo delivered', 'Proposal sent', 'Negotiation', 'Closed & handoff'],
+  },
+  {
+    id: 'cl-launch',
+    name: 'Launch readiness',
+    icon: 'ti-rocket',
+    items: ['Feature complete', 'Marketing assets ready', 'Support & docs prepared', 'Analytics & tracking live', 'Rollback plan', 'Go / no-go sign-off'],
+  },
+]
+
+/**
  * Curated templates shipped with the app. Each seeds a project with modules and
  * starter tasks. `id` is stable so it can be referenced in the gallery.
  */

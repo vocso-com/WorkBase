@@ -47,7 +47,7 @@ export function AppHeader({
           ) : (
             <span className="brand-ic"><Icon name="ti-checkup-list" /></span>
           )}
-          {crumbs.length === 0 ? <span className="brand-name">{profile?.orgName || 'Manage'}</span> : null}
+          {crumbs.length === 0 ? <span className="brand-name">{profile?.orgName || 'WorkBase'}</span> : null}
         </div>
 
         {current ? (

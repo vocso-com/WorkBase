@@ -69,7 +69,7 @@ export function AvatarMenu({ onExport, onImport }: { onExport: () => void; onImp
           </div>
           <div className="avatar-menu-item" onClick={() => setOpen(false)}
             style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 8px', borderRadius: 8, fontSize: 13.5, color: 'var(--ink)', cursor: 'pointer' }}>
-            <Icon name="ti-info-circle" style={{ fontSize: 17, color: 'var(--muted)' }} /> About Manage
+            <Icon name="ti-info-circle" style={{ fontSize: 17, color: 'var(--muted)' }} /> About WorkBase
           </div>
         </div>
       )}

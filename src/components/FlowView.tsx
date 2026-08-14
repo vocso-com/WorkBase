@@ -32,7 +32,9 @@ function descendantsOf(n: Node): Set<string> {
 
 export function FlowView({ node }: { node: Node }) {
   const stages = useStore(s => s.doc.stages)
-  const [orient, setOrient] = useState<'h' | 'v'>('h')
+  const [orient, setOrient] = useState<'h' | 'v'>(node.flowOrientation ?? 'h')
+  // Restore the remembered orientation when switching to a different project.
+  useEffect(() => { setOrient(node.flowOrientation ?? 'h') }, [node.id, node.flowOrientation])
   const layout = useMemo(() => layoutTree(node, expandPred, orient), [node, orient])
   const byId = useMemo(() => new Map(layout.nodes.map(n => [n.id, n])), [layout])
   const accent = hex(node.color)
@@ -62,15 +64,42 @@ export function FlowView({ node }: { node: Node }) {
 
   const fitRef = useRef(fit)
   fitRef.current = fit
+
+  // Center a node and its visible sub-nodes in the viewport.
+  const focusSubtree = useCallback((id: string) => {
+    const vp = vpRef.current
+    if (!vp) return
+    const target = byId.get(id)
+    if (!target) return
+    const subtree = descendantsOf(target.node)
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+    for (const fnode of layout.nodes) {
+      if (!subtree.has(fnode.id)) continue
+      const p = fnode.node.pos ?? { x: fnode.x, y: fnode.y }
+      minX = Math.min(minX, p.x); minY = Math.min(minY, p.y)
+      maxX = Math.max(maxX, p.x + fnode.w); maxY = Math.max(maxY, p.y + fnode.h)
+    }
+    if (!isFinite(minX)) return
+    const bw = maxX - minX, bh = maxY - minY, pad = 64
+    const k = clamp(Math.min((vp.clientWidth - pad * 2) / bw, (vp.clientHeight - pad * 2) / bh), MIN_K, MAX_K)
+    setTf({ k, x: (vp.clientWidth - bw * k) / 2 - minX * k, y: (vp.clientHeight - bh * k) / 2 - minY * k })
+  }, [byId, layout])
+  const focusRef = useRef(focusSubtree)
+  focusRef.current = focusSubtree
+
   // When set, re-frame after the next layout recompute (used by bulk actions so
   // the canvas is always well-framed; single node toggles keep the user's view).
   const refit = useRef(false)
+  // When set, focus this node's subtree after the next layout recompute (used so
+  // expanding-on-click reveals children before we frame them).
+  const focusPending = useRef<string | null>(null)
 
   // Frame on switching to a different project/module.
   useLayoutEffect(() => { fitRef.current() }, [node.id])
   // Re-frame after collapse/expand-all, orientation change, or layout reset.
   useEffect(() => {
     if (refit.current) { refit.current = false; fitRef.current() }
+    if (focusPending.current) { const id = focusPending.current; focusPending.current = null; focusRef.current(id) }
   }, [layout])
 
   useEffect(() => {
@@ -159,7 +188,13 @@ export function FlowView({ node }: { node: Node }) {
         useStore.getState().setPos(fn.id, { x: live.x, y: live.y })
       }
     } else {
-      useDetail.getState().open(fn.id)
+      // Single click: center this node and its sub-nodes. If it's collapsed,
+      // expand one level first, then frame the revealed children.
+      if (fn.hasChildren && !fn.expanded) {
+        useStore.getState().setCollapsed(fn.id, false)
+        focusPending.current = fn.id
+      }
+      focusRef.current(fn.id)
     }
     setLive(null)
   }
@@ -183,7 +218,12 @@ export function FlowView({ node }: { node: Node }) {
     })
   }
   const resetLayout = () => { refit.current = true; useStore.getState().clearPositions(node.id) }
-  const toggleOrient = () => { refit.current = true; setOrient(o => (o === 'h' ? 'v' : 'h')) }
+  const toggleOrient = () => {
+    const next = orient === 'h' ? 'v' : 'h'
+    refit.current = true
+    setOrient(next)
+    useStore.getState().patch(node.id, { flowOrientation: next })
+  }
   const collapseAll = () => { refit.current = true; useStore.getState().setCollapsedAll(node.id, true) }
   const expandAll = () => { refit.current = true; useStore.getState().setCollapsedAll(node.id, false) }
 
@@ -222,6 +262,7 @@ export function FlowView({ node }: { node: Node }) {
               onPointerDown={e => onNodeDown(e, fn)}
               onPointerMove={onNodeMove}
               onPointerUp={() => onNodeUp(fn)}
+              onOpen={() => useDetail.getState().open(fn.id)}
               onToggle={() => toggle(fn)}
               onAdd={() => addChild(fn)}
               onDelete={() => del(fn)}
@@ -250,7 +291,7 @@ export function FlowView({ node }: { node: Node }) {
         <span className="flow-sep" />
         <button onClick={fit} aria-label="Fit to screen"><Icon name="ti-maximize" /></button>
       </div>
-      <div className="flow-hint"><Icon name="ti-click" /> Click to open · drag to arrange · double-click to add</div>
+      <div className="flow-hint"><Icon name="ti-click" /> Click to focus · double-click to open · drag to arrange</div>
     </div>
   )
 }
@@ -272,12 +313,13 @@ interface CardProps {
   onPointerDown: (e: React.PointerEvent) => void
   onPointerMove: (e: React.PointerEvent) => void
   onPointerUp: () => void
+  onOpen: () => void
   onToggle: () => void
   onAdd: () => void
   onDelete: () => void
 }
 
-function FlowNodeCard({ fn, stages, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onToggle, onAdd, onDelete }: CardProps) {
+function FlowNodeCard({ fn, stages, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onOpen, onToggle, onAdd, onDelete }: CardProps) {
   const { node, depth } = fn
   const drop = isDropTarget ? ' fn-droptarget' : ''
   const sm = stageMeta(stages, node.status)
@@ -306,7 +348,7 @@ function FlowNodeCard({ fn, stages, pos, dragging, isDropTarget, onPointerDown, 
     </button>
   ) : null
 
-  const handlers = { onPointerDown, onPointerMove, onPointerUp }
+  const handlers = { onPointerDown, onPointerMove, onPointerUp, onDoubleClick: (e: React.MouseEvent) => { e.stopPropagation(); onOpen() } }
 
   if (depth === 0) {
     return (

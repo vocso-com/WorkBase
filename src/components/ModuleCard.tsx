@@ -11,6 +11,20 @@ import { Icon } from './ui/Icon'
 import { Checkbox } from './ui/Checkbox'
 import { Tag } from './ui/Tag'
 import { DueChip } from './DueChip'
+import { dueInfo } from '../lib/due'
+
+function hasOverdueDescendant(n: Node): boolean {
+  if (n.status !== 'done' && dueInfo(n.dueDate)?.tone === 'overdue') return true
+  return n.children.some(hasOverdueDescendant)
+}
+
+// One consistent progress color, switched by health: complete → green,
+// delayed (any overdue item) → red, otherwise on-track → blue.
+function progressColor(node: Node, pc: number): string {
+  if (pc >= 100) return hex('teal')
+  if (hasOverdueDescendant(node)) return hex('red')
+  return hex('blue')
+}
 
 function isChildDone(child: Node): boolean {
   if (child.children.length > 0) return progressOf(child) === 100
@@ -79,7 +93,7 @@ export function ModuleCard({ node, onOpen }: { node: Node; onOpen: () => void })
           <span style={{ fontSize: 11.5, color: 'var(--faint)' }}>{done}/{total}</span>
         </div>
         <div className="bar2">
-          <span style={{ width: `${pc}%`, background: hex(color) }} />
+          <span style={{ width: `${pc}%`, background: progressColor(node, pc) }} />
         </div>
         {node.children.map(child => {
           const isLeaf = child.children.length === 0
@@ -95,21 +109,25 @@ export function ModuleCard({ node, onOpen }: { node: Node; onOpen: () => void })
                 title="Open details"
               >
                 <span className="check-sub-ic"><Icon name="ti-list-tree" /></span>
-                <span className="grow check-parent-title">{child.title}</span>
-                <DueChip dueDate={child.dueDate} />
-                {(child.tags ?? []).slice(0, 1).map(t => <Tag key={t.name} tag={t} />)}
-                <span className="check-sub-count">{subDone}/{subs.length}</span>
-                <button
-                  className="check-drill-btn"
-                  onClick={e => { e.stopPropagation(); useNav.getState().set(pathTo(useStore.getState().doc.roots, child.id)) }}
-                  aria-label="Open sub-items"
-                  title="Open sub-items"
-                ><Icon name="ti-chevron-right" /></button>
+                <span className="check-parent-title">{child.title}</span>
+                <div className="check-parent-meta">
+                  <DueChip dueDate={child.dueDate} />
+                  {(child.tags ?? []).slice(0, 1).map(t => <Tag key={t.name} tag={t} />)}
+                  <span className="check-sub-count">{subDone}/{subs.length}</span>
+                  <button
+                    className="check-drill-btn"
+                    onClick={e => { e.stopPropagation(); useNav.getState().set(pathTo(useStore.getState().doc.roots, child.id)) }}
+                    aria-label="Open sub-items"
+                    title="Open sub-items"
+                  ><Icon name="ti-chevron-right" /></button>
+                </div>
               </div>
             )
           }
+          const overdue = child.status !== 'done' && dueInfo(child.dueDate)?.tone === 'overdue'
+          const state = child.status === 'done' ? 'done' : overdue ? 'overdue' : ''
           return (
-            <div key={child.id} data-testid={`child-row-${child.id}`} className={`check check-item ${child.status === 'done' ? 'done' : ''}`} onClick={e => e.stopPropagation()}>
+            <div key={child.id} data-testid={`child-row-${child.id}`} className={`check check-item ${state}`} onClick={e => e.stopPropagation()}>
               <Checkbox status={child.status} color={color} onToggle={() => useStore.getState().toggleDone(child.id)} />
               <span
                 className="grow"
