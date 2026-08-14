@@ -439,7 +439,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .fn-toggle:hover{color:var(--ink);border-color:color-mix(in srgb,var(--ink) 20%,var(--line));}
 .fn-toggle:not(.open){background:color-mix(in srgb,var(--board-accent,var(--blue)) 14%,var(--card));color:var(--ink);border-color:color-mix(in srgb,var(--board-accent,var(--blue)) 30%,var(--line));}
 .fn-toggle-n{font-variant-numeric:tabular-nums;line-height:1;}
-.fn-title{font-weight:600;letter-spacing:-.01em;line-height:1.2;overflow:hidden;text-overflow:ellipsis;}
+.fn-title{font-weight:600;letter-spacing:-.01em;line-height:1.25;overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;}
 .fn-root{background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-flat);
   display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:12px;padding-right:14px;transition:box-shadow .15s, transform .15s;}
 .fn-root:hover{box-shadow:var(--shadow-flat-hover);transform:translateY(-2px);}
@@ -709,6 +710,30 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .cm-checks .check-item.done .grow{color:var(--faint);}
 .check-item .cm-check-del{opacity:0;flex-shrink:0;}
 .check-item:hover .cm-check-del{opacity:1;}
+
+/* Checklist as an in-place tree: parents expand, rows drag to nest/promote */
+.cm-tree{display:flex;flex-direction:column;gap:6px;}
+.cm-trow{display:flex;align-items:center;gap:8px;min-height:40px;padding:8px 10px;border-radius:9px;
+  background:var(--panel);border:1px solid var(--line);cursor:grab;
+  transition:border-color .12s,box-shadow .12s,background .12s,opacity .12s;}
+.cm-trow:hover{border-color:color-mix(in srgb,var(--ink) 12%,var(--line));}
+.cm-trow.done{box-shadow:inset 3px 0 0 var(--teal);}
+.cm-trow.done .cm-trow-title{color:var(--faint);text-decoration:line-through;}
+.cm-trow.overdue{border-color:color-mix(in srgb,var(--red) 30%,var(--line));background:color-mix(in srgb,var(--red) 6%,var(--panel));box-shadow:inset 3px 0 0 var(--red);}
+.cm-trow.dragging{opacity:.4;}
+.cm-trow.drop-into{border-color:var(--cm-accent,var(--blue));box-shadow:inset 0 0 0 1.5px var(--cm-accent,var(--blue));}
+.cm-tree-rail{width:20px;flex-shrink:0;align-self:stretch;position:relative;}
+.cm-tree-rail::before{content:"";position:absolute;left:9px;top:-9px;bottom:-9px;width:1.5px;background:color-mix(in srgb,var(--ink) 12%,var(--line));}
+.cm-tree-caret{flex-shrink:0;width:24px;height:24px;border:none;background:none;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;border-radius:6px;transition:background .12s,color .12s;}
+.cm-tree-caret:hover{background:var(--chip);color:var(--ink);}
+.cm-trow-title{flex:1;min-width:0;font-size:13.5px;color:var(--ink);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cm-trow-grip{flex-shrink:0;color:var(--faint);font-size:15px;display:flex;opacity:0;cursor:grab;transition:opacity .12s;}
+.cm-trow:hover .cm-trow-grip{opacity:.6;}
+.cm-trow .cm-check-del{opacity:0;flex-shrink:0;}
+.cm-trow:hover .cm-check-del{opacity:1;}
+.cm-tree-root-drop{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;padding:11px;
+  font-size:12.5px;font-weight:600;color:var(--muted);border:1.5px dashed var(--edge);border-radius:10px;transition:border-color .12s,background .12s,color .12s;}
+.cm-tree-root-drop.over{border-color:var(--cm-accent,var(--blue));background:color-mix(in srgb,var(--cm-accent,var(--blue)) 8%,transparent);color:var(--ink);}
 .cm-picker{display:flex;align-items:center;gap:9px;width:100%;box-sizing:border-box;font:inherit;font-size:13px;color:var(--ink);
   background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:7px 10px;cursor:pointer;transition:border-color .12s;}
 .cm-picker:hover{border-color:color-mix(in srgb,var(--ink) 14%,var(--line));}

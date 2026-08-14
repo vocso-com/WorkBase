@@ -7,13 +7,13 @@ import { useDetail } from '../hooks/useDetail'
 import { useNav } from '../hooks/useNav'
 import { findNode, findParent, leaves, pathTo } from '../lib/tree'
 import { CHECKLIST_TEMPLATES } from '../lib/templates'
-import { progressOf, statusCounts } from '../lib/progress'
-import { dueInfo } from '../lib/due'
+import { progressOf } from '../lib/progress'
 import { linkifyText } from '../lib/linkify'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { uploadFile } from '../lib/uploads'
 import { askConfirm } from '../hooks/useConfirm'
 import { RichText } from './RichText'
+import { ChecklistTree } from './ChecklistTree'
 import { Icon } from './ui/Icon'
 import { Tag } from './ui/Tag'
 import { Checkbox } from './ui/Checkbox'
@@ -588,45 +588,7 @@ export function CardModal() {
                 <div className="cm-checkbar"><span style={{ width: `${progressOf(node)}%`, background: hex(color) }} /></div>
               ) : null}
               <div className="cm-checks">
-                {children.map(c => {
-                  const cc = c.labelColor ?? c.color ?? color
-                  const del = (
-                    <button className="cm-check-del" onClick={() => useStore.getState().remove(c.id)} aria-label="Delete item"><Icon name="ti-trash" /></button>
-                  )
-                  if (c.children.length > 0) {
-                    const total = leaves(c).filter(l => l.id !== c.id).length
-                    const done = statusCounts(c).done
-                    return (
-                      <div key={c.id} className="check check-item check-parent" onClick={() => useDetail.getState().open(c.id)} title="Open details">
-                        <span className="check-sub-ic"><Icon name="ti-list-tree" /></span>
-                        <span className="grow check-parent-title">{c.title}</span>
-                        {c.priority ? (
-                          <span className="tprio" style={{ background: tagBg(PRIORITY_META[c.priority].color), color: tagFg(PRIORITY_META[c.priority].color) }}>{PRIORITY_META[c.priority].label}</span>
-                        ) : null}
-                        <span className="check-sub-count">{done}/{total}</span>
-                        <button
-                          className="check-drill-btn"
-                          onClick={e => { e.stopPropagation(); useNav.getState().set(pathTo(roots, c.id)); close() }}
-                          aria-label="Open sub-items"
-                          title="Open sub-items"
-                        ><Icon name="ti-chevron-right" /></button>
-                        {del}
-                      </div>
-                    )
-                  }
-                  const overdue = c.status !== 'done' && dueInfo(c.dueDate)?.tone === 'overdue'
-                  return (
-                    <div key={c.id} className={`check check-item${c.status === 'done' ? ' done' : overdue ? ' overdue' : ''}`}>
-                      <Checkbox status={c.status} color={cc} onToggle={() => useStore.getState().toggleDone(c.id)} />
-                      <span className="grow" style={{ cursor: 'pointer' }} onClick={() => useDetail.getState().open(c.id)}>{c.title}</span>
-                      {c.priority ? (
-                        <span className="tprio" style={{ background: tagBg(PRIORITY_META[c.priority].color), color: tagFg(PRIORITY_META[c.priority].color) }}>{PRIORITY_META[c.priority].label}</span>
-                      ) : null}
-                      {(c.tags ?? []).map(t => <Tag key={t.name} tag={t} />)}
-                      {del}
-                    </div>
-                  )
-                })}
+                <ChecklistTree root={node} color={color} />
               </div>
               <div className="cm-add">
                 <Icon name="ti-plus" />
