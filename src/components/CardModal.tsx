@@ -14,6 +14,7 @@ import { uploadFile } from '../lib/uploads'
 import { askConfirm } from '../hooks/useConfirm'
 import { RichText } from './RichText'
 import { ChecklistTree } from './ChecklistTree'
+import { ProgressBar } from './ui/ProgressBar'
 import { Icon } from './ui/Icon'
 import { Tag } from './ui/Tag'
 import { Checkbox } from './ui/Checkbox'
@@ -587,7 +588,7 @@ export function CardModal({ inlineNode }: { inlineNode?: Node } = {}) {
                 </div>
               </div>
               {children.length > 0 ? (
-                <div className="cm-checkbar"><span style={{ width: `${progressOf(node)}%`, background: hex(color) }} /></div>
+                <ProgressBar node={node} className="cm-checkbar" />
               ) : null}
               <div className="cm-checks">
                 <ChecklistTree root={node} color={color} />

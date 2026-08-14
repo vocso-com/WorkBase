@@ -5,25 +5,12 @@ import { useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { hex } from '../theme'
 import { progressOf } from '../lib/progress'
-import { dueInfo } from '../lib/due'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { useStore } from '../store/useStore'
 import { useDetail } from '../hooks/useDetail'
 import { Icon } from './ui/Icon'
+import { ProgressBar } from './ui/ProgressBar'
 import { BoardItemRow } from './BoardItemRow'
-
-function hasOverdueDescendant(n: Node): boolean {
-  if (n.status !== 'done' && dueInfo(n.dueDate)?.tone === 'overdue') return true
-  return n.children.some(hasOverdueDescendant)
-}
-
-// One consistent progress color, switched by health: complete → green,
-// delayed (any overdue item) → red, otherwise on-track → blue.
-function progressColor(node: Node, pc: number): string {
-  if (pc >= 100) return hex('teal')
-  if (hasOverdueDescendant(node)) return hex('red')
-  return hex('blue')
-}
 
 function isChildDone(child: Node): boolean {
   return child.children.length > 0 ? progressOf(child) === 100 : child.status === 'done'
@@ -64,7 +51,6 @@ export function ModuleCard({ node, onOpen }: { node: Node; onOpen: () => void })
   const color = node.color ?? 'gray'
   const total = node.children.length
   const done = node.children.filter(isChildDone).length
-  const pc = progressOf(node)
   const canDrillIn = node.children.length > 0
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: node.id, data: { type: 'module' } })
@@ -97,9 +83,7 @@ export function ModuleCard({ node, onOpen }: { node: Node; onOpen: () => void })
           </div>
           <span style={{ fontSize: 11.5, color: 'var(--faint)' }}>{done}/{total}</span>
         </div>
-        <div className="bar2">
-          <span style={{ width: `${pc}%`, background: progressColor(node, pc) }} />
-        </div>
+        <ProgressBar node={node} className="bar2" />
         <SortableContext items={node.children.map(c => c.id)} strategy={verticalListSortingStrategy}>
           {node.children.map(child => (
             <BoardItemRow key={child.id} child={child} color={color} parentId={node.id} />

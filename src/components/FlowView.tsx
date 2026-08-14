@@ -8,6 +8,7 @@ import { tagBg, tagFg } from '../lib/colorMode'
 import { useStore } from '../store/useStore'
 import { useDetail } from '../hooks/useDetail'
 import { askConfirm } from '../hooks/useConfirm'
+import { ProgressBar } from './ui/ProgressBar'
 import { Icon } from './ui/Icon'
 import { ProgressRing } from './ui/ProgressRing'
 import { DueChip } from './DueChip'
@@ -377,7 +378,7 @@ function FlowNodeCard({ fn, stages, pos, dragging, isDropTarget, onPointerDown, 
           <div className="fn-title">{node.title}</div>
           <span className="fn-count">{done}/{total}</span>
         </div>
-        <div className="fn-bar"><span style={{ width: `${progressOf(node)}%`, background: hex(color) }} /></div>
+        <ProgressBar node={node} className="fn-bar" />
         {actions}
         {toggle}
       </div>
