@@ -1,14 +1,8 @@
 import { useEffect, useState } from 'react'
 import type { Node } from '../types'
-import { PRIORITY_META, stageMeta } from '../theme'
-import { useStore } from '../store/useStore'
-import { useDetail } from '../hooks/useDetail'
 import { findNode } from '../lib/tree'
-import { tagBg, tagFg } from '../lib/colorMode'
-import { RichText } from './RichText'
-import { ChecklistTree } from './ChecklistTree'
-import { Checkbox } from './ui/Checkbox'
 import { Icon } from './ui/Icon'
+import { CardModal } from './CardModal'
 
 interface Row { node: Node; depth: number }
 
@@ -19,17 +13,16 @@ function flatten(items: Node[], depth: number, expanded: Set<string>, acc: Row[]
   }
 }
 
-// Obsidian-style: a collapsible tree of the whole project on the left, the
-// selected item open in a reading/editing pane on the right.
+// Obsidian-style: a collapsible tree of the whole project on the left, and the
+// selected item's full detail (the card modal, reused inline) on the right.
 export function ColumnsView({ node }: { node: Node }) {
   const [sel, setSel] = useState<string | null>(null)
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
-  // Reset navigation and open the first level when the project changes.
   useEffect(() => {
     setSel(null)
     setExpanded(new Set(node.children.map(c => c.id)))
-  }, [node.id, node.children])
+  }, [node.id])
 
   const rows: Row[] = []
   flatten(node.children, 0, expanded, rows)
@@ -69,43 +62,9 @@ export function ColumnsView({ node }: { node: Node }) {
           })}
         </div>
       </aside>
-      <div className="ol-main"><OutlinePane node={pane} /></div>
-    </div>
-  )
-}
-
-function OutlinePane({ node }: { node: Node }) {
-  const customStages = useStore(s => s.doc.stages)
-  const color = node.labelColor ?? node.color ?? 'gray'
-  const sm = stageMeta(customStages, node.status)
-  const isContainer = node.children.length > 0
-  return (
-    <div className="ol-pane">
-      <div className="ol-pane-head">
-        {isContainer ? (
-          <span className="ol-pane-ic" style={{ background: tagBg(color), color: tagFg(color) }}><Icon name={node.icon ?? 'ti-stack-2'} /></span>
-        ) : (
-          <Checkbox status={node.status} color={color} onToggle={() => useStore.getState().toggleDone(node.id)} />
-        )}
-        <h2 className="ol-pane-title">{node.title}</h2>
-        <button className="ol-pane-open" onClick={() => useDetail.getState().open(node.id)}><Icon name="ti-arrow-up-right" /> Details</button>
+      <div className="ol-main">
+        <CardModal inlineNode={pane} key={pane.id} />
       </div>
-      <div className="ol-pane-chips">
-        <span className="ol-chip" style={{ background: tagBg(sm.color), color: tagFg(sm.color) }}><span className="sdot" style={{ background: sm.dot }} /> {sm.label}</span>
-        {node.priority ? <span className="tprio" style={{ background: tagBg(PRIORITY_META[node.priority].color), color: tagFg(PRIORITY_META[node.priority].color) }}>{PRIORITY_META[node.priority].label}</span> : null}
-      </div>
-      <RichText
-        key={node.id}
-        initial={node.description}
-        onChange={html => useStore.getState().patch(node.id, { description: html })}
-        placeholder="Write here…"
-      />
-      {isContainer ? (
-        <>
-          <div className="ol-sec-h">Sub-items</div>
-          <ChecklistTree root={node} color={color} />
-        </>
-      ) : null}
     </div>
   )
 }

@@ -60,9 +60,9 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
   background-image:radial-gradient(color-mix(in srgb,var(--proj,var(--blue)) 22%,var(--dot)) 1.3px,transparent 1.3px);
   background-size:22px 22px;}
 
-/* Outline view (Obsidian-style): collapsible project tree + reading pane */
-.outline{display:flex;align-items:stretch;height:calc(100vh - 158px);min-height:360px;overflow:hidden;
-  background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-flat);}
+/* Outline view (Obsidian-style): full-bleed, collapsible tree + the card detail
+   reused inline on the right. Negative margins cancel the page padding. */
+.outline{display:flex;align-items:stretch;margin:-16px -32px -24px;height:calc(100vh - 100px);overflow:hidden;background:var(--card);}
 .ol-tree{width:288px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid var(--line);background:var(--panel);}
 .ol-tree-head{display:flex;align-items:center;gap:8px;padding:13px 14px;flex-shrink:0;border-bottom:1px solid var(--line);
   font-size:13px;font-weight:700;color:var(--ink);}
@@ -80,18 +80,10 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .ol-row-ic{flex-shrink:0;display:flex;font-size:15px;color:var(--muted);}
 .ol-row.active .ol-row-ic{color:color-mix(in srgb,var(--proj,var(--blue)) 70%,var(--ink));}
 .ol-row-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.ol-main{flex:1;min-width:0;overflow-y:auto;}
-.ol-pane{padding:24px 30px 40px;display:flex;flex-direction:column;gap:16px;max-width:780px;}
-.ol-pane-head{display:flex;align-items:center;gap:12px;}
-.ol-pane-ic{width:34px;height:34px;flex-shrink:0;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;}
-.ol-pane-title{flex:1;min-width:0;font-size:22px;font-weight:800;letter-spacing:-.02em;line-height:1.25;color:var(--ink);margin:0;overflow-wrap:break-word;}
-.ol-pane-open{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:12.5px;font-weight:600;
-  color:var(--ink);background:var(--btn);border:none;border-radius:8px;padding:7px 11px;cursor:pointer;transition:background .12s;}
-.ol-pane-open:hover{background:var(--btn-h);}
-.ol-pane-chips{display:flex;flex-wrap:wrap;gap:8px;}
-.ol-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 11px;border-radius:20px;}
-.ol-chip .sdot{width:7px;height:7px;border-radius:50%;}
-.ol-sec-h{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);margin:6px 0 -6px;}
+.ol-main{flex:1;min-width:0;overflow:hidden;display:flex;}
+/* The card detail reused inline: fill the pane, drop the overlay chrome */
+.cm-inline{flex:1;min-width:0;height:100%;display:flex;}
+.cardmodal-inline{flex:1;min-width:0;width:100%;max-width:none;height:100%;max-height:none;border:none;border-radius:0;box-shadow:none;}
 
 .crumb{display:flex;align-items:center;gap:7px;padding:16px 28px 2px;font-size:13.5px;color:var(--muted);}
 .crumb b{color:var(--ink);font-weight:600;}

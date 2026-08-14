@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import type { ColorKey, Priority, Status } from '../types'
+import type { ColorKey, Node, Priority, Status } from '../types'
 import { COLORS, ICON_CHOICES, PRIORITY_META, hex, mergedStages, stageMeta } from '../theme'
 import { useStore } from '../store/useStore'
 import { useDetail } from '../hooks/useDetail'
@@ -35,7 +35,9 @@ function ago(iso: string): string {
   return new Date(iso).toLocaleDateString()
 }
 
-export function CardModal() {
+// Renders the full card detail. As the app's singleton overlay when driven by
+// useDetail.openId, or inline in the page (Outline view) when given `inlineNode`.
+export function CardModal({ inlineNode }: { inlineNode?: Node } = {}) {
   const openId = useDetail(s => s.openId)
   const roots = useStore(s => s.doc.roots)
   const tagPalette = useStore(s => s.doc.tagPalette)
@@ -43,7 +45,7 @@ export function CardModal() {
   const profile = useStore(s => s.doc.profile)
   const workspaces = useStore(s => s.doc.workspaces)
   const templates = useStore(s => s.doc.templates)
-  const node = openId ? findNode(roots, openId) : null
+  const node = inlineNode ?? (openId ? findNode(roots, openId) : null)
 
   const [item, setItem] = useState('')
   const [comment, setComment] = useState('')
@@ -99,7 +101,7 @@ export function CardModal() {
     return () => window.removeEventListener('keydown', onKey)
   }, [openId])
 
-  if (!openId || !node) return null
+  if (!node) return null
 
   const color = node.labelColor ?? node.color ?? 'gray'
   const sm = stageMeta(customStages, node.status)
@@ -278,8 +280,8 @@ export function CardModal() {
   ) : null
 
   return (
-    <div className="card-overlay" onClick={close}>
-      <div className="cardmodal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" style={{ ['--cm-accent' as string]: hex(color) }}>
+    <div className={inlineNode ? 'cm-inline' : 'card-overlay'} onClick={inlineNode ? undefined : close}>
+      <div className={`cardmodal${inlineNode ? ' cardmodal-inline' : ''}`} onClick={e => e.stopPropagation()} role={inlineNode ? undefined : 'dialog'} aria-modal={inlineNode ? undefined : true} style={{ ['--cm-accent' as string]: hex(color) }}>
         <div className="cm-accent" />
         {!isProject && node.image ? (
           <div className="cm-cover" style={{ backgroundImage: `url(${node.image})` }}>
@@ -348,7 +350,7 @@ export function CardModal() {
                 </>
               ) : null}
             </div>
-            <button className="cm-icon-btn" onClick={close} aria-label="Close"><Icon name="ti-x" /></button>
+            {!inlineNode ? <button className="cm-icon-btn" onClick={close} aria-label="Close"><Icon name="ti-x" /></button> : null}
           </div>
         </div>
 
