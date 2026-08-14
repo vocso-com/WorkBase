@@ -1,6 +1,6 @@
 import type { StoreDoc, Node, ColorKey, Status, Tag } from '../types'
 import { newNode } from './factory'
-import { DEFAULT_TAGS } from './serialize'
+import { DEFAULT_TAGS, defaultWorkspaces, DEFAULT_WORKSPACE_ID } from './serialize'
 import { projectPrefix, nextShortId } from './shortid'
 
 interface ItemSeed {
@@ -200,5 +200,5 @@ export function sampleDoc(): StoreDoc {
     }
   }
 
-  return { version: 1, roots, tagPalette: [...DEFAULT_TAGS], templates: [], stages: [] }
+  return { version: 1, roots, workspaces: defaultWorkspaces(), activeWorkspace: DEFAULT_WORKSPACE_ID, tagPalette: [...DEFAULT_TAGS], templates: [], stages: [] }
 }

@@ -8,10 +8,14 @@ import { Icon } from './ui/Icon'
 
 export function ProjectsHome() {
   const roots = useStore(s => s.doc.roots)
+  const activeWorkspace = useStore(s => s.doc.activeWorkspace)
+  const fallbackWs = useStore(s => s.doc.workspaces[0]?.id)
 
+  // Only projects in the active WorkBase (undefined workspace = the default one).
+  const mine = roots.filter(n => (n.workspace ?? fallbackWs) === activeWorkspace)
   const lanes = HOME_ORDER.map(status => ({
     status,
-    projects: roots.filter(n => n.status === status),
+    projects: mine.filter(n => n.status === status),
   })).filter(lane => lane.projects.length > 0 || lane.status === 'doing')
 
   return (

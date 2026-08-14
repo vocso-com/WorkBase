@@ -37,12 +37,21 @@ export interface Attachment {
   at: string
 }
 
+export interface Workspace {
+  id: string
+  name: string
+  icon?: string
+  color?: string
+}
+
 export interface Node {
   id: string
   shortId: string
   title: string
   status: Status
   children: Node[]
+  // Root-level only: which WorkBase this project belongs to (undefined = default).
+  workspace?: string
   // A palette key (ColorKey) or a raw hex string like "#8b5cf6".
   color?: string
   labelColor?: string
@@ -102,6 +111,10 @@ export interface Profile {
 export interface StoreDoc {
   version: 1
   roots: Node[]
+  // WorkBases (hubs). Projects belong to one via Node.workspace; templates,
+  // labels and stages stay shared across all of them.
+  workspaces: Workspace[]
+  activeWorkspace: string
   tagPalette: Tag[]
   templates: Template[]
   stages: Stage[]

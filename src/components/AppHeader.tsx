@@ -10,6 +10,7 @@ import { useDetail } from '../hooks/useDetail'
 import { useView, type ViewKind } from '../hooks/useView'
 import { useNewProject } from '../hooks/useNewProject'
 import { AvatarMenu } from './AvatarMenu'
+import { WorkspaceSwitcher } from './WorkspaceSwitcher'
 import { Icon } from './ui/Icon'
 
 const VIEWS: { key: ViewKind; label: string; icon: string }[] = [
@@ -41,18 +42,13 @@ export function AppHeader({
   return (
     <header className="phead">
       <div className="phead-nav">
-        <div className="brand" onClick={onHome} title="Home">
+        <div className="brand">
           {profile?.orgLogo ? (
-            <img className="brand-logo" src={profile.orgLogo} alt="" />
+            <img className="brand-logo" src={profile.orgLogo} alt="" onClick={onHome} title="Home" style={{ cursor: 'pointer' }} />
           ) : (
-            <span className="brand-ic"><Icon name="ti-checkup-list" /></span>
+            <span className="brand-ic" onClick={onHome} title="Home" style={{ cursor: 'pointer' }}><Icon name="ti-checkup-list" /></span>
           )}
-          {crumbs.length === 0 ? (
-            <span className="brand-text">
-              <span className="brand-name">{profile?.orgName || 'WorkBase'}</span>
-              {profile?.orgName ? <span className="brand-sub">WorkBase</span> : null}
-            </span>
-          ) : null}
+          {crumbs.length === 0 ? <WorkspaceSwitcher /> : null}
         </div>
 
         {current ? (

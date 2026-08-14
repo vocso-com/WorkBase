@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { nanoid } from 'nanoid'
 import type { StoreDoc, Node, Status, ColorKey, Template } from '../types'
 import { pickAdapter, type StorageAdapter } from '../lib/storage'
-import { emptyDocument } from '../lib/serialize'
+import { emptyDocument, DEFAULT_WORKSPACE_ID } from '../lib/serialize'
 import { newNode } from '../lib/factory'
 import { projectPrefix, nextShortId } from '../lib/shortid'
 import { addChild, updateNode, deleteNode, moveNode, reorderChildren, findNode, findParent } from '../lib/tree'
@@ -24,6 +24,10 @@ interface State {
   init: (adapter?: StorageAdapter) => Promise<void>
   addProject: (name: string) => string
   addProjectFromTemplate: (tpl: Template, name?: string) => string
+  addWorkspace: (name: string) => string
+  renameWorkspace: (id: string, name: string) => void
+  deleteWorkspace: (id: string) => void
+  setActiveWorkspace: (id: string) => void
   saveAsTemplate: (nodeId: string) => string | null
   deleteTemplate: (id: string) => void
   addChildNode: (parentId: string, title: string) => string
@@ -102,6 +106,7 @@ export const useStore = create<State>((set, get) => ({
     const icon = PROJECT_ICONS[roots.length % PROJECT_ICONS.length]
     const node = newNode(name, { color, icon, status: 'todo' })
     node.shortId = nextShortId(roots, projectPrefix(name))
+    node.workspace = get().doc.activeWorkspace
     set(s => ({ doc: { ...s.doc, roots: addChild(s.doc.roots, null, node) } }))
     schedulePersist(get)
     return node.id
@@ -109,9 +114,38 @@ export const useStore = create<State>((set, get) => ({
   addProjectFromTemplate(tpl, name) {
     const roots = get().doc.roots
     const root = instantiateTemplate(tpl, roots, name)
+    root.workspace = get().doc.activeWorkspace
     set(s => ({ doc: { ...s.doc, roots: [...s.doc.roots, root] } }))
     schedulePersist(get)
     return root.id
+  },
+  addWorkspace(name) {
+    const id = `ws-${nanoid(6)}`
+    const color = PALETTE[get().doc.workspaces.length % PALETTE.length]
+    set(s => ({ doc: { ...s.doc, workspaces: [...s.doc.workspaces, { id, name: name.trim() || 'New WorkBase', icon: 'ti-stack-2', color }], activeWorkspace: id } }))
+    schedulePersist(get)
+    return id
+  },
+  renameWorkspace(id, name) {
+    set(s => ({ doc: { ...s.doc, workspaces: s.doc.workspaces.map(w => (w.id === id ? { ...w, name: name.trim() || w.name } : w)) } }))
+    schedulePersist(get)
+  },
+  setActiveWorkspace(id) {
+    set(s => ({ doc: { ...s.doc, activeWorkspace: id } }))
+    schedulePersist(get)
+  },
+  deleteWorkspace(id) {
+    const ws = get().doc.workspaces
+    if (ws.length <= 1) return
+    const fallback = ws.find(w => w.id !== id)!.id
+    set(s => {
+      // Reassign this WorkBase's projects to the fallback — no data loss.
+      const roots = s.doc.roots.map(r => ((r.workspace ?? DEFAULT_WORKSPACE_ID) === id ? { ...r, workspace: fallback } : r))
+      const workspaces = s.doc.workspaces.filter(w => w.id !== id)
+      const activeWorkspace = s.doc.activeWorkspace === id ? fallback : s.doc.activeWorkspace
+      return { doc: { ...s.doc, roots, workspaces, activeWorkspace } }
+    })
+    schedulePersist(get)
   },
   saveAsTemplate(nodeId) {
     const node = findNode(get().doc.roots, nodeId)
