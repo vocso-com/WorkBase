@@ -442,8 +442,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 
 /* Large card modal (Trello-style card back) */
 .card-overlay{position:fixed;inset:0;z-index:70;background:rgba(15,18,24,.5);backdrop-filter:blur(4px);
-  display:flex;align-items:flex-start;justify-content:center;padding:5vh 20px 40px;overflow-y:auto;}
-.cardmodal{width:100%;max-width:1024px;max-height:88vh;background:var(--card);border:1px solid var(--line);border-radius:16px;
+  display:flex;align-items:flex-start;justify-content:center;padding:3.5vh 3vw 4vh;overflow-y:auto;}
+.cardmodal{width:100%;max-width:min(1440px,95vw);max-height:93vh;background:var(--card);border:1px solid var(--line);border-radius:16px;
   box-shadow:0 30px 70px rgba(0,0,0,.34);overflow:hidden;display:flex;flex-direction:column;}
 /* Signature accent: the item's color as a through-line (top bar + section marks) */
 .cm-accent{height:4px;flex-shrink:0;background:var(--cm-accent,var(--blue));}
@@ -452,7 +452,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .cm-act-dot{background:color-mix(in srgb,var(--cm-accent,var(--dot)) 55%,var(--dot));}
 
 /* Optional cover strip (shown only when an image is set) */
-.cm-cover{position:relative;height:132px;background-size:cover;background-position:center;flex-shrink:0;}
+.cm-cover{position:relative;height:132px;background-color:var(--panel);background-size:contain;background-repeat:no-repeat;background-position:center;flex-shrink:0;padding:14px 0;background-origin:content-box;}
+.cm-cover .cm-cover-del{background:rgba(20,24,33,.72);}
 .cm-cover-del{position:absolute;right:12px;bottom:12px;display:inline-flex;align-items:center;gap:6px;border:none;cursor:pointer;
   font:inherit;font-size:12px;font-weight:600;color:#fff;background:rgba(0,0,0,.5);border-radius:8px;padding:6px 11px;
   backdrop-filter:blur(4px);opacity:0;transition:opacity .14s;}
@@ -516,7 +517,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .cm-title:focus{outline:none;background:var(--panel);box-shadow:inset 0 0 0 1px var(--line);}
 
 /* Two-panel body: white content | gray comments rail (full height) */
-.cm-body{flex:1;min-height:0;display:grid;grid-template-columns:1fr minmax(300px,332px);}
+.cm-body{flex:1;min-height:0;display:grid;grid-template-columns:1fr minmax(340px,400px);}
 .cm-main{min-width:0;overflow-y:auto;display:flex;flex-direction:column;gap:20px;padding:20px 24px 26px;}
 /* Property strip (left column) */
 .cm-props{display:flex;flex-direction:column;gap:15px;padding-bottom:18px;border-bottom:1px solid var(--line);}
