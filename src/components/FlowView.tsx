@@ -249,7 +249,7 @@ export function FlowView({ node }: { node: Node }) {
                 const my = (y1 + y2) / 2
                 d = `M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${y2}`
               }
-              return <path key={e.id} d={d} stroke={e.color} strokeWidth={2} fill="none" opacity={0.45} />
+              return <path key={e.id} d={d} stroke={e.color} strokeWidth={2.5} fill="none" opacity={0.62} strokeLinecap="round" />
             })}
           </svg>
           {layout.nodes.map(fn => (
@@ -354,8 +354,11 @@ function FlowNodeCard({ fn, stages, pos, dragging, isDropTarget, onPointerDown, 
   if (depth === 0) {
     return (
       <div className={`fn fn-root${dragging ? ' fn-drag' : ''}${drop}`} style={style} {...handlers}>
-        <div className="fn-band" style={{ background: `linear-gradient(135deg, ${hex(color)}, ${hex(color)}bb)` }}>
-          <div className="fn-band-ic"><Icon name={node.icon ?? 'ti-folder'} /></div>
+        <div
+          className={`fn-band${node.image ? ' fn-band-img' : ''}`}
+          style={node.image ? { backgroundImage: `url(${node.image})` } : { background: `linear-gradient(135deg, ${hex(color)}, ${hex(color)}bb)` }}
+        >
+          {node.image ? null : <div className="fn-band-ic"><Icon name={node.icon ?? 'ti-folder'} /></div>}
         </div>
         <div className="fn-root-body">
           <div className="fn-title">{node.title}</div>

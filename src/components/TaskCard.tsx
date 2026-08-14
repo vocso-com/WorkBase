@@ -32,6 +32,7 @@ export function TaskCard({ node, color, label }: { node: Node; color: string; la
     >
       <button
         className={`tcheck${done ? ' done' : ''}`}
+        style={done ? { color: hex(color) } : undefined}
         onPointerDown={e => e.stopPropagation()}
         onClick={e => { e.stopPropagation(); useStore.getState().toggleDone(node.id) }}
         aria-label={done ? 'Mark not done' : 'Mark done'}

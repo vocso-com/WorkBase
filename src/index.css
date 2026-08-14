@@ -185,6 +185,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
   display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;box-shadow:var(--shadow-flat);}
 /* Org logo: keep its natural aspect (accommodate wide logos), don't crop */
 .brand-logo{height:34px;width:auto;max-width:180px;object-fit:contain;display:block;border-radius:7px;}
+/* WorkBase app mark: self-contained dark badge, no light plate in dark mode */
+.brand-mark{width:34px;height:34px;object-fit:cover;border-radius:9px;display:block;flex-shrink:0;box-shadow:var(--shadow-flat);}
 /* Uploaded logos are usually dark-on-transparent — give them a light plate in
    dark mode so they stay legible on the dark header / band. */
 @media (prefers-color-scheme: dark){
@@ -321,9 +323,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .check-drill-btn:hover{color:var(--ink);background:var(--chip);}
 
 /* Kanban board — Trello-style depth */
-.board{border-radius:16px;padding:14px;margin-top:2px;overflow-x:auto;
-  background:linear-gradient(180deg, color-mix(in srgb, var(--board-accent,var(--blue)) 16%, var(--board)) 0%, var(--board) 78%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.06), inset 0 0 0 1px rgba(20,24,33,.05);}
+.board{margin:-16px -32px -24px;padding:16px 32px 24px;min-height:calc(100vh - 108px);overflow-x:auto;
+  background:linear-gradient(180deg, color-mix(in srgb, var(--board-accent,var(--blue)) 12%, var(--board)) 0%, var(--board) 70%);}
 .kb{display:grid;grid-template-columns:repeat(4,minmax(212px,1fr));gap:13px;align-items:start;}
 .col{background:color-mix(in srgb, var(--card) 86%, transparent);
   border-radius:13px;padding:8px 8px 10px;min-height:90px;border:1px solid color-mix(in srgb, var(--ink) 5%, var(--line));
@@ -489,6 +490,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .fn-root:hover{box-shadow:var(--shadow-flat-hover);transform:translateY(-2px);}
 .fn-band{align-self:stretch;width:52px;display:flex;align-items:center;justify-content:center;border-radius:9px 0 0 9px;}
 .fn-band-ic{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.24);color:#fff;display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+/* Root node shows the project's own logo/image when it has one (contained) */
+.fn-band-img{background-color:var(--card);background-size:contain;background-repeat:no-repeat;background-position:center;background-origin:content-box;padding:8px;}
 .fn-root-body{min-width:0;padding:10px 0;}
 .fn-root .fn-title{font-size:15.5px;}
 .fn-sub{font-size:11.5px;color:var(--muted);margin-top:2px;}

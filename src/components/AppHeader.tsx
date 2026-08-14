@@ -49,7 +49,7 @@ export function AppHeader({
           {profile?.orgLogo ? (
             <img className="brand-logo" src={profile.orgLogo} alt="" onClick={onHome} title="Home" style={{ cursor: 'pointer' }} />
           ) : (
-            <span className="brand-ic" onClick={onHome} title="Home" style={{ cursor: 'pointer' }}><Icon name="ti-checkup-list" /></span>
+            <img className="brand-mark" src="/workbase-logo.png" alt="WorkBase" onClick={onHome} title="Home" style={{ cursor: 'pointer' }} />
           )}
           <WorkspaceSwitcher />
         </div>
