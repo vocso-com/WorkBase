@@ -195,6 +195,14 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .check-sub-count{font-size:10.5px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;background:var(--chip);border-radius:20px;padding:1px 8px;flex-shrink:0;}
 .check-parent-title{flex:1 1 auto;min-width:0;font-weight:500;cursor:pointer;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;line-height:1.35;word-break:break-word;}
 .check-parent-meta{display:flex;align-items:center;gap:7px;flex:0 0 auto;margin-left:auto;padding-top:1px;}
+/* Drag-to-reorder grip + nest highlight (board) */
+.board-grip{position:absolute;left:-15px;top:0;bottom:0;width:16px;display:flex;align-items:center;justify-content:center;
+  color:var(--faint);opacity:0;cursor:grab;background:none;border:none;padding:0;font-size:15px;transition:opacity .12s,color .12s;touch-action:none;}
+.board-grip:active{cursor:grabbing;}
+.check-item:hover .board-grip{opacity:.6;}
+.board-grip:hover{opacity:1;color:var(--muted);}
+.mc-head{touch-action:none;border-radius:9px;transition:box-shadow .12s,background .12s;}
+.mc-nesting{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--blue) 55%,transparent);background:color-mix(in srgb,var(--blue) 9%,transparent);}
 .check-drill-btn{border:none;background:none;cursor:pointer;color:var(--faint);font-size:16px;padding:2px;border-radius:6px;display:flex;flex-shrink:0;transition:color .12s,background .12s;}
 .check-drill-btn:hover{color:var(--ink);background:var(--chip);}
 
@@ -464,7 +472,15 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .cm-prop-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;align-items:start;}
 .cm-statusbtns.cm-chiprow{flex-direction:row;flex-wrap:wrap;gap:6px;}
 .cm-statusbtns.cm-chiprow .cm-sbtn{flex:0 0 auto;padding:6px 12px;}
-.cm-tag-add{font:inherit;font-size:11.5px;font-weight:600;color:var(--muted);background:var(--panel);border:1px dashed color-mix(in srgb,var(--ink) 18%,var(--line));border-radius:20px;padding:4px 11px;cursor:pointer;}
+.cm-tag-add{font:inherit;font-size:11.5px;font-weight:600;color:var(--muted);background:var(--panel);border:1px dashed color-mix(in srgb,var(--ink) 18%,var(--line));border-radius:20px;padding:5px 12px;cursor:pointer;transition:color .12s,border-color .12s;}
+.cm-tag-add:hover{color:var(--ink);border-color:color-mix(in srgb,var(--ink) 30%,var(--line));}
+.cm-tagpop{min-width:216px;padding:6px;}
+.cm-tagdot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.cm-tagpop-empty{font-size:12px;color:var(--faint);padding:6px 9px;}
+.cm-tagnew{display:flex;flex-direction:column;gap:8px;padding:6px 6px 4px;}
+.cm-tagnew-input{font:inherit;font-size:13px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 9px;}
+.cm-tagnew-input:focus{outline:none;border-color:color-mix(in srgb,var(--ink) 20%,var(--line));}
+.cm-tagnew-sw{display:flex;flex-wrap:wrap;gap:5px;}
 .cm-moveto{margin-top:22px;}
 .cm-moveto .cm-field-l{margin:0 0 6px;display:block;}
 .cm-main-foot{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line);}
@@ -605,6 +621,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .cm-comment-meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);}
 .cm-comment-meta b{color:var(--ink);font-weight:600;}
 .cm-comment-text{font-size:13.5px;color:var(--ink);margin-top:3px;line-height:1.45;white-space:pre-wrap;word-break:break-word;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 11px;}
+.cm-comment-text a{color:var(--blue);text-decoration:underline;text-underline-offset:2px;}
 .cm-empty{font-size:12.5px;color:var(--faint);padding:4px 2px;}
 .cm-side{display:flex;flex-direction:column;gap:8px;}
 .cm-side-h{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);margin-bottom:2px;}

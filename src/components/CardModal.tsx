@@ -8,6 +8,7 @@ import { findNode, findParent, leaves, pathTo } from '../lib/tree'
 import { CHECKLIST_TEMPLATES } from '../lib/templates'
 import { progressOf, statusCounts } from '../lib/progress'
 import { dueInfo } from '../lib/due'
+import { linkifyText } from '../lib/linkify'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { uploadFile } from '../lib/uploads'
 import { askConfirm } from '../hooks/useConfirm'
@@ -43,7 +44,9 @@ export function CardModal() {
 
   const [item, setItem] = useState('')
   const [comment, setComment] = useState('')
-  const [pick, setPick] = useState<'status' | 'priority' | 'color' | 'icon' | null>(null)
+  const [pick, setPick] = useState<'status' | 'priority' | 'color' | 'icon' | 'tags' | null>(null)
+  const [newTag, setNewTag] = useState('')
+  const [newTagColor, setNewTagColor] = useState<ColorKey>('blue')
   const [menu, setMenu] = useState(false)
   const [moveOpen, setMoveOpen] = useState(false)
   const [moveQuery, setMoveQuery] = useState('')
@@ -68,6 +71,7 @@ export function CardModal() {
     setMoveQuery('')
     setDetails(false)
     setClTpl(false)
+    setNewTag('')
     if (!openId) return
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') useDetail.getState().close() }
     window.addEventListener('keydown', onKey)
@@ -110,6 +114,18 @@ export function CardModal() {
   const applyChecklistTemplate = (items: string[]) => {
     items.forEach(t => useStore.getState().addChildNode(node.id, t))
     setClTpl(false)
+  }
+  const applyTag = (t: { name: string; color: ColorKey }) => {
+    if (!tags.some(x => x.name.toLowerCase() === t.name.toLowerCase())) {
+      useStore.getState().patch(node.id, { tags: [...tags, t] })
+    }
+  }
+  const createTag = () => {
+    const name = newTag.trim()
+    if (!name) return
+    useStore.getState().addTag(name, newTagColor)
+    applyTag({ name, color: newTagColor })
+    setNewTag('')
   }
   const addComment = () => {
     const t = comment.trim()
@@ -357,12 +373,38 @@ export function CardModal() {
                   <button onClick={() => useStore.getState().patch(node.id, { tags: tags.filter(x => x.name !== t.name) })} aria-label={`Remove ${t.name}`}><Icon name="ti-x" /></button>
                 </span>
               ))}
-              {availableTags.length > 0 ? (
-                <select className="cm-tag-add" aria-label="Add tag" value="" onChange={e => { const pt = tagPalette.find(t => t.name === e.target.value); if (pt) useStore.getState().patch(node.id, { tags: [...tags, pt] }) }}>
-                  <option value="">+ Tag</option>
-                  {availableTags.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
-                </select>
-              ) : null}
+              <div className="cm-qp-wrap">
+                <button className="cm-tag-add" onClick={() => setPick(p => (p === 'tags' ? null : 'tags'))}>+ Tag</button>
+                {pick === 'tags' ? (
+                  <>
+                    <div className="cm-menu-backdrop" onClick={() => setPick(null)} />
+                    <div className="cm-qp-pop cm-tagpop" onClick={e => e.stopPropagation()}>
+                      {availableTags.map(t => (
+                        <button key={t.name} className="cm-qp-opt" onClick={() => applyTag(t)}>
+                          <span className="cm-tagdot" style={{ background: hex(t.color) }} /> {t.name}
+                        </button>
+                      ))}
+                      {availableTags.length === 0 ? <div className="cm-tagpop-empty">No more saved tags — create one.</div> : null}
+                      <div className="cm-menu-sep" />
+                      <div className="cm-tagnew">
+                        <input
+                          className="cm-tagnew-input"
+                          placeholder="New tag name…"
+                          value={newTag}
+                          onChange={e => setNewTag(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') createTag() }}
+                        />
+                        <div className="cm-tagnew-sw">
+                          {SWATCHES.map(c => (
+                            <button key={c} className={`cm-sw${newTagColor === c ? ' on' : ''}`} style={{ background: COLORS[c] }} onClick={() => setNewTagColor(c)} aria-label={c} />
+                          ))}
+                        </div>
+                        <button className="cm-add-btn" onClick={createTag}>Add tag</button>
+                      </div>
+                    </div>
+                  </>
+                ) : null}
+              </div>
             </div>
 
             <section className="cm-sec">
@@ -515,7 +557,7 @@ export function CardModal() {
                   <Avatar />
                   <div className="cm-comment-body">
                     <div className="cm-comment-meta"><b>{userName}</b><span>{ago(f.c.at)}</span></div>
-                    <div className="cm-comment-text">{f.c.text}</div>
+                    <div className="cm-comment-text" dangerouslySetInnerHTML={{ __html: linkifyText(f.c.text) }} />
                   </div>
                   <button className="cm-check-del" onClick={() => useStore.getState().removeComment(node.id, f.c.id)} aria-label="Delete comment"><Icon name="ti-trash" /></button>
                 </div>

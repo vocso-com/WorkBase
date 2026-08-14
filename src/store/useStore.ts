@@ -32,6 +32,7 @@ interface State {
   setStatus: (id: string, status: Status) => void
   toggleDone: (id: string) => void
   patch: (id: string, patch: Partial<Node>) => void
+  addTag: (name: string, color: ColorKey) => void
   addComment: (id: string, text: string) => void
   removeComment: (id: string, commentId: string) => void
   addAttachment: (id: string, file: { name: string; type: string; dataUrl: string }) => void
@@ -172,6 +173,13 @@ export const useStore = create<State>((set, get) => ({
   patch(id, patch) {
     const stamped = { ...patch, updatedAt: new Date().toISOString() }
     set(s => ({ doc: { ...s.doc, roots: updateNode(s.doc.roots, id, stamped) } }))
+    schedulePersist(get)
+  },
+  addTag(name, color) {
+    const n = name.trim()
+    if (!n) return
+    if (get().doc.tagPalette.some(t => t.name.toLowerCase() === n.toLowerCase())) return
+    set(s => ({ doc: { ...s.doc, tagPalette: [...s.doc.tagPalette, { name: n, color }] } }))
     schedulePersist(get)
   },
   addComment(id, text) {

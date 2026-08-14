@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Icon } from './ui/Icon'
+import { linkifyHtml } from '../lib/linkify'
 
 function placeCaretEnd(el: HTMLElement) {
   const range = document.createRange()
@@ -56,8 +57,8 @@ export function RichText({
 
   if (!editing) {
     return (
-      <div className="rt-read" onClick={() => setEditing(true)} title="Click to edit">
-        {html ? <div dangerouslySetInnerHTML={{ __html: html }} /> : <span className="rt-ph">{placeholder}</span>}
+      <div className="rt-read" onClick={e => { if ((e.target as HTMLElement).closest('a')) return; setEditing(true) }} title="Click to edit">
+        {html ? <div dangerouslySetInnerHTML={{ __html: linkifyHtml(html) }} /> : <span className="rt-ph">{placeholder}</span>}
       </div>
     )
   }
