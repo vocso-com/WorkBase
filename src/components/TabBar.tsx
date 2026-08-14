@@ -30,7 +30,7 @@ export function TabBar() {
           <div
             key={t.id}
             className={`tab${active ? ' on' : ''}${drag === i ? ' dragging' : ''}${over === i && drag !== i ? ' dropbefore' : ''}`}
-            style={active ? { boxShadow: `inset 0 2.5px 0 ${accent}` } : undefined}
+            style={active ? { background: `color-mix(in srgb, ${accent} 12%, var(--bg))`, boxShadow: `inset 0 2.5px 0 ${accent}` } : undefined}
             onClick={() => useTabs.getState().activate(t.id)}
             title={label}
             draggable

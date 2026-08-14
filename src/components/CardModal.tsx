@@ -195,7 +195,8 @@ export function CardModal() {
 
   return (
     <div className="card-overlay" onClick={close}>
-      <div className="cardmodal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
+      <div className="cardmodal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" style={{ ['--cm-accent' as string]: hex(color) }}>
+        <div className="cm-accent" />
         {node.image ? (
           <div className="cm-cover" style={{ backgroundImage: `url(${node.image})` }}>
             <button className="cm-cover-del" onClick={() => useStore.getState().patch(node.id, { image: undefined })}>

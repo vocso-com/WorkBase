@@ -445,6 +445,11 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
   display:flex;align-items:flex-start;justify-content:center;padding:5vh 20px 40px;overflow-y:auto;}
 .cardmodal{width:100%;max-width:1024px;max-height:88vh;background:var(--card);border:1px solid var(--line);border-radius:16px;
   box-shadow:0 30px 70px rgba(0,0,0,.34);overflow:hidden;display:flex;flex-direction:column;}
+/* Signature accent: the item's color as a through-line (top bar + section marks) */
+.cm-accent{height:4px;flex-shrink:0;background:var(--cm-accent,var(--blue));}
+.cm-sec-h .ti{color:var(--cm-accent,var(--muted));}
+.cm-rail-t .ti{color:var(--cm-accent,var(--muted));}
+.cm-act-dot{background:color-mix(in srgb,var(--cm-accent,var(--dot)) 55%,var(--dot));}
 
 /* Optional cover strip (shown only when an image is set) */
 .cm-cover{position:relative;height:132px;background-size:cover;background-position:center;flex-shrink:0;}
