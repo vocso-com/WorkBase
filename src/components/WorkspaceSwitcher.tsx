@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../store/useStore'
-import { useNav } from '../hooks/useNav'
+import { useTabs } from '../hooks/useTabs'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { Icon } from './ui/Icon'
 
@@ -18,14 +18,14 @@ export function WorkspaceSwitcher() {
 
   const pick = (id: string) => {
     useStore.getState().setActiveWorkspace(id)
-    useNav.getState().home()
+    useTabs.getState().goHome()
     setOpen(false)
   }
   const create = () => {
     const n = name.trim()
     if (!n) return
     useStore.getState().addWorkspace(n)
-    useNav.getState().home()
+    useTabs.getState().goHome()
     setName('')
     setAdding(false)
     setOpen(false)

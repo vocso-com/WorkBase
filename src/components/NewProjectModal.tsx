@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Template } from '../types'
 import { useStore } from '../store/useStore'
-import { useNav } from '../hooks/useNav'
+import { useTabs } from '../hooks/useTabs'
 import { useNewProject } from '../hooks/useNewProject'
 import { BUILTIN_TEMPLATES } from '../lib/templates'
 import { hex } from '../theme'
@@ -30,8 +30,7 @@ export function NewProjectModal() {
 
   const openProject = (id: string) => {
     hide()
-    useNav.getState().home()
-    useNav.getState().open(id)
+    useTabs.getState().openProject(id)
   }
 
   const createBlank = () => {

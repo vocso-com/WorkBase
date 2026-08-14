@@ -1,7 +1,7 @@
 import type { Node, Status } from '../types'
 import { HOME_ORDER, STATUS } from '../theme'
 import { useStore } from '../store/useStore'
-import { useNav } from '../hooks/useNav'
+import { useTabs } from '../hooks/useTabs'
 import { useNewProject } from '../hooks/useNewProject'
 import { ProjectCard } from './ProjectCard'
 import { Icon } from './ui/Icon'
@@ -37,7 +37,7 @@ function Lane({ status, projects }: { status: Status; projects: Node[] }) {
       </div>
       <div className="grid">
         {projects.map(node => (
-          <ProjectCard key={node.id} node={node} onOpen={() => useNav.getState().open(node.id)} />
+          <ProjectCard key={node.id} node={node} onOpen={() => useTabs.getState().openProject(node.id)} />
         ))}
         {status === 'doing' ? (
           <div className="card newcard" onClick={() => useNewProject.getState().show()}>
