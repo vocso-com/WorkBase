@@ -37,7 +37,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .avatar-menu-item:hover{background:var(--chip);}
 
 /* Project page tinted with the project's own color */
-.proj-page{min-height:calc(100vh - 54px);padding:0;
+/* Full-bleed under the header: cancel the app's content padding, re-inset inside */
+.proj-page{margin:-16px -32px -28px;padding:16px 32px 24px;min-height:calc(100vh - 56px);
   background-color:color-mix(in srgb,var(--proj,var(--blue)) 12%,var(--bg));
   background-image:radial-gradient(color-mix(in srgb,var(--proj,var(--blue)) 34%,var(--dot)) 1.3px,transparent 1.3px);
   background-size:22px 22px;}
@@ -98,10 +99,14 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
   backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
 .phead-nav{display:flex;align-items:center;gap:12px;padding:10px 24px;}
 .phead-fill{flex:1;min-width:8px;}
-.brand{display:flex;align-items:center;gap:10px;cursor:pointer;flex-shrink:0;}
-.brand-ic{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#6d5ce0,#3b82c4);
+.brand{display:flex;align-items:center;gap:11px;cursor:pointer;flex-shrink:0;}
+.brand-ic{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#6d5ce0,#3b82c4);
   display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;box-shadow:var(--shadow-flat);}
-.brand-name{font-size:16px;font-weight:600;letter-spacing:-.01em;}
+/* Org logo: keep its natural aspect (accommodate wide logos), don't crop */
+.brand-logo{height:34px;width:auto;max-width:180px;object-fit:contain;display:block;border-radius:7px;}
+.brand-text{display:flex;flex-direction:column;line-height:1.08;min-width:0;}
+.brand-name{font-size:16px;font-weight:700;letter-spacing:-.01em;color:var(--ink);white-space:nowrap;}
+.brand-sub{font-size:10px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
 .phead-crumb{display:flex;align-items:center;gap:7px;font-size:13.5px;color:var(--muted);min-width:0;overflow:hidden;}
 .phead-crumb .cseg{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;}
 .phead-crumb .ti{font-size:15px;opacity:.6;}

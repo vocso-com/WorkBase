@@ -89,11 +89,14 @@ export interface Template {
   modules: TemplateModule[]
 }
 
+export type VocabKey = 'general' | 'agency' | 'consultant'
+
 export interface Profile {
   orgName?: string
   orgLogo?: string
   userName?: string
   userAvatar?: string
+  vocab?: VocabKey
 }
 
 export interface StoreDoc {

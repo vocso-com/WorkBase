@@ -43,11 +43,16 @@ export function AppHeader({
       <div className="phead-nav">
         <div className="brand" onClick={onHome} title="Home">
           {profile?.orgLogo ? (
-            <span className="brand-ic brand-ic-img" style={{ backgroundImage: `url(${profile.orgLogo})` }} />
+            <img className="brand-logo" src={profile.orgLogo} alt="" />
           ) : (
             <span className="brand-ic"><Icon name="ti-checkup-list" /></span>
           )}
-          {crumbs.length === 0 ? <span className="brand-name">{profile?.orgName || 'WorkBase'}</span> : null}
+          {crumbs.length === 0 ? (
+            <span className="brand-text">
+              <span className="brand-name">{profile?.orgName || 'WorkBase'}</span>
+              {profile?.orgName ? <span className="brand-sub">WorkBase</span> : null}
+            </span>
+          ) : null}
         </div>
 
         {current ? (
