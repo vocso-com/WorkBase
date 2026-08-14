@@ -9,7 +9,6 @@ import { CardModal } from './components/CardModal'
 import { NewProjectModal } from './components/NewProjectModal'
 import { SettingsModal } from './components/SettingsModal'
 import { ConfirmDialog } from './components/ConfirmDialog'
-import { TabBar } from './components/TabBar'
 import { exportDoc, importDoc } from './lib/transfer'
 import { initRouter } from './lib/router'
 import { initTabs, useTabs } from './hooks/useTabs'
@@ -54,7 +53,6 @@ export default function App() {
             }
           }}
         />
-        <TabBar />
         <div style={{ padding: '16px 32px 28px' }}>
           {path.length === 0 ? <ProjectsHome /> : <ProjectPage />}
         </div>

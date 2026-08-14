@@ -121,29 +121,28 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .phead{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--bg) 88%, var(--card));
   backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
 
-/* Desktop tabs — connected "folder tab" strip: active tab is a raised surface
-   that sits on the baseline and breaks through it to join the content below. */
-.tabbar{position:sticky;top:54px;z-index:29;display:flex;align-items:flex-end;gap:2px;
-  padding:7px 12px 0;background:var(--bg);overflow-x:auto;}
-.tab{display:flex;align-items:center;gap:8px;max-width:200px;padding:8px 11px;cursor:pointer;
+/* Browser-style tabs living in the top bar, next to the workspace switcher */
+.tabbar{display:flex;align-items:center;gap:3px;flex:0 1 auto;min-width:0;overflow-x:auto;margin-left:4px;
+  scrollbar-width:none;}
+.tabbar::-webkit-scrollbar{display:none;}
+.tab{display:flex;align-items:center;gap:7px;max-width:190px;padding:6px 9px;cursor:pointer;
   color:var(--muted);font-size:13px;font-weight:600;flex-shrink:0;
-  border:1px solid transparent;border-bottom:none;border-radius:9px 9px 0 0;margin-bottom:-1px;
+  border:1px solid transparent;border-radius:9px;
   transition:background .12s,color .12s,border-color .12s;}
-.tab:hover:not(.on){background:color-mix(in srgb,var(--card) 55%,transparent);color:var(--ink);}
-.tab.on{background:var(--card);color:var(--ink);border-color:var(--line);position:relative;z-index:1;margin-bottom:-2px;padding-bottom:10px;}
+.tab:hover:not(.on){background:var(--chip);color:var(--ink);}
+.tab.on{color:var(--ink);}
 .tab.dragging{opacity:.45;}
 .tab.dropbefore{box-shadow:inset 2px 0 0 var(--ink);}
 .tab-ic{width:20px;height:20px;flex-shrink:0;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--muted);}
-.tab.on .tab-ic{background:var(--chip);}
 .tab-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .tab-close{border:none;background:none;color:var(--faint);cursor:pointer;width:18px;height:18px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;opacity:.65;transition:background .12s,color .12s,opacity .12s;}
 .tab-close:hover{background:color-mix(in srgb,var(--ink) 12%,transparent);color:var(--ink);opacity:1;}
-.tab-new{border:none;background:none;color:var(--muted);cursor:pointer;width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;margin:0 0 5px 3px;transition:background .12s,color .12s;}
+.tab-new{border:none;background:none;color:var(--muted);cursor:pointer;width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;margin-left:2px;transition:background .12s,color .12s;}
 .tab-new:hover{background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--ink);}
-/* Fixed height so switching Home ↔ project (different header content) doesn't
-   change the bar height and jolt the sticky tab strip below it. */
-.phead-nav{display:flex;align-items:center;gap:12px;padding:0 24px;min-height:54px;box-sizing:border-box;}
+.phead-nav{display:flex;align-items:center;gap:12px;padding:0 20px;min-height:54px;box-sizing:border-box;}
 .phead-fill{flex:1;min-width:8px;}
+/* Slim per-project context bar under the tabs: crumb · project · view · progress */
+.phead-sub{display:flex;align-items:center;gap:12px;padding:0 24px;min-height:46px;box-sizing:border-box;border-top:1px solid var(--line);}
 .brand{display:flex;align-items:center;gap:11px;cursor:pointer;flex-shrink:0;}
 .brand-ic{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#6d5ce0,#3b82c4);
   display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;box-shadow:var(--shadow-flat);}

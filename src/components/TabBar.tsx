@@ -19,14 +19,8 @@ export function TabBar() {
   // Only surface tabs once you're actually juggling more than one thing.
   if (tabs.length < 2) return null
 
-  // The bar itself carries the active project's color; the active tab is a
-  // lighter "folder" that opens straight into the (same-tinted) board below.
-  const activeTab = tabs.find(t => t.id === activeId)
-  const activeRoot = activeTab?.path[0] ? findNode(roots, activeTab.path[0]) : null
-  const barTint = activeRoot ? hex(activeRoot.color ?? 'gray') : 'var(--dot)'
-
   return (
-    <div className="tabbar" style={{ background: `color-mix(in srgb, ${barTint} 15%, var(--bg))` }}>
+    <div className="tabbar">
       {tabs.map((t, i) => {
         const root = t.path[0] ? findNode(roots, t.path[0]) : null
         const active = t.id === activeId
@@ -36,7 +30,7 @@ export function TabBar() {
           <div
             key={t.id}
             className={`tab${active ? ' on' : ''}${drag === i ? ' dragging' : ''}${over === i && drag !== i ? ' dropbefore' : ''}`}
-            style={active ? { background: `color-mix(in srgb, ${accent} 5%, var(--bg))` } : undefined}
+            style={active ? { background: `color-mix(in srgb, ${accent} 13%, var(--card))`, borderColor: `color-mix(in srgb, ${accent} 32%, var(--line))` } : undefined}
             onClick={() => useTabs.getState().activate(t.id)}
             title={label}
             draggable

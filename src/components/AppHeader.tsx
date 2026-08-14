@@ -11,6 +11,7 @@ import { useView, type ViewKind } from '../hooks/useView'
 import { useNewProject } from '../hooks/useNewProject'
 import { AvatarMenu } from './AvatarMenu'
 import { WorkspaceSwitcher } from './WorkspaceSwitcher'
+import { TabBar } from './TabBar'
 import { Icon } from './ui/Icon'
 
 const VIEWS: { key: ViewKind; label: string; icon: string }[] = [
@@ -48,35 +49,36 @@ export function AppHeader({
           ) : (
             <span className="brand-ic" onClick={onHome} title="Home" style={{ cursor: 'pointer' }}><Icon name="ti-checkup-list" /></span>
           )}
-          {crumbs.length === 0 ? <WorkspaceSwitcher /> : null}
+          <WorkspaceSwitcher />
         </div>
 
-        {current ? (
-          <>
-            <nav className="phead-crumb">
-              <span className="cl" onClick={onHome}>Projects</span>
-              {parents.map((n, i) => (
-                <span key={n.id} className="cseg">
-                  <Icon name="ti-chevron-right" />
-                  <span className="cl" onClick={() => onGoto(i)}>{n.title}</span>
-                </span>
-              ))}
-              <Icon name="ti-chevron-right" />
-            </nav>
-            <ProjectChip node={current} />
-            <ViewMenu />
-            <div className="phead-fill" />
-            <HeaderProgress node={current} />
-          </>
-        ) : (
-          <div className="phead-fill" />
-        )}
+        <TabBar />
+        <div className="phead-fill" />
 
         <button className="newbtn" onClick={() => useNewProject.getState().show()}>
           <Icon name="ti-plus" /> New
         </button>
         <AvatarMenu onExport={onExport} onImport={onImport} />
       </div>
+
+      {current ? (
+        <div className="phead-sub">
+          <nav className="phead-crumb">
+            <span className="cl" onClick={onHome}>Projects</span>
+            {parents.map((n, i) => (
+              <span key={n.id} className="cseg">
+                <Icon name="ti-chevron-right" />
+                <span className="cl" onClick={() => onGoto(i)}>{n.title}</span>
+              </span>
+            ))}
+            <Icon name="ti-chevron-right" />
+          </nav>
+          <ProjectChip node={current} />
+          <ViewMenu />
+          <div className="phead-fill" />
+          <HeaderProgress node={current} />
+        </div>
+      ) : null}
     </header>
   )
 }
