@@ -37,7 +37,7 @@ function Lane({ status, projects }: { status: Status; projects: Node[] }) {
       </div>
       <div className="grid">
         {projects.map(node => (
-          <ProjectCard key={node.id} node={node} onOpen={() => useTabs.getState().openProject(node.id)} />
+          <ProjectCard key={node.id} node={node} onOpen={e => useTabs.getState().openProject(node.id, e.metaKey || e.ctrlKey)} />
         ))}
         {status === 'doing' ? (
           <div className="card newcard" onClick={() => useNewProject.getState().show()}>

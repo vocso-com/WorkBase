@@ -26,9 +26,10 @@ interface TabsState {
   tabs: Tab[]
   activeId: string
   newTab: () => void
-  // Open a project in its own tab (focus it if already open).
-  openProject: (rootId: string) => void
-  // Focus a blank/home tab, creating one if none is open.
+  // Open a project. From a Home tab it navigates in place (browser-like);
+  // forceNew (⌘/Ctrl-click) always opens a new tab. Re-opening focuses.
+  openProject: (rootId: string, forceNew?: boolean) => void
+  // Go to the project list — focus a Home tab, else send the current tab home.
   goHome: () => void
   activate: (id: string) => void
   close: (id: string) => void
@@ -44,11 +45,18 @@ export const useTabs = create<TabsState>((set, get) => ({
     set(s => ({ tabs: [...s.tabs, tab], activeId: tab.id }))
     applyTab(tab)
   },
-  openProject: rootId => {
+  openProject: (rootId, forceNew = false) => {
     const existing = get().tabs.find(t => t.path[0] === rootId)
     if (existing) { get().activate(existing.id); return }
     const root = findNode(useStore.getState().doc.roots, rootId)
     const view = (root?.view as ViewKind) ?? 'board'
+    const active = get().tabs.find(t => t.id === get().activeId)
+    // From a blank Home tab, navigate in place; otherwise open a new tab.
+    if (!forceNew && active && active.path.length === 0) {
+      useNav.getState().set([rootId])
+      useView.getState().setView(view)
+      return
+    }
     const tab: Tab = { id: nanoid(6), path: [rootId], view }
     set(s => ({ tabs: [...s.tabs, tab], activeId: tab.id }))
     applyTab(tab)
@@ -56,7 +64,8 @@ export const useTabs = create<TabsState>((set, get) => ({
   goHome: () => {
     const home = get().tabs.find(t => t.path.length === 0)
     if (home) { get().activate(home.id); return }
-    get().newTab()
+    // No home tab open — send the current tab back to the project list.
+    useNav.getState().set([])
   },
   activate: id => {
     const tab = get().tabs.find(t => t.id === id)

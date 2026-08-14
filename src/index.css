@@ -62,7 +62,10 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 
 /* Project card — colorful cover (hybrid) */
 .pcover{position:relative;height:106px;padding:15px 17px;display:flex;align-items:flex-start;justify-content:space-between;background-size:cover;background-position:center;}
-.pcover-img::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(0,0,0,.35));}
+/* Logo/cover image shows in full (contain), never cropped or distorted. */
+.pcover-img{background-color:var(--panel);background-size:contain;background-repeat:no-repeat;background-position:center;background-origin:content-box;}
+.pcover-img .pcover-status{background:rgba(20,24,33,.72);color:#fff;backdrop-filter:none;}
+.pcover-img .pcover-status .sdot{box-shadow:0 0 0 1.5px rgba(255,255,255,.35);}
 .pcover-ic{position:relative;z-index:1;width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;
   font-size:23px;color:#fff;background:rgba(255,255,255,.24);backdrop-filter:blur(3px);box-shadow:0 2px 8px rgba(0,0,0,.14);}
 .pcover-status{position:relative;z-index:1;display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#fff;background:rgba(255,255,255,.24);

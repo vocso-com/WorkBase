@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react'
 import type { Node } from '../types'
 import { hex, stageMeta } from '../theme'
 import { progressOf } from '../lib/progress'
@@ -8,7 +9,7 @@ import { toText } from '../lib/text'
 import { Tag } from './ui/Tag'
 import { Icon } from './ui/Icon'
 
-export function ProjectCard({ node, onOpen }: { node: Node; onOpen: () => void }) {
+export function ProjectCard({ node, onOpen }: { node: Node; onOpen: (e: MouseEvent) => void }) {
   const color = node.color ?? 'gray'
   const stages = useStore(s => s.doc.stages)
   const sm = stageMeta(stages, node.status)

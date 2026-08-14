@@ -11,6 +11,9 @@ export function TabBar() {
   const activeId = useTabs(s => s.activeId)
   const roots = useStore(s => s.doc.roots)
 
+  // Only surface tabs once you're actually juggling more than one thing.
+  if (tabs.length < 2) return null
+
   return (
     <div className="tabbar">
       {tabs.map(t => {
