@@ -1,9 +1,15 @@
 import type { StoreDoc, Tag, Template, Stage } from '../types'
 
+// Agency-focused default labels — the language a studio actually uses on work.
 export const DEFAULT_TAGS: Tag[] = [
-  { name: 'High', color: 'red' },
-  { name: 'SEO', color: 'blue' },
-  { name: 'Revenue', color: 'teal' },
+  { name: 'Design', color: 'violet' },
+  { name: 'Development', color: 'blue' },
+  { name: 'Content', color: 'teal' },
+  { name: 'SEO', color: 'cyan' },
+  { name: 'Client Review', color: 'amber' },
+  { name: 'Revision', color: 'coral' },
+  { name: 'Billable', color: 'lime' },
+  { name: 'Urgent', color: 'red' },
 ]
 
 export function emptyDocument(): StoreDoc {

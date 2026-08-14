@@ -71,6 +71,285 @@ export const CHECKLIST_TEMPLATES: ChecklistTemplate[] = [
  * starter tasks. `id` is stable so it can be referenced in the gallery.
  */
 export const BUILTIN_TEMPLATES: Template[] = [
+  // ── Agency pack ──────────────────────────────────────────────────────────
+  {
+    id: 'tpl-agency-onboarding',
+    name: 'Client Onboarding',
+    description: 'Start a new client relationship right',
+    color: 'teal',
+    icon: 'ti-user-plus',
+    builtin: true,
+    tags: [tag('Client Review', 'amber')],
+    modules: [
+      {
+        name: 'Kickoff',
+        icon: 'ti-flag',
+        color: 'teal',
+        items: [
+          { title: 'Send welcome email & signed agreement', status: 'todo' },
+          { title: 'Collect brand assets, logins & access', status: 'todo' },
+          { title: 'Kickoff call — goals & expectations', status: 'todo', tags: [tag('Client Review', 'amber')] },
+          { title: 'Confirm scope & deliverables', status: 'todo', tags: [tag('Billable', 'lime')] },
+        ],
+      },
+      {
+        name: 'Setup',
+        icon: 'ti-settings',
+        color: 'blue',
+        items: [
+          { title: 'Create project workspace', status: 'todo' },
+          { title: 'Set up shared drive & folders', status: 'todo' },
+          { title: 'Agree communication channels & cadence', status: 'todo' },
+          { title: 'Add client to status updates', status: 'todo' },
+        ],
+      },
+      {
+        name: 'Discovery',
+        icon: 'ti-bulb',
+        color: 'violet',
+        items: [
+          { title: 'Audit current site / assets', status: 'todo' },
+          { title: 'Competitor & market review', status: 'todo' },
+          { title: 'Define success metrics & KPIs', status: 'todo', tags: [tag('SEO', 'cyan')] },
+        ],
+      },
+      {
+        name: 'Handoff to delivery',
+        icon: 'ti-checklist',
+        color: 'amber',
+        items: [
+          { title: 'Confirm timeline & milestones', status: 'todo' },
+          { title: 'Send first invoice / deposit', status: 'todo', tags: [tag('Billable', 'lime')] },
+          { title: 'Schedule recurring check-ins', status: 'todo' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'tpl-agency-website',
+    name: 'Website Project',
+    description: 'Full client website, discovery to launch',
+    color: 'blue',
+    icon: 'ti-world',
+    builtin: true,
+    tags: [tag('Development', 'blue')],
+    modules: [
+      {
+        name: 'Discovery & Strategy',
+        icon: 'ti-bulb',
+        color: 'violet',
+        items: [
+          { title: 'Kickoff & goals', status: 'todo' },
+          { title: 'Content inventory', status: 'todo' },
+          { title: 'Sitemap & information architecture', status: 'todo' },
+          { title: 'Success metrics', status: 'todo', tags: [tag('SEO', 'cyan')] },
+        ],
+      },
+      {
+        name: 'Design',
+        icon: 'ti-palette',
+        color: 'coral',
+        items: [
+          { title: 'Moodboard & direction', status: 'todo', tags: [tag('Design', 'violet')] },
+          { title: 'Wireframes', status: 'todo' },
+          { title: 'Homepage design', status: 'todo', tags: [tag('Design', 'violet')] },
+          { title: 'Inner page designs', status: 'todo' },
+          { title: 'Client review — round 1', status: 'todo', tags: [tag('Client Review', 'amber')] },
+        ],
+      },
+      {
+        name: 'Development',
+        icon: 'ti-code',
+        color: 'blue',
+        items: [
+          { title: 'Environment & repo setup', status: 'todo' },
+          { title: 'Build components & templates', status: 'todo', tags: [tag('Development', 'blue')] },
+          { title: 'CMS integration', status: 'todo' },
+          { title: 'Responsive & cross-device QA', status: 'todo' },
+        ],
+      },
+      {
+        name: 'Content & SEO',
+        icon: 'ti-pencil',
+        color: 'teal',
+        items: [
+          { title: 'Copywriting', status: 'todo', tags: [tag('Content', 'teal')] },
+          { title: 'Image & asset prep', status: 'todo' },
+          { title: 'On-page SEO & metadata', status: 'todo', tags: [tag('SEO', 'cyan')] },
+          { title: 'Schema & analytics', status: 'todo' },
+        ],
+      },
+      {
+        name: 'Launch',
+        icon: 'ti-rocket',
+        color: 'lime',
+        items: [
+          { title: 'Final client approval', status: 'todo', tags: [tag('Client Review', 'amber')] },
+          { title: 'DNS & go-live', status: 'todo' },
+          { title: 'Post-launch checks', status: 'todo' },
+          { title: 'Handover & training', status: 'todo' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'tpl-agency-retainer',
+    name: 'Monthly Retainer',
+    description: 'Recurring monthly deliverables & reporting',
+    color: 'violet',
+    icon: 'ti-calendar-event',
+    builtin: true,
+    tags: [tag('Billable', 'lime')],
+    modules: [
+      {
+        name: 'Planning',
+        icon: 'ti-flag',
+        color: 'violet',
+        items: [
+          { title: 'Review last month & feedback', status: 'todo' },
+          { title: 'Align on this month’s priorities', status: 'todo', tags: [tag('Client Review', 'amber')] },
+          { title: 'Plan deliverables & hours', status: 'todo', tags: [tag('Billable', 'lime')] },
+        ],
+      },
+      {
+        name: 'Design & Content',
+        icon: 'ti-palette',
+        color: 'coral',
+        items: [
+          { title: 'Social & ad creatives', status: 'todo', tags: [tag('Design', 'violet')] },
+          { title: 'Blog / content pieces', status: 'todo', tags: [tag('Content', 'teal')] },
+          { title: 'Ad-hoc design requests', status: 'todo' },
+        ],
+      },
+      {
+        name: 'Development & Fixes',
+        icon: 'ti-code',
+        color: 'blue',
+        items: [
+          { title: 'Site updates & changes', status: 'todo', tags: [tag('Development', 'blue')] },
+          { title: 'Bug fixes', status: 'todo' },
+          { title: 'Performance & uptime check', status: 'todo' },
+        ],
+      },
+      {
+        name: 'Reporting',
+        icon: 'ti-chart-bar',
+        color: 'teal',
+        items: [
+          { title: 'Analytics & KPI report', status: 'todo', tags: [tag('SEO', 'cyan')] },
+          { title: 'Monthly summary to client', status: 'todo', tags: [tag('Client Review', 'amber')] },
+          { title: 'Propose next month’s focus', status: 'todo' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'tpl-agency-brand',
+    name: 'Brand Identity',
+    description: 'Logo, system & guidelines for a client',
+    color: 'coral',
+    icon: 'ti-palette',
+    builtin: true,
+    tags: [tag('Design', 'violet')],
+    modules: [
+      {
+        name: 'Discovery',
+        icon: 'ti-bulb',
+        color: 'violet',
+        items: [
+          { title: 'Brand questionnaire', status: 'todo' },
+          { title: 'Audience & positioning', status: 'todo' },
+          { title: 'Competitor landscape', status: 'todo' },
+          { title: 'Moodboards & direction', status: 'todo', tags: [tag('Design', 'violet')] },
+        ],
+      },
+      {
+        name: 'Concepts',
+        icon: 'ti-pencil',
+        color: 'coral',
+        items: [
+          { title: 'Logo concepts', status: 'todo', tags: [tag('Design', 'violet')] },
+          { title: 'Typography & color system', status: 'todo' },
+          { title: 'Present concepts to client', status: 'todo', tags: [tag('Client Review', 'amber')] },
+          { title: 'Revisions', status: 'todo', tags: [tag('Revision', 'coral')] },
+        ],
+      },
+      {
+        name: 'Guidelines',
+        icon: 'ti-book',
+        color: 'blue',
+        items: [
+          { title: 'Finalize logo suite', status: 'todo' },
+          { title: 'Brand guidelines document', status: 'todo' },
+          { title: 'Asset library & exports', status: 'todo' },
+        ],
+      },
+      {
+        name: 'Handoff',
+        icon: 'ti-checklist',
+        color: 'lime',
+        items: [
+          { title: 'Deliver full brand kit', status: 'todo' },
+          { title: 'Final invoice', status: 'todo', tags: [tag('Billable', 'lime')] },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'tpl-agency-seo',
+    name: 'SEO Engagement',
+    description: 'Audit, optimize, content & reporting',
+    color: 'cyan',
+    icon: 'ti-chart-line',
+    builtin: true,
+    tags: [tag('SEO', 'cyan')],
+    modules: [
+      {
+        name: 'Audit',
+        icon: 'ti-microscope',
+        color: 'cyan',
+        items: [
+          { title: 'Technical SEO audit', status: 'todo' },
+          { title: 'Keyword research', status: 'todo', tags: [tag('SEO', 'cyan')] },
+          { title: 'Competitor gap analysis', status: 'todo' },
+          { title: 'Backlink audit', status: 'todo' },
+        ],
+      },
+      {
+        name: 'On-Page',
+        icon: 'ti-pencil',
+        color: 'blue',
+        items: [
+          { title: 'Titles & metadata', status: 'todo' },
+          { title: 'Content optimization', status: 'todo', tags: [tag('Content', 'teal')] },
+          { title: 'Internal linking', status: 'todo' },
+          { title: 'Schema markup', status: 'todo' },
+        ],
+      },
+      {
+        name: 'Content',
+        icon: 'ti-file-text',
+        color: 'teal',
+        items: [
+          { title: 'Content calendar', status: 'todo' },
+          { title: 'Blog articles', status: 'todo', tags: [tag('Content', 'teal')] },
+          { title: 'Landing pages', status: 'todo' },
+        ],
+      },
+      {
+        name: 'Off-Page & Reporting',
+        icon: 'ti-chart-bar',
+        color: 'violet',
+        items: [
+          { title: 'Link building & outreach', status: 'todo' },
+          { title: 'Local citations', status: 'todo' },
+          { title: 'Rank tracking', status: 'todo' },
+          { title: 'Monthly report', status: 'todo', tags: [tag('Billable', 'lime')] },
+        ],
+      },
+    ],
+  },
+  // ── General pack ─────────────────────────────────────────────────────────
   {
     id: 'tpl-mobile-app',
     name: 'Mobile App',
