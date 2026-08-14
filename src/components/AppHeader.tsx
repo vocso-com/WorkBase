@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Node } from '../types'
-import { COLORS, mergedStages } from '../theme'
+import { COLORS, hex, mergedStages } from '../theme'
 import { findNode, leaves } from '../lib/tree'
 import { progressOf } from '../lib/progress'
 import { tagBg, tagFg } from '../lib/colorMode'
@@ -62,7 +62,7 @@ export function AppHeader({
       </div>
 
       {current ? (
-        <div className="phead-sub">
+        <div className="phead-sub" style={{ ['--pj' as string]: hex(current.color ?? 'gray') }}>
           <nav className="phead-crumb">
             <span className="cl" onClick={onHome}>Projects</span>
             {parents.map((n, i) => (
