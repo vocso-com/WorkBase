@@ -79,7 +79,12 @@ export function AppHeader({
           <div className="phead-fill" />
           <HeaderProgress node={current} />
         </div>
-      ) : null}
+      ) : (
+        <div className="phead-sub" style={{ ['--pj' as string]: 'var(--dot)' }}>
+          <nav className="phead-crumb"><span className="cl cl-static">Projects</span></nav>
+          <div className="phead-fill" />
+        </div>
+      )}
     </header>
   )
 }

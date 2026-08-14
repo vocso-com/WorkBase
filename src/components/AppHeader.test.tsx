@@ -14,10 +14,11 @@ function headerFor(path: string[]) {
   return <AppHeader roots={roots} path={path} onHome={() => {}} onGoto={() => {}} onExport={() => {}} onImport={() => {}} />
 }
 
-test('shows the wordmark at home and no breadcrumb', () => {
+test('shows the wordmark and a Projects sub-bar at home', () => {
   render(headerFor([]))
   expect(screen.getByText('Default')).toBeInTheDocument()
-  expect(screen.queryByText('Projects')).not.toBeInTheDocument()
+  // Home carries a minimal "Projects" sub-bar so its tab connects like a project's
+  expect(screen.getByText('Projects')).toBeInTheDocument()
 })
 
 test('shows the project chip and view menu when inside a project', () => {

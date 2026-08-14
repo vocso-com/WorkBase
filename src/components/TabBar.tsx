@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { useStore } from '../store/useStore'
 import { useTabs } from '../hooks/useTabs'
 import { findNode } from '../lib/tree'
@@ -16,6 +16,30 @@ export function TabBar() {
   const roots = useStore(s => s.doc.roots)
   const [drag, setDrag] = useState<number | null>(null)
   const [over, setOver] = useState<number | null>(null)
+  const barRef = useRef<HTMLDivElement>(null)
+
+  // Measure the active tab so the sub-bar can draw its border everywhere except
+  // directly under the tab — the tab opens into the panel (CSS can't do this
+  // alone, and the tabbar's scroll clips any overlap).
+  useLayoutEffect(() => {
+    const root = document.documentElement
+    const measure = () => {
+      const el = barRef.current?.querySelector('.tab.on') as HTMLElement | null
+      if (el) {
+        const r = el.getBoundingClientRect()
+        root.style.setProperty('--tabgap-l', `${Math.max(0, r.left)}px`)
+        root.style.setProperty('--tabgap-r', `${Math.max(0, r.right)}px`)
+      } else {
+        root.style.setProperty('--tabgap-l', '0px')
+        root.style.setProperty('--tabgap-r', '0px')
+      }
+    }
+    measure()
+    const bar = barRef.current
+    window.addEventListener('resize', measure)
+    bar?.addEventListener('scroll', measure)
+    return () => { window.removeEventListener('resize', measure); bar?.removeEventListener('scroll', measure) }
+  })
 
   // Tabs are scoped to the active WorkBase; only surface them once you're
   // juggling more than one thing in this WorkBase.
@@ -23,7 +47,7 @@ export function TabBar() {
   if (visible.length < 2) return null
 
   return (
-    <div className="tabbar">
+    <div className="tabbar" ref={barRef}>
       {visible.map(t => {
         const i = tabs.indexOf(t)
         const root = t.path[0] ? findNode(roots, t.path[0]) : null

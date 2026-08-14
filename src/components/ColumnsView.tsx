@@ -35,9 +35,6 @@ export function ColumnsView({ node }: { node: Node }) {
   return (
     <div className="outline">
       <aside className="ol-tree">
-        <div className="ol-tree-head">
-          <Icon name={node.icon ?? 'ti-folders'} /> <span>{node.title}</span>
-        </div>
         <div className="ol-tree-rows">
           <div className={`ol-row${sel === null || sel === node.id ? ' active' : ''}`} onClick={() => setSel(node.id)}>
             <span className="ol-spacer" />

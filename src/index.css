@@ -62,7 +62,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 
 /* Outline view (Obsidian-style): full-bleed, collapsible tree + the card detail
    reused inline on the right. Negative margins cancel the page padding. */
-.outline{display:flex;align-items:stretch;margin:-16px -32px -24px;height:calc(100vh - 100px);overflow:hidden;background:var(--card);}
+.outline{display:flex;align-items:stretch;margin:-16px -32px -24px;height:calc(100vh - 108px);overflow:hidden;background:transparent;}
 .ol-tree{width:288px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid var(--line);background:var(--panel);}
 .ol-tree-head{display:flex;align-items:center;gap:8px;padding:13px 14px;flex-shrink:0;border-bottom:1px solid var(--line);
   font-size:13px;font-weight:700;color:var(--ink);}
@@ -80,7 +80,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .ol-row-ic{flex-shrink:0;display:flex;font-size:15px;color:var(--muted);}
 .ol-row.active .ol-row-ic{color:color-mix(in srgb,var(--proj,var(--blue)) 70%,var(--ink));}
 .ol-row-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.ol-main{flex:1;min-width:0;overflow:hidden;display:flex;}
+.ol-main{flex:1;min-width:0;overflow:hidden;display:flex;border-radius:16px 16px 0 0;}
+.ol-tree{border-radius:0;}
 /* The card detail reused inline: fill the pane, drop the overlay chrome.
    Doubled class beats the base .cardmodal rules that come later in the file. */
 .cm-inline{flex:1;min-width:0;height:100%;display:flex;}
@@ -158,8 +159,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
   border:1px solid transparent;border-radius:9px;
   transition:background .12s,color .12s,border-color .12s;}
 .tab:hover:not(.on){background:var(--chip);color:var(--ink);}
-.tab.on{color:var(--ink);}
-.tab.on.tab-proj{border-bottom:none;border-bottom-left-radius:0;border-bottom-right-radius:0;margin-bottom:-1px;}
+.tab.on{color:var(--ink);border-bottom:none;border-bottom-left-radius:0;border-bottom-right-radius:0;margin-bottom:-1px;}
 .tab.dragging{opacity:.45;}
 .tab.dropbefore{box-shadow:inset 2px 0 0 var(--ink);}
 .tab-ic{width:20px;height:20px;flex-shrink:0;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--muted);}
@@ -172,8 +172,14 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .phead-fill{flex:1;min-width:8px;}
 /* Slim per-project context bar under the tabs: crumb · project · view · progress.
    Tinted with the active project's color so the active tab merges into it. */
-.phead-sub{display:flex;align-items:center;gap:12px;padding:0 24px;min-height:46px;box-sizing:border-box;position:relative;z-index:0;
+.phead-sub{display:flex;align-items:center;gap:12px;padding:0 24px;min-height:54px;box-sizing:border-box;position:relative;z-index:0;
+  --pjbc:color-mix(in srgb,var(--pj,var(--blue)) 32%,var(--line));
   background:color-mix(in srgb,var(--pj,var(--blue)) 10%,var(--card));}
+/* Full-width base border, broken under the active tab (gap measured in JS). */
+.phead-sub::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;pointer-events:none;
+  background:linear-gradient(to right,
+    var(--pjbc) var(--tabgap-l,0px),transparent var(--tabgap-l,0px),
+    transparent var(--tabgap-r,0px),var(--pjbc) var(--tabgap-r,0px));}
 .brand{display:flex;align-items:center;gap:11px;cursor:pointer;flex-shrink:0;}
 .brand-ic{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#6d5ce0,#3b82c4);
   display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;box-shadow:var(--shadow-flat);}
@@ -444,7 +450,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 
 /* Flow / organogram view */
 .flow-wrap{position:relative;margin:-16px -32px -24px;}
-.flow-vp{position:relative;height:calc(100vh - 100px);min-height:360px;overflow:hidden;cursor:grab;touch-action:none;
+.flow-vp{position:relative;height:calc(100vh - 108px);min-height:360px;overflow:hidden;cursor:grab;touch-action:none;
   background:
     radial-gradient(color-mix(in srgb,var(--ink) 8%,transparent) 1.2px, transparent 1.2px),
     linear-gradient(180deg,color-mix(in srgb,var(--board-accent,var(--blue)) 12%,var(--board)) 0%,var(--board) 82%);
