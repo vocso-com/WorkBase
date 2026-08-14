@@ -1,4 +1,4 @@
-import type { StoreDoc, Tag } from '../types'
+import type { StoreDoc, Tag, Template, Stage } from '../types'
 
 export const DEFAULT_TAGS: Tag[] = [
   { name: 'High', color: 'red' },
@@ -7,7 +7,7 @@ export const DEFAULT_TAGS: Tag[] = [
 ]
 
 export function emptyDocument(): StoreDoc {
-  return { version: 1, roots: [], tagPalette: [...DEFAULT_TAGS] }
+  return { version: 1, roots: [], tagPalette: [...DEFAULT_TAGS], templates: [], stages: [] }
 }
 
 export function serialize(doc: StoreDoc): string {
@@ -26,5 +26,8 @@ export function deserialize(text: string): StoreDoc {
     version: 1,
     roots: parsed.roots,
     tagPalette: Array.isArray(parsed.tagPalette) ? parsed.tagPalette : [...DEFAULT_TAGS],
+    templates: Array.isArray(parsed.templates) ? (parsed.templates as Template[]) : [],
+    stages: Array.isArray(parsed.stages) ? (parsed.stages as Stage[]) : [],
+    profile: parsed.profile && typeof parsed.profile === 'object' ? parsed.profile : undefined,
   }
 }

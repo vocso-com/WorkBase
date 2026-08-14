@@ -2,25 +2,41 @@ import { useEffect } from 'react'
 import { useStore } from './store/useStore'
 import { useNav } from './hooks/useNav'
 import { useDetail } from './hooks/useDetail'
-import { TopBar } from './components/TopBar'
-import { Breadcrumb } from './components/Breadcrumb'
+import { AppHeader } from './components/AppHeader'
 import { ProjectsHome } from './components/ProjectsHome'
 import ProjectPage from './components/ProjectPage'
-import { DetailPanel } from './components/DetailPanel'
+import { CardModal } from './components/CardModal'
+import { NewProjectModal } from './components/NewProjectModal'
+import { SettingsModal } from './components/SettingsModal'
+import { ConfirmDialog } from './components/ConfirmDialog'
+import { useView } from './hooks/useView'
 import { exportDoc, importDoc } from './lib/transfer'
+import { initRouter } from './lib/router'
 
 export default function App() {
   const ready = useStore(s => s.ready)
   const roots = useStore(s => s.doc.roots)
   const path = useNav(s => s.path)
-  useEffect(() => { void useStore.getState().init() }, [])
+  const rootId = path[0]
+  useEffect(() => { void useStore.getState().init().then(initRouter) }, [])
+
+  // Open each project in the view it was last left in.
+  useEffect(() => {
+    if (!rootId) return
+    const root = useStore.getState().doc.roots.find(r => r.id === rootId)
+    useView.getState().setView(root?.view ?? 'board')
+  }, [rootId])
 
   if (!ready) return <div style={{ padding: 40, color: 'var(--muted)' }}>Loading…</div>
 
   return (
     <div style={{ display: 'flex', alignItems: 'stretch', minHeight: '100vh' }}>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <TopBar
+        <AppHeader
+          roots={roots}
+          path={path}
+          onHome={() => useNav.getState().home()}
+          onGoto={i => useNav.getState().goto(i)}
           onExport={async () => {
             try {
               await exportDoc(useStore.getState().doc)
@@ -41,13 +57,14 @@ export default function App() {
             }
           }}
         />
-        <Breadcrumb roots={roots} path={path}
-          onHome={() => useNav.getState().home()} onGoto={i => useNav.getState().goto(i)} />
-        <div style={{ padding: '12px 28px 70px', maxWidth: 1120 }}>
+        <div style={{ padding: '16px 32px 28px' }}>
           {path.length === 0 ? <ProjectsHome /> : <ProjectPage />}
         </div>
       </div>
-      <DetailPanel />
+      <CardModal />
+      <NewProjectModal />
+      <SettingsModal />
+      <ConfirmDialog />
     </div>
   )
 }

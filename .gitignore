@@ -5,3 +5,6 @@ target
 
 # Tauri auto-generated schemas (regenerated on every build)
 src-tauri/gen/
+
+# Local, per-machine Claude settings
+.claude/settings.local.json

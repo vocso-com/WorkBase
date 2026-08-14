@@ -1,23 +1,51 @@
+import { useState } from 'react'
 import type { Node } from '../types'
-import { COLORS } from '../theme'
-import { progressOf } from '../lib/progress'
+import { hex } from '../theme'
+import { progressOf, statusCounts } from '../lib/progress'
+import { leaves, pathTo } from '../lib/tree'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { useStore } from '../store/useStore'
+import { useNav } from '../hooks/useNav'
 import { useDetail } from '../hooks/useDetail'
 import { Icon } from './ui/Icon'
 import { Checkbox } from './ui/Checkbox'
 import { Tag } from './ui/Tag'
+import { DueChip } from './DueChip'
 
 function isChildDone(child: Node): boolean {
   if (child.children.length > 0) return progressOf(child) === 100
   return child.status === 'done'
 }
 
-function addItem(node: Node, e: React.MouseEvent) {
-  e.stopPropagation()
-  const name = window.prompt('Item name')
-  if (!name || !name.trim()) return
-  useStore.getState().addChildNode(node.id, name.trim())
+function AddItemRow({ node }: { node: Node }) {
+  const [adding, setAdding] = useState(false)
+  const [val, setVal] = useState('')
+  const submit = () => {
+    const t = val.trim()
+    if (!t) return
+    useStore.getState().addChildNode(node.id, t)
+    setVal('')
+  }
+  if (!adding) {
+    return (
+      <div className="check" style={{ color: 'var(--faint)', marginTop: 4 }} onClick={e => { e.stopPropagation(); setAdding(true) }}>
+        <Icon name="ti-plus" className="box" />
+        <span>New item</span>
+      </div>
+    )
+  }
+  return (
+    <div className="mc-add" onClick={e => e.stopPropagation()}>
+      <input
+        autoFocus
+        placeholder="Item name…"
+        value={val}
+        onChange={e => setVal(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') { setAdding(false); setVal('') } }}
+        onBlur={() => { if (!val.trim()) setAdding(false) }}
+      />
+    </div>
+  )
 }
 
 export function ModuleCard({ node, onOpen }: { node: Node; onOpen: () => void }) {
@@ -33,7 +61,7 @@ export function ModuleCard({ node, onOpen }: { node: Node; onOpen: () => void })
       onClick={canDrillIn ? onOpen : undefined}
       style={{ cursor: canDrillIn ? 'pointer' : 'default' }}
     >
-      <div className="accent" style={{ background: COLORS[color] }} />
+      <div className="accent" style={{ background: hex(color) }} />
       <div className="pad">
         <div className="row1">
           <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
@@ -51,23 +79,38 @@ export function ModuleCard({ node, onOpen }: { node: Node; onOpen: () => void })
           <span style={{ fontSize: 11.5, color: 'var(--faint)' }}>{done}/{total}</span>
         </div>
         <div className="bar2">
-          <span style={{ width: `${pc}%`, background: COLORS[color] }} />
+          <span style={{ width: `${pc}%`, background: hex(color) }} />
         </div>
         {node.children.map(child => {
           const isLeaf = child.children.length === 0
+          if (!isLeaf) {
+            const subs = leaves(child).filter(l => l.id !== child.id)
+            const subDone = statusCounts(child).done
+            return (
+              <div
+                key={child.id}
+                data-testid={`child-row-${child.id}`}
+                className="check check-item check-parent"
+                onClick={e => { e.stopPropagation(); useDetail.getState().open(child.id) }}
+                title="Open details"
+              >
+                <span className="check-sub-ic"><Icon name="ti-list-tree" /></span>
+                <span className="grow check-parent-title">{child.title}</span>
+                <DueChip dueDate={child.dueDate} />
+                {(child.tags ?? []).slice(0, 1).map(t => <Tag key={t.name} tag={t} />)}
+                <span className="check-sub-count">{subDone}/{subs.length}</span>
+                <button
+                  className="check-drill-btn"
+                  onClick={e => { e.stopPropagation(); useNav.getState().set(pathTo(useStore.getState().doc.roots, child.id)) }}
+                  aria-label="Open sub-items"
+                  title="Open sub-items"
+                ><Icon name="ti-chevron-right" /></button>
+              </div>
+            )
+          }
           return (
-            <div key={child.id} data-testid={`child-row-${child.id}`} className={`check ${child.status === 'done' ? 'done' : ''}`} onClick={e => e.stopPropagation()}>
-              {isLeaf ? (
-                <Checkbox status={child.status} color={color} onToggle={() => useStore.getState().toggleDone(child.id)} />
-              ) : (
-                <span
-                  aria-hidden="true"
-                  title={`${progressOf(child)}% complete`}
-                  style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 18, fontSize: 10.5, fontWeight: 600, color: 'var(--faint)' }}
-                >
-                  {progressOf(child)}%
-                </span>
-              )}
+            <div key={child.id} data-testid={`child-row-${child.id}`} className={`check check-item ${child.status === 'done' ? 'done' : ''}`} onClick={e => e.stopPropagation()}>
+              <Checkbox status={child.status} color={color} onToggle={() => useStore.getState().toggleDone(child.id)} />
               <span
                 className="grow"
                 style={{ cursor: 'pointer' }}
@@ -75,6 +118,7 @@ export function ModuleCard({ node, onOpen }: { node: Node; onOpen: () => void })
               >
                 {child.title}
               </span>
+              <DueChip dueDate={child.dueDate} />
               {(child.tags ?? []).map(t => (
                 <Tag key={t.name} tag={t} />
               ))}
@@ -84,10 +128,7 @@ export function ModuleCard({ node, onOpen }: { node: Node; onOpen: () => void })
             </div>
           )
         })}
-        <div className="check" style={{ color: 'var(--faint)', marginTop: 4 }} onClick={e => addItem(node, e)}>
-          <Icon name="ti-plus" className="box" />
-          <span>New item</span>
-        </div>
+        <AddItemRow node={node} />
       </div>
     </div>
   )

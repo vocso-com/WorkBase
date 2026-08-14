@@ -5,6 +5,7 @@ interface Nav {
   open: (id: string) => void
   goto: (index: number) => void
   home: () => void
+  set: (path: string[]) => void
 }
 
 export const useNav = create<Nav>(set => ({
@@ -12,4 +13,5 @@ export const useNav = create<Nav>(set => ({
   open: id => set(s => ({ path: [...s.path, id] })),
   goto: index => set(s => ({ path: s.path.slice(0, index + 1) })),
   home: () => set({ path: [] }),
+  set: path => set({ path }),
 }))

@@ -20,6 +20,16 @@ export function findParent(roots: Node[], id: string, parent: Node | null = null
   return null
 }
 
+/** Ancestor id chain from a root down to `id` (inclusive), or [] if not found. */
+export function pathTo(roots: Node[], id: string): string[] {
+  for (const n of roots) {
+    if (n.id === id) return [n.id]
+    const sub = pathTo(n.children, id)
+    if (sub.length) return [n.id, ...sub]
+  }
+  return []
+}
+
 export function leaves(node: Node): Node[] {
   if (node.children.length === 0) return [node]
   return node.children.flatMap(leaves)

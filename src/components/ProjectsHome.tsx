@@ -2,14 +2,9 @@ import type { Node, Status } from '../types'
 import { HOME_ORDER, STATUS } from '../theme'
 import { useStore } from '../store/useStore'
 import { useNav } from '../hooks/useNav'
+import { useNewProject } from '../hooks/useNewProject'
 import { ProjectCard } from './ProjectCard'
 import { Icon } from './ui/Icon'
-
-function addProject() {
-  const name = window.prompt('Project name')
-  if (!name || !name.trim()) return
-  useStore.getState().addProject(name.trim())
-}
 
 export function ProjectsHome() {
   const roots = useStore(s => s.doc.roots)
@@ -41,7 +36,7 @@ function Lane({ status, projects }: { status: Status; projects: Node[] }) {
           <ProjectCard key={node.id} node={node} onOpen={() => useNav.getState().open(node.id)} />
         ))}
         {status === 'doing' ? (
-          <div className="card newcard" onClick={addProject}>
+          <div className="card newcard" onClick={() => useNewProject.getState().show()}>
             <Icon name="ti-plus" style={{ fontSize: 24 }} />
             New project
           </div>

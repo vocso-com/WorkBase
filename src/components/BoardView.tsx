@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable'
 import type { Node } from '../types'
@@ -7,10 +8,40 @@ import { ModuleCard } from './ModuleCard'
 import { SortableCard } from './SortableCard'
 import { Icon } from './ui/Icon'
 
-function addModule(node: Node) {
-  const name = window.prompt('Module name')
-  if (!name || !name.trim()) return
-  useStore.getState().addChildNode(node.id, name.trim())
+function AddModuleCard({ node }: { node: Node }) {
+  const [adding, setAdding] = useState(false)
+  const [val, setVal] = useState('')
+  const submit = () => {
+    const t = val.trim()
+    if (!t) return
+    const id = useStore.getState().addChildNode(node.id, t)
+    setVal('')
+    setAdding(false)
+    useNav.getState().open(id)
+  }
+  if (!adding) {
+    return (
+      <div className="card newcard" onClick={() => setAdding(true)}>
+        <Icon name="ti-plus" style={{ fontSize: 24 }} />
+        New module
+      </div>
+    )
+  }
+  return (
+    <div className="newcard-box">
+      <input
+        autoFocus
+        placeholder="Module name…"
+        value={val}
+        onChange={e => setVal(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') { setAdding(false); setVal('') } }}
+      />
+      <div className="newcard-row">
+        <button className="col-add-go" onClick={submit}>Add module</button>
+        <button className="col-add-x" onClick={() => { setAdding(false); setVal('') }} aria-label="Cancel"><Icon name="ti-x" /></button>
+      </div>
+    </div>
+  )
 }
 
 export function BoardView({ node }: { node: Node }) {
@@ -35,10 +66,7 @@ export function BoardView({ node }: { node: Node }) {
               <ModuleCard node={child} onOpen={() => useNav.getState().open(child.id)} />
             </SortableCard>
           ))}
-          <div className="card newcard" onClick={() => addModule(node)}>
-            <Icon name="ti-plus" style={{ fontSize: 24 }} />
-            New module
-          </div>
+          <AddModuleCard node={node} />
         </div>
       </SortableContext>
     </DndContext>

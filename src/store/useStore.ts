@@ -1,10 +1,12 @@
 import { create } from 'zustand'
-import type { StoreDoc, Node, Status, ColorKey } from '../types'
+import { nanoid } from 'nanoid'
+import type { StoreDoc, Node, Status, ColorKey, Template } from '../types'
 import { pickAdapter, type StorageAdapter } from '../lib/storage'
 import { emptyDocument } from '../lib/serialize'
 import { newNode } from '../lib/factory'
 import { projectPrefix, nextShortId } from '../lib/shortid'
 import { addChild, updateNode, deleteNode, moveNode, reorderChildren, findNode } from '../lib/tree'
+import { instantiateTemplate, projectToTemplate } from '../lib/templates'
 import { PROJECT_ICONS } from '../theme'
 import { sampleDoc } from '../lib/seed'
 
@@ -21,11 +23,26 @@ interface State {
   adapter: StorageAdapter
   init: (adapter?: StorageAdapter) => Promise<void>
   addProject: (name: string) => string
+  addProjectFromTemplate: (tpl: Template, name?: string) => string
+  saveAsTemplate: (nodeId: string) => string | null
+  deleteTemplate: (id: string) => void
   addChildNode: (parentId: string, title: string) => string
   rename: (id: string, title: string) => void
   setStatus: (id: string, status: Status) => void
   toggleDone: (id: string) => void
   patch: (id: string, patch: Partial<Node>) => void
+  addComment: (id: string, text: string) => void
+  removeComment: (id: string, commentId: string) => void
+  addAttachment: (id: string, file: { name: string; type: string; dataUrl: string }) => void
+  removeAttachment: (id: string, attId: string) => void
+  setPos: (id: string, pos: { x: number; y: number } | undefined) => void
+  clearPositions: (rootId: string) => void
+  setCollapsed: (id: string, collapsed: boolean) => void
+  setCollapsedAll: (rootId: string, collapsed: boolean) => void
+  addStage: (label: string, color: ColorKey) => string
+  removeStage: (id: string) => void
+  renameStage: (id: string, label: string) => void
+  setProfile: (patch: Partial<StoreDoc['profile']>) => void
   remove: (id: string) => void
   move: (id: string, newParentId: string | null, index: number) => void
   reorder: (parentId: string | null, from: number, to: number) => void
@@ -87,6 +104,32 @@ export const useStore = create<State>((set, get) => ({
     schedulePersist(get)
     return node.id
   },
+  addProjectFromTemplate(tpl, name) {
+    const roots = get().doc.roots
+    const root = instantiateTemplate(tpl, roots, name)
+    set(s => ({ doc: { ...s.doc, roots: [...s.doc.roots, root] } }))
+    schedulePersist(get)
+    return root.id
+  },
+  saveAsTemplate(nodeId) {
+    const node = findNode(get().doc.roots, nodeId)
+    if (!node) return null
+    // Upsert by name so "Update template" replaces rather than duplicates.
+    const existing = get().doc.templates.find(t => t.name === node.title)
+    const tpl = projectToTemplate(node, existing?.id ?? `tpl-${nanoid(8)}`)
+    set(s => ({
+      doc: {
+        ...s.doc,
+        templates: existing ? s.doc.templates.map(t => (t.id === existing.id ? tpl : t)) : [...s.doc.templates, tpl],
+      },
+    }))
+    schedulePersist(get)
+    return tpl.id
+  },
+  deleteTemplate(id) {
+    set(s => ({ doc: { ...s.doc, templates: s.doc.templates.filter(t => t.id !== id) } }))
+    schedulePersist(get)
+  },
   addChildNode(parentId, title) {
     const node = newNode(title)
     const prefix = rootPrefixFor(get().doc.roots, parentId)
@@ -104,6 +147,88 @@ export const useStore = create<State>((set, get) => ({
   patch(id, patch) {
     const stamped = { ...patch, updatedAt: new Date().toISOString() }
     set(s => ({ doc: { ...s.doc, roots: updateNode(s.doc.roots, id, stamped) } }))
+    schedulePersist(get)
+  },
+  addComment(id, text) {
+    const t = text.trim()
+    if (!t) return
+    const n = findNode(get().doc.roots, id)
+    const comment = { id: nanoid(), text: t, at: new Date().toISOString() }
+    get().patch(id, { comments: [...(n?.comments ?? []), comment] })
+  },
+  removeComment(id, commentId) {
+    const n = findNode(get().doc.roots, id)
+    get().patch(id, { comments: (n?.comments ?? []).filter(c => c.id !== commentId) })
+  },
+  addAttachment(id, file) {
+    const n = findNode(get().doc.roots, id)
+    const att = { id: nanoid(), name: file.name, type: file.type, dataUrl: file.dataUrl, at: new Date().toISOString() }
+    get().patch(id, { attachments: [...(n?.attachments ?? []), att] })
+  },
+  removeAttachment(id, attId) {
+    const n = findNode(get().doc.roots, id)
+    get().patch(id, { attachments: (n?.attachments ?? []).filter(a => a.id !== attId) })
+  },
+  setPos(id, pos) {
+    get().patch(id, { pos })
+  },
+  clearPositions(rootId) {
+    const root = findNode(get().doc.roots, rootId)
+    if (!root) return
+    const ids: string[] = []
+    const walk = (n: Node) => { ids.push(n.id); n.children.forEach(walk) }
+    walk(root)
+    set(s => {
+      let roots = s.doc.roots
+      for (const nid of ids) roots = updateNode(roots, nid, { pos: undefined })
+      return { doc: { ...s.doc, roots } }
+    })
+    schedulePersist(get)
+  },
+  setCollapsed(id, collapsed) {
+    get().patch(id, { collapsed })
+  },
+  setCollapsedAll(rootId, collapsed) {
+    const root = findNode(get().doc.roots, rootId)
+    if (!root) return
+    const updates: { id: string; collapsed: boolean }[] = []
+    const walk = (n: Node, depth: number) => {
+      // Root stays expanded; descendants take the requested state.
+      updates.push({ id: n.id, collapsed: depth === 0 ? false : collapsed })
+      n.children.forEach(c => walk(c, depth + 1))
+    }
+    walk(root, 0)
+    set(s => {
+      let roots = s.doc.roots
+      for (const u of updates) roots = updateNode(roots, u.id, { collapsed: u.collapsed })
+      return { doc: { ...s.doc, roots } }
+    })
+    schedulePersist(get)
+  },
+  addStage(label, color) {
+    const id = `stage-${nanoid(6)}`
+    set(s => ({ doc: { ...s.doc, stages: [...s.doc.stages, { id, label: label.trim() || 'New stage', color }] } }))
+    schedulePersist(get)
+    return id
+  },
+  renameStage(id, label) {
+    set(s => ({ doc: { ...s.doc, stages: s.doc.stages.map(st => (st.id === id ? { ...st, label } : st)) } }))
+    schedulePersist(get)
+  },
+  setProfile(patch) {
+    set(s => ({ doc: { ...s.doc, profile: { ...(s.doc.profile ?? {}), ...patch } } }))
+    schedulePersist(get)
+  },
+  removeStage(id) {
+    set(s => {
+      // Reassign any tasks currently in this stage back to "To do".
+      let roots = s.doc.roots
+      const orphaned: string[] = []
+      const walk = (n: Node) => { if (n.status === id) orphaned.push(n.id); n.children.forEach(walk) }
+      roots.forEach(walk)
+      for (const nid of orphaned) roots = updateNode(roots, nid, { status: 'todo' })
+      return { doc: { ...s.doc, roots, stages: s.doc.stages.filter(st => st.id !== id) } }
+    })
     schedulePersist(get)
   },
   remove(id) {

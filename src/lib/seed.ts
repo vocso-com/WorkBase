@@ -200,5 +200,5 @@ export function sampleDoc(): StoreDoc {
     }
   }
 
-  return { version: 1, roots, tagPalette: [...DEFAULT_TAGS] }
+  return { version: 1, roots, tagPalette: [...DEFAULT_TAGS], templates: [], stages: [] }
 }
