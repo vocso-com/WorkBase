@@ -29,7 +29,7 @@ export function TabBar() {
         return (
           <div
             key={t.id}
-            className={`tab${active ? ' on' : ''}${drag === i ? ' dragging' : ''}${over === i && drag !== i ? ' dropbefore' : ''}`}
+            className={`tab${active ? ' on' : ''}${root ? ' tab-proj' : ''}${drag === i ? ' dragging' : ''}${over === i && drag !== i ? ' dropbefore' : ''}`}
             style={active ? { background: `color-mix(in srgb, ${accent} 10%, var(--card))`, borderColor: `color-mix(in srgb, ${accent} 30%, var(--line))` } : undefined}
             onClick={() => useTabs.getState().activate(t.id)}
             title={label}
