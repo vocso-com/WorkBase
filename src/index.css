@@ -717,9 +717,11 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
   background:var(--panel);border:1px solid var(--line);cursor:grab;
   transition:border-color .12s,box-shadow .12s,background .12s,opacity .12s;}
 .cm-trow:hover{border-color:color-mix(in srgb,var(--ink) 12%,var(--line));}
-.cm-trow.done{box-shadow:inset 3px 0 0 var(--teal);}
 .cm-trow.done .cm-trow-title{color:var(--faint);text-decoration:line-through;}
-.cm-trow.overdue{border-color:color-mix(in srgb,var(--red) 30%,var(--line));background:color-mix(in srgb,var(--red) 6%,var(--panel));box-shadow:inset 3px 0 0 var(--red);}
+.cm-trow.overdue{border-color:color-mix(in srgb,var(--red) 26%,var(--line));background:color-mix(in srgb,var(--red) 5%,var(--panel));}
+.cm-trow-overdue{flex-shrink:0;display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;
+  color:var(--red);background:color-mix(in srgb,var(--red) 12%,transparent);border-radius:20px;padding:2px 9px;}
+.cm-trow-overdue .ti{font-size:12px;}
 .cm-trow.dragging{opacity:.4;}
 .cm-trow.drop-into{border-color:var(--cm-accent,var(--blue));box-shadow:inset 0 0 0 1.5px var(--cm-accent,var(--blue));}
 .cm-tree-rail{width:20px;flex-shrink:0;align-self:stretch;position:relative;}

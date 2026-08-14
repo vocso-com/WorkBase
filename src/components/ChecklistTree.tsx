@@ -96,6 +96,7 @@ export function ChecklistTree({ root, color }: { root: Node; color: string }) {
             {c.priority ? (
               <span className="tprio" style={{ background: tagBg(PRIORITY_META[c.priority].color), color: tagFg(PRIORITY_META[c.priority].color) }}>{PRIORITY_META[c.priority].label}</span>
             ) : null}
+            {overdue ? <span className="cm-trow-overdue"><Icon name="ti-clock" /> Overdue</span> : null}
             {isParent ? <span className="check-sub-count">{done}/{total}</span> : (c.tags ?? []).map(t => <Tag key={t.name} tag={t} />)}
             <span className="cm-trow-grip" title="Drag to nest or promote"><Icon name="ti-grip-vertical" /></span>
             <button className="cm-check-del" onClick={() => useStore.getState().remove(c.id)} aria-label="Delete item"><Icon name="ti-trash" /></button>
