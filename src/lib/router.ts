@@ -3,7 +3,7 @@ import { useView, type ViewKind } from '../hooks/useView'
 import { useStore } from '../store/useStore'
 import { findNode } from './tree'
 
-const VIEWS: ViewKind[] = ['board', 'kanban', 'flow']
+const VIEWS: ViewKind[] = ['board', 'kanban', 'flow', 'columns']
 
 export function parseHash(hash: string): { path: string[]; view: ViewKind } {
   const body = hash.replace(/^#\/?/, '')

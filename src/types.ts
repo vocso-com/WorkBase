@@ -67,7 +67,7 @@ export interface Node {
   activities?: Activity[]
   pos?: { x: number; y: number }
   collapsed?: boolean
-  view?: 'board' | 'kanban' | 'flow'
+  view?: 'board' | 'kanban' | 'flow' | 'columns'
   flowOrientation?: 'h' | 'v'
   createdAt: string
   updatedAt: string

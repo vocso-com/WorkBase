@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type ViewKind = 'board' | 'kanban' | 'flow'
+export type ViewKind = 'board' | 'kanban' | 'flow' | 'columns'
 
 interface ViewState {
   view: ViewKind

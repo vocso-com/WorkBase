@@ -18,6 +18,7 @@ const VIEWS: { key: ViewKind; label: string; icon: string }[] = [
   { key: 'board', label: 'Board', icon: 'ti-layout-grid' },
   { key: 'kanban', label: 'Kanban', icon: 'ti-layout-kanban' },
   { key: 'flow', label: 'Flow', icon: 'ti-sitemap' },
+  { key: 'columns', label: 'Outline', icon: 'ti-layout-sidebar' },
 ]
 
 export function AppHeader({

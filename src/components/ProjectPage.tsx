@@ -6,6 +6,7 @@ import { hex } from '../theme'
 import { BoardView } from './BoardView'
 import { KanbanView } from './KanbanView'
 import { FlowView } from './FlowView'
+import { ColumnsView } from './ColumnsView'
 
 export default function ProjectPage() {
   const roots = useStore(s => s.doc.roots)
@@ -21,7 +22,7 @@ export default function ProjectPage() {
 
   return (
     <div className="proj-page" style={{ '--proj': proj } as React.CSSProperties}>
-      {view === 'board' ? <BoardView node={node} /> : view === 'kanban' ? <KanbanView node={node} /> : <FlowView node={node} />}
+      {view === 'board' ? <BoardView node={node} /> : view === 'kanban' ? <KanbanView node={node} /> : view === 'columns' ? <ColumnsView node={node} /> : <FlowView node={node} />}
     </div>
   )
 }
