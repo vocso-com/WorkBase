@@ -111,6 +111,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
   transition:background .12s,color .12s,border-color .12s;}
 .tab:hover:not(.on){background:color-mix(in srgb,var(--card) 55%,transparent);color:var(--ink);}
 .tab.on{background:var(--card);color:var(--ink);border-color:var(--line);}
+.tab.dragging{opacity:.45;}
+.tab.dropbefore{box-shadow:inset 2px 0 0 var(--ink);}
 .tab-ic{width:20px;height:20px;flex-shrink:0;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--muted);}
 .tab.on .tab-ic{background:var(--chip);}
 .tab-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}

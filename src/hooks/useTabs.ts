@@ -33,6 +33,7 @@ interface TabsState {
   goHome: () => void
   activate: (id: string) => void
   close: (id: string) => void
+  reorder: (from: number, to: number) => void
   // Called by the nav/view subscriptions to persist the active tab's location.
   save: (path: string[], view: ViewKind) => void
 }
@@ -86,6 +87,16 @@ export const useTabs = create<TabsState>((set, get) => ({
     }
     set({ tabs: remaining, activeId: nextActive })
   },
+  reorder: (from, to) => {
+    if (from === to) return
+    set(s => {
+      const tabs = [...s.tabs]
+      if (from < 0 || from >= tabs.length || to < 0 || to >= tabs.length) return {}
+      const [moved] = tabs.splice(from, 1)
+      tabs.splice(to, 0, moved)
+      return { tabs }
+    })
+  },
   save: (path, view) => {
     if (applying) return
     set(s => ({ tabs: s.tabs.map(t => (t.id === s.activeId ? { ...t, path, view } : t)) }))
@@ -101,4 +112,18 @@ export function initTabs() {
   }
   useNav.subscribe(s => useTabs.getState().save(s.path, useView.getState().view))
   useView.subscribe(s => useTabs.getState().save(useNav.getState().path, s.view))
+
+  // Desktop keyboard shortcuts: ⌘/Ctrl+T new tab, ⌘/Ctrl+W close, ⌘/Ctrl+1–9 switch.
+  if (typeof window !== 'undefined') {
+    window.addEventListener('keydown', e => {
+      if (!(e.metaKey || e.ctrlKey) || e.altKey) return
+      const t = useTabs.getState()
+      if (e.key === 't' || e.key === 'T') { e.preventDefault(); t.newTab() }
+      else if (e.key === 'w' || e.key === 'W') { if (t.tabs.length > 1) { e.preventDefault(); t.close(t.activeId) } }
+      else if (e.key >= '1' && e.key <= '9') {
+        const tab = t.tabs[Number(e.key) - 1]
+        if (tab) { e.preventDefault(); t.activate(tab.id) }
+      }
+    })
+  }
 }
