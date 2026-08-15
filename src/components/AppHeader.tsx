@@ -74,7 +74,7 @@ export function AppHeader({
       </div>
 
       {myWorkOpen ? (
-        <div className="phead-sub" style={{ ['--pj' as string]: hex('violet') }}>
+        <div className="phead-sub" style={{ ['--pj' as string]: 'var(--dot)' }}>
           <nav className="phead-crumb"><span className="cl cl-static"><Icon name="ti-target-arrow" /> My Work</span></nav>
           <div className="phead-fill" />
         </div>

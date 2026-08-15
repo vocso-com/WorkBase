@@ -538,25 +538,30 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .mw-tone-today{color:var(--amber);} .mw-tone-today .ti{color:var(--amber);}
 .mw-tone-blocked{color:var(--muted);} .mw-tone-blocked .ti{color:var(--muted);}
 .mw-list{display:flex;flex-direction:column;gap:7px;}
-.mw-row{display:flex;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 13px;box-shadow:var(--card-shadow);}
-.mw-projdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-right:10px;}
-/* Tick hidden by default; on hover it expands and pushes the title right. */
-.mw-check{display:inline-flex;flex-shrink:0;overflow:hidden;width:0;margin-right:0;opacity:0;transition:width .14s ease,margin-right .14s ease,opacity .12s;}
+.mw-row{display:flex;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:12px 14px;box-shadow:var(--card-shadow);transition:box-shadow .14s ease;}
+.mw-row:hover{box-shadow:var(--card-shadow-h);}
+.mw-projdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-right:10px;margin-top:5px;}
+/* Tick hidden by default; on hover it expands and pushes the body right. */
+.mw-check{display:inline-flex;flex-shrink:0;overflow:hidden;width:0;margin-right:0;opacity:0;margin-top:1px;transition:width .14s ease,margin-right .14s ease,opacity .12s;}
 .mw-row:hover .mw-check,.mw-row-done .mw-check{width:18px;margin-right:8px;opacity:1;}
-.mw-row-done{opacity:.6;}
+.mw-body{flex:1;min-width:0;cursor:pointer;display:flex;flex-direction:column;gap:5px;}
+.mw-line1{display:flex;align-items:center;gap:9px;}
+.mw-line2{display:flex;align-items:center;gap:8px;min-width:0;}
+.mw-l1r{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0;}
+.mw-l2r{display:flex;align-items:center;gap:9px;margin-left:auto;flex-shrink:0;}
+.mw-row-done{opacity:.62;}
 .mw-row-done .mw-title{text-decoration:line-through;color:var(--muted);}
 .mw-sec-done{margin-top:26px;}
-.mw-pri{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-right:8px;}
-.mw-title{border:none;background:none;cursor:pointer;font:inherit;font-size:14px;font-weight:550;color:var(--ink);text-align:left;padding:0;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;max-width:44%;}
-.mw-title:hover{text-decoration:underline;}
-.mw-crumb{font-size:12px;color:var(--muted);cursor:pointer;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:9px;}
-.mw-meta{display:flex;align-items:center;gap:9px;flex-shrink:0;margin-left:10px;}
-.mw-blocked{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--red);}
+.mw-title{font-size:14.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.mw-body:hover .mw-title{text-decoration:underline;}
+.mw-prio{font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:20px;flex-shrink:0;}
+.mw-stage{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--muted);flex-shrink:0;}
+.mw-stage-dot{width:7px;height:7px;border-radius:50%;}
+.mw-crumb{font-size:12px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.mw-blocked{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--red);flex-shrink:0;}
 .mw-blocked .ti{font-size:12px;}
-.mw-due{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:600;font-variant-numeric:tabular-nums;}
-.mw-due .ti{font-size:13px;}
-.mw-due-overdue{color:var(--red);} .mw-due-today,.mw-due-soon{color:var(--amber);} .mw-due-upcoming{color:var(--muted);}
+.mw-mini{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums;}
+.mw-mini .ti{font-size:14px;}
 .mw-sid{font-size:11px;font-weight:600;color:var(--faint);font-variant-numeric:tabular-nums;}
 .mw-clear{text-align:center;padding:60px 20px;color:var(--muted);}
 .mw-clear .ti{font-size:44px;color:var(--teal);}

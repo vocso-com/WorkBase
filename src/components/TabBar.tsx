@@ -54,13 +54,13 @@ export function TabBar() {
   const homeActive = !!active && active.path.length === 0 && !active.kind
   const myworkActive = active?.kind === 'mywork'
   const iconOnly = projectTabs.length >= 3
-  const violet = hex('violet')
+  const neutralActive = { background: 'color-mix(in srgb, var(--dot) 16%, var(--card))', borderColor: 'color-mix(in srgb, var(--dot) 32%, var(--line))' }
 
   return (
     <div className="tabbar" ref={barRef}>
       <button
         className={`tab tab-pinned${homeActive ? ' on' : ''}${iconOnly ? ' tab-icononly' : ''}`}
-        style={homeActive ? { background: 'color-mix(in srgb, var(--dot) 16%, var(--card))', borderColor: 'color-mix(in srgb, var(--dot) 32%, var(--line))' } : undefined}
+        style={homeActive ? neutralActive : undefined}
         onClick={() => useTabs.getState().goHome()}
         title="Home"
       >
@@ -70,11 +70,11 @@ export function TabBar() {
 
       <button
         className={`tab tab-pinned tab-mywork${myworkActive ? ' on' : ''}${iconOnly ? ' tab-icononly' : ''}`}
-        style={myworkActive ? { background: `color-mix(in srgb, ${violet} 10%, var(--card))`, borderColor: `color-mix(in srgb, ${violet} 32%, var(--line))` } : undefined}
+        style={myworkActive ? neutralActive : undefined}
         onClick={() => useTabs.getState().openMyWork()}
         title="My Work — what to do next"
       >
-        <span className="tab-ic" style={{ background: tagBg('violet'), color: tagFg('violet') }}><Icon name="ti-target-arrow" /></span>
+        <span className="tab-ic"><Icon name="ti-target-arrow" /></span>
         {iconOnly ? null : <span className="tab-label">My Work</span>}
       </button>
 

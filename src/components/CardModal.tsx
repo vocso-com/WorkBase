@@ -465,7 +465,13 @@ export function CardModal({ inlineNode }: { inlineNode?: Node } = {}) {
               <label className={`cm-qp cm-qp-due${node.dueDate ? ' set' : ''}`}>
                 <Icon name="ti-clock" className="cm-qp-lead" />
                 <span>{node.dueDate || 'Due date'}</span>
-                <input type="date" aria-label="Due date" value={node.dueDate ?? ''} onChange={e => useStore.getState().patch(node.id, { dueDate: e.target.value })} />
+                <input
+                  type="date"
+                  aria-label="Due date"
+                  value={node.dueDate ?? ''}
+                  onClick={e => { try { (e.currentTarget as HTMLInputElement & { showPicker?: () => void }).showPicker?.() } catch { /* unsupported */ } }}
+                  onChange={e => useStore.getState().patch(node.id, { dueDate: e.target.value })}
+                />
               </label>
 
               <div className="cm-qp-wrap">
