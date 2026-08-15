@@ -4,18 +4,19 @@ import { useNudge } from '../hooks/useNudge'
 import { useTabs } from '../hooks/useTabs'
 import { DEFAULT_WORKSPACE_ID } from '../lib/serialize'
 import { goToNode } from '../lib/goto'
+import { focusMain, setWidgetVisible } from '../lib/desktopWidget'
 import { dueInfo } from '../lib/due'
 import { hex } from '../theme'
 import { Checkbox } from './ui/Checkbox'
 import { Icon } from './ui/Icon'
 
 /**
- * A small, sticky reminder / My Work nudge that floats in the bottom-right.
- * Shows overdue + due-today tasks (reminders) and, optionally, a soft My Work
- * summary. In the browser build it's an in-app overlay; the same component is
- * what a Tauri always-on-top window would render to sit above every app.
+ * A small, sticky reminder / My Work nudge. In the web build it floats in the
+ * bottom-right of the app; in the desktop build the same component fills a
+ * native always-on-top window (`standalone`) that sits above every app, so
+ * its actions target the main window instead of navigating in place.
  */
-export function NudgeWidget() {
+export function NudgeWidget({ standalone }: { standalone?: boolean } = {}) {
   const roots = useStore(s => s.doc.roots)
   const activeWs = useStore(s => s.doc.activeWorkspace)
   const profile = useStore(s => s.doc.profile)
@@ -31,20 +32,24 @@ export function NudgeWidget() {
 
   const hasReminders = remindersOn && reminders.length > 0
   const hasNudge = myWorkOn && work.total > 0
-  if (closed || (!hasReminders && !hasNudge)) return null
+  if ((!standalone && closed) || (!hasReminders && !hasNudge)) return null
 
-  const openNode = (id: string) => goToNode(id)
+  // In the desktop widget, actions hand off to the main window; in-app they
+  // navigate directly.
+  const openNode = (id: string) => { if (standalone) { void focusMain() } else { goToNode(id) } }
+  const openMyWork = () => { if (standalone) { void focusMain() } else { useTabs.getState().openMyWork() } }
+  const dismiss = () => { if (standalone) { void setWidgetVisible(false) } else { useNudge.getState().close() } }
 
   return (
-    <div className="nudge" role="status" aria-label="Reminders">
-      <div className="nudge-head">
+    <div className={`nudge${standalone ? ' nudge-standalone' : ''}`} role="status" aria-label="Reminders">
+      <div className="nudge-head" data-tauri-drag-region>
         <img className="nudge-logo" src="/workbase-logo.png" alt="" />
         <span className="nudge-title">{hasReminders ? 'Reminders' : 'My Work'}</span>
-        <button className="nudge-x" onClick={() => useNudge.getState().close()} aria-label="Dismiss"><Icon name="ti-x" /></button>
+        <button className="nudge-x" onClick={dismiss} aria-label="Dismiss"><Icon name="ti-x" /></button>
       </div>
 
       {hasNudge ? (
-        <button className="nudge-summary" onClick={() => useTabs.getState().openMyWork()}>
+        <button className="nudge-summary" onClick={openMyWork}>
           <span className="nudge-stat"><b>{work.overdue.length}</b> overdue</span>
           <span className="nudge-stat"><b>{work.today.length}</b> today</span>
           <span className="nudge-stat"><b>{work.focus.length || work.anytime.length}</b> ready</span>
@@ -70,7 +75,7 @@ export function NudgeWidget() {
             )
           })}
           {reminders.length > shown.length ? (
-            <button className="nudge-more" onClick={() => useTabs.getState().openMyWork()}>+{reminders.length - shown.length} more · Open My Work</button>
+            <button className="nudge-more" onClick={openMyWork}>+{reminders.length - shown.length} more · Open My Work</button>
           ) : null}
         </div>
       ) : null}

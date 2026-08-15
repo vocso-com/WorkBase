@@ -2,11 +2,20 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Default capabilities for Manage",
-  "windows": ["main"],
+  "windows": ["main", "widget"],
   "permissions": [
     "core:default",
     "dialog:default",
     "fs:default",
+    "core:webview:allow-create-webview-window",
+    "core:window:allow-show",
+    "core:window:allow-hide",
+    "core:window:allow-close",
+    "core:window:allow-set-focus",
+    "core:window:allow-set-position",
+    "core:window:allow-set-always-on-top",
+    "core:window:allow-outer-size",
+    "core:window:allow-current-monitor",
     {
       "identifier": "fs:allow-write-text-file",
       "allow": [

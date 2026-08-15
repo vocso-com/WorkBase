@@ -58,6 +58,7 @@ interface State {
   move: (id: string, newParentId: string | null, index: number) => void
   reorder: (parentId: string | null, from: number, to: number) => void
   replaceDoc: (doc: StoreDoc) => void
+  reload: () => Promise<void>
 }
 
 let timer: ReturnType<typeof setTimeout> | null = null
@@ -405,5 +406,10 @@ export const useStore = create<State>((set, get) => ({
   replaceDoc(doc) {
     set({ doc })
     schedulePersist(get)
+  },
+  // Re-read the document from disk without persisting — used by the reminder
+  // widget window to pick up changes made in the main window.
+  async reload() {
+    try { set({ doc: await get().adapter.load() }) } catch { /* keep current */ }
   },
 }))
