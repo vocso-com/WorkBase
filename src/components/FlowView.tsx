@@ -249,7 +249,7 @@ export function FlowView({ node }: { node: Node }) {
                 const my = (y1 + y2) / 2
                 d = `M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${y2}`
               }
-              return <path key={e.id} d={d} stroke={e.color} strokeWidth={2.5} fill="none" opacity={0.62} strokeLinecap="round" />
+              return <path key={e.id} d={d} stroke={e.color} strokeWidth={3} fill="none" opacity={0.8} strokeLinecap="round" />
             })}
           </svg>
           {layout.nodes.map(fn => (
@@ -372,7 +372,7 @@ function FlowNodeCard({ fn, stages, pos, dragging, isDropTarget, onPointerDown, 
     )
   }
 
-  if (depth === 1) {
+  if (depth === 1 && node.children.length > 0) {
     const total = leaves(node).filter(l => l.id !== node.id).length
     const done = statusCounts(node).done
     return (
