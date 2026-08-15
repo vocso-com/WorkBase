@@ -32,6 +32,7 @@ interface State {
   saveAsTemplate: (nodeId: string) => string | null
   deleteTemplate: (id: string) => void
   addChildNode: (parentId: string, title: string) => string
+  quickAddTask: (title: string, dueDate?: string) => string
   logActivity: (id: string, text: string) => void
   rename: (id: string, title: string) => void
   setStatus: (id: string, status: Status) => void
@@ -180,6 +181,20 @@ export const useStore = create<State>((set, get) => ({
     get().logActivity(parentId, `Added “${title.trim()}”`)
     schedulePersist(get)
     return node.id
+  },
+  quickAddTask(title, dueDate) {
+    const ws = get().doc.activeWorkspace
+    const existing = get().doc.roots.find(r => r.title === 'Inbox' && (r.workspace ?? DEFAULT_WORKSPACE_ID) === ws)
+    let inboxId: string
+    if (existing) {
+      inboxId = existing.id
+    } else {
+      inboxId = get().addProject('Inbox')
+      get().patch(inboxId, { icon: 'ti-inbox' })
+    }
+    const id = get().addChildNode(inboxId, title)
+    if (dueDate) get().patch(id, { dueDate })
+    return id
   },
   logActivity(id, text) {
     const n = findNode(get().doc.roots, id)

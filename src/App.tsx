@@ -16,7 +16,11 @@ import { NudgeWidget } from './components/NudgeWidget'
 import { VerifyNudge } from './components/VerifyNudge'
 import { ConfirmDialog } from './components/ConfirmDialog'
 import { useOnboarding } from './hooks/useOnboarding'
-import { useNewProject } from './hooks/useNewProject'
+import { useQuickCapture } from './hooks/useQuickCapture'
+import { QuickCapture } from './components/QuickCapture'
+import { buildWork } from './lib/execution'
+import { setDockBadge } from './lib/desktopWidget'
+import { DEFAULT_WORKSPACE_ID } from './lib/serialize'
 import { exportDoc, importDoc } from './lib/transfer'
 import { isTauri } from './lib/platform'
 import { initRouter } from './lib/router'
@@ -42,10 +46,18 @@ export default function App() {
     void (async () => {
       const { listen } = await import('@tauri-apps/api/event')
       const { QUICK_ADD_EVENT } = await import('./lib/desktopWidget')
-      un = await listen(QUICK_ADD_EVENT, () => useNewProject.getState().show())
+      un = await listen(QUICK_ADD_EVENT, () => useQuickCapture.getState().show())
     })()
     return () => un?.()
   }, [])
+  // Ambient dock badge: overdue + due-today count for the active WorkBase.
+  const activeWs = useStore(s => s.doc.activeWorkspace)
+  const badge = (() => {
+    if (!ready) return 0
+    const w = buildWork(roots.filter(r => (r.workspace ?? DEFAULT_WORKSPACE_ID) === activeWs))
+    return w.overdue.length + w.today.length
+  })()
+  useEffect(() => { void setDockBadge(badge) }, [badge])
 
   if (!ready) return <div style={{ padding: 40, color: 'var(--muted)' }}>Loading…</div>
 
@@ -84,6 +96,7 @@ export default function App() {
       </div>
       <CardModal />
       <NewProjectModal />
+      <QuickCapture />
       <SettingsModal />
       <SearchPalette />
       <ActivityFeed />

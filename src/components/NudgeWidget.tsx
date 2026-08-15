@@ -4,7 +4,7 @@ import { buildWork } from '../lib/execution'
 import { useStore } from '../store/useStore'
 import { useNudge } from '../hooks/useNudge'
 import { useTabs } from '../hooks/useTabs'
-import { useNewProject } from '../hooks/useNewProject'
+import { useQuickCapture } from '../hooks/useQuickCapture'
 import { DEFAULT_WORKSPACE_ID } from '../lib/serialize'
 import { goToNode } from '../lib/goto'
 import { focusMain, setWidgetVisible, quickAddFromWidget } from '../lib/desktopWidget'
@@ -86,7 +86,7 @@ export function NudgeWidget({ standalone }: { standalone?: boolean } = {}) {
   const openMyWork = () => { if (standalone) { void focusMain() } else { useTabs.getState().openMyWork() } }
   const dismiss = () => { if (standalone) { void setWidgetVisible(false) } else { useNudge.getState().close() } }
   const toggle = () => useNudge.getState().toggleCollapsed()
-  const quickAdd = () => { if (standalone) { void quickAddFromWidget() } else { useNewProject.getState().show() } }
+  const quickAdd = () => { if (standalone) { void quickAddFromWidget() } else { useQuickCapture.getState().show() } }
 
   return (
     <div className={`nudge${standalone ? ' nudge-standalone' : ''}${collapsed ? ' is-collapsed' : ''}${celebrate ? ' is-celebrating' : ''}`} role="status" aria-label="Reminders">

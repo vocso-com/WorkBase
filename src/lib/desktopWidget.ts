@@ -96,6 +96,17 @@ export async function quickAddFromWidget(): Promise<void> {
   }
 }
 
+/** Ambient dock/taskbar badge with the overdue + due-today count (0 clears it). */
+export async function setDockBadge(count: number): Promise<void> {
+  if (!isTauri()) return
+  try {
+    const { getCurrentWindow } = await import('@tauri-apps/api/window')
+    await getCurrentWindow().setBadgeCount(count > 0 ? count : undefined)
+  } catch (e) {
+    console.error('WorkBase: could not set dock badge', e)
+  }
+}
+
 /** From the MAIN window: reveal the reminder widget (used by the in-app toggle). */
 export async function showWidgetFromMain(): Promise<void> {
   if (!isTauri()) return

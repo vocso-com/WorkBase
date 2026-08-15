@@ -537,6 +537,28 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
   opacity:0;transition:opacity .12s,background .12s,color .12s;}
 .nudge-card:hover .nudge-snooze{opacity:1;}
 .nudge-snooze:hover{background:var(--btn);color:var(--ink);}
+/* Quick capture palette */
+.qc-backdrop{position:fixed;inset:0;z-index:1400;background:color-mix(in srgb,var(--ink) 22%,transparent);
+  display:flex;align-items:flex-start;justify-content:center;padding-top:16vh;animation:qc-fade .12s ease;}
+@keyframes qc-fade{from{opacity:0}to{opacity:1}}
+.qc{width:min(520px,92vw);background:var(--card);border:1px solid var(--edge);border-radius:16px;box-shadow:var(--shadow-hover);
+  padding:16px;animation:nudge-in .16s ease;}
+.qc-head{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:11px;text-transform:uppercase;letter-spacing:.04em;}
+.qc-head .ti{font-size:16px;color:var(--violet);}
+.qc-head span{color:var(--faint);font-weight:600;}
+.qc-input{width:100%;box-sizing:border-box;border:none;background:none;font:inherit;font-size:19px;font-weight:600;color:var(--ink);outline:none;padding:2px 0;}
+.qc-input::placeholder{color:var(--faint);font-weight:500;}
+.qc-preview{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:13px;}
+.qc-preview-title{color:var(--ink);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.qc-preview-due{display:inline-flex;align-items:center;gap:4px;flex-shrink:0;font-weight:700;color:var(--violet);
+  background:color-mix(in srgb,var(--violet) 12%,var(--card));padding:3px 9px;border-radius:20px;}
+.qc-preview-due .ti{font-size:14px;}
+.qc-hint{margin-top:12px;font-size:12px;color:var(--faint);}
+.qc-actions{display:flex;align-items:center;gap:9px;margin-top:16px;}
+.qc-add{border:none;background:var(--violet);color:#fff;font:inherit;font-size:13.5px;font-weight:650;padding:9px 16px;border-radius:9px;cursor:pointer;box-shadow:var(--shadow-flat);}
+.qc-add:hover{filter:brightness(1.06);}
+.qc-add:disabled{opacity:.5;cursor:default;filter:none;}
+.qc-actions kbd{font-size:11px;color:var(--faint);background:var(--chip);border-radius:5px;padding:2px 6px;}
 /* Standalone (native always-on-top window): a floating rounded card. The
    window itself is transparent so only the card shows, with real rounded
    corners; a small margin gives room for the drop shadow. */
@@ -641,10 +663,10 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .mw-list{display:flex;flex-direction:column;gap:7px;}
 .mw-row{display:flex;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:12px 14px;box-shadow:var(--card-shadow);transition:box-shadow .14s ease;}
 .mw-row:hover{box-shadow:var(--card-shadow-h);}
-.mw-projdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-right:10px;margin-top:5px;}
-/* Tick hidden by default; on hover it expands and pushes the body right. */
-.mw-check{display:inline-flex;flex-shrink:0;overflow:hidden;width:0;margin-right:0;opacity:0;margin-top:1px;transition:width .14s ease,margin-right .14s ease,opacity .12s;}
-.mw-row:hover .mw-check,.mw-row-done .mw-check{width:18px;margin-right:8px;opacity:1;}
+.mw-projdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-right:10px;margin-top:6px;}
+/* Tick always present (faint), so it's never missed; solid on hover/done. */
+.mw-check{display:inline-flex;flex-shrink:0;width:18px;margin-right:9px;margin-top:1px;opacity:.4;transition:opacity .12s ease;}
+.mw-row:hover .mw-check,.mw-row-done .mw-check{opacity:1;}
 .mw-body{flex:1;min-width:0;cursor:pointer;display:flex;flex-direction:column;gap:5px;}
 .mw-line1{display:flex;align-items:center;gap:9px;}
 .mw-line2{display:flex;align-items:center;gap:8px;min-width:0;}
