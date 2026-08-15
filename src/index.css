@@ -323,8 +323,9 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .check-drill-btn:hover{color:var(--ink);background:var(--chip);}
 
 /* Kanban board — Trello-style depth */
-.board{margin:-16px -32px -24px;padding:16px 32px 24px;min-height:calc(100vh - 108px);overflow-x:auto;
-  background:linear-gradient(180deg, color-mix(in srgb, var(--board-accent,var(--blue)) 12%, var(--board)) 0%, var(--board) 70%);}
+/* Transparent so the tinted dotted canvas from .proj-page shows through,
+   matching the Board view exactly. */
+.board{margin:-16px -32px -24px;padding:16px 32px 24px;min-height:calc(100vh - 108px);overflow-x:auto;background:transparent;}
 .kb{display:grid;grid-template-columns:repeat(4,minmax(212px,1fr));gap:13px;align-items:start;}
 .col{background:color-mix(in srgb, var(--card) 86%, transparent);
   border-radius:13px;padding:8px 8px 10px;min-height:90px;border:1px solid color-mix(in srgb, var(--ink) 5%, var(--line));
