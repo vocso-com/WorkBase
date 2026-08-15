@@ -786,6 +786,9 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .onb-field span{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;}
 .onb-field input{width:100%;box-sizing:border-box;font:inherit;font-size:14px;color:var(--ink);background:var(--card);border:1px solid var(--edge);border-radius:10px;padding:10px 12px;transition:border-color .12s,box-shadow .12s;}
 .onb-field input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 16%,transparent);}
+.onb-field select{width:100%;box-sizing:border-box;font:inherit;font-size:14px;color:var(--ink);background:var(--card);border:1px solid var(--edge);border-radius:10px;padding:10px 12px;cursor:pointer;transition:border-color .12s,box-shadow .12s;}
+.onb-field select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 16%,transparent);}
+.onb-opt{font-weight:500;color:var(--faint);text-transform:none;}
 .onb-code{letter-spacing:.4em;font-size:18px!important;font-weight:600;text-align:center;font-variant-numeric:tabular-nums;}
 .onb-demo{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);background:var(--chip);border-radius:9px;padding:9px 11px;margin-bottom:14px;text-align:left;line-height:1.4;}
 .onb-demo .ti{font-size:16px;flex-shrink:0;}

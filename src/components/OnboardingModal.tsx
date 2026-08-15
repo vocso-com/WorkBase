@@ -20,6 +20,8 @@ export function OnboardingModal() {
   const [step, setStep] = useState<'info' | 'verify'>('info')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [org, setOrg] = useState('')
+  const [userType, setUserType] = useState('')
   const [code, setCode] = useState('')
   const [demo, setDemo] = useState('')
   const [err, setErr] = useState('')
@@ -30,6 +32,8 @@ export function OnboardingModal() {
     if (!open) return
     setName(profile?.userName ?? '')
     setEmail(profile?.userEmail ?? '')
+    setOrg(profile?.orgName ?? '')
+    setUserType(profile?.userType ?? '')
     setCode('')
     setErr('')
     setDemo('')
@@ -43,8 +47,8 @@ export function OnboardingModal() {
     const e = email.trim()
     if (!EMAIL_RE.test(e)) { setErr('Enter a valid email address.'); return }
     setBusy(true); setErr('')
-    useStore.getState().setProfile({ userName: name.trim() || undefined, userEmail: e })
-    const r = await requestCode(e)
+    useStore.getState().setProfile({ userName: name.trim() || undefined, userEmail: e, orgName: org.trim() || undefined, userType: userType || undefined })
+    const r = await requestCode(e, { name: name.trim(), org: org.trim(), userType })
     setBusy(false)
     if (!r.ok) { setErr(r.error ?? 'Could not send the code.'); return }
     setDemo(r.demoCode ?? '')
@@ -98,7 +102,21 @@ export function OnboardingModal() {
               <span>Email</span>
               <input ref={emailRef} type="email" value={email} onChange={e => { setEmail(e.target.value); setErr('') }}
                 placeholder="you@company.com"
-                onKeyDown={e => { if (e.key === 'Enter') sendCode() }} />
+                onKeyDown={e => { if (e.key === 'Enter') void sendCode() }} />
+            </label>
+            <label className="onb-field">
+              <span>Organization <span className="onb-opt">(optional)</span></span>
+              <input value={org} onChange={e => setOrg(e.target.value)} placeholder="Acme Studio" />
+            </label>
+            <label className="onb-field">
+              <span>You are… <span className="onb-opt">(optional)</span></span>
+              <select value={userType} onChange={e => setUserType(e.target.value)}>
+                <option value="">Select one…</option>
+                <option value="agency">An agency</option>
+                <option value="consultant">A consultant / freelancer</option>
+                <option value="inhouse">An in-house team</option>
+                <option value="personal">Personal use</option>
+              </select>
             </label>
             {err ? <div className="onb-err">{err}</div> : null}
             <button className="onb-primary" onClick={() => void sendCode()} disabled={busy}>{busy ? 'Sending…' : 'Continue'}</button>

@@ -62,17 +62,19 @@ export async function positionWidget(): Promise<void> {
 export async function fitWidget(w: number, h: number): Promise<void> {
   if (!isTauri()) return
   try {
-    const { getCurrentWindow, currentMonitor } = await import('@tauri-apps/api/window')
-    const { LogicalSize, PhysicalPosition } = await import('@tauri-apps/api/dpi')
+    const { getCurrentWindow } = await import('@tauri-apps/api/window')
+    const { LogicalSize, LogicalPosition } = await import('@tauri-apps/api/dpi')
     const win = getCurrentWindow()
     await win.setSize(new LogicalSize(w, h))
-    const mon = await currentMonitor()
-    if (!mon) return
-    const size = await win.outerSize()
-    const margin = Math.round(18 * mon.scaleFactor)
-    const x = mon.position.x + mon.size.width - size.width - margin
-    const y = mon.position.y + mon.size.height - size.height - margin
-    await win.setPosition(new PhysicalPosition(Math.round(x), Math.round(y)))
+    // `screen.avail*` is in logical (CSS) pixels and already excludes the macOS
+    // Dock and menu bar, so docking to its bottom-right sits neatly above the
+    // Dock instead of behind it.
+    const s = window.screen as Screen & { availLeft?: number; availTop?: number }
+    const margin = 16
+    const x = (s.availLeft ?? 0) + s.availWidth - w - margin
+    const y = (s.availTop ?? 0) + s.availHeight - h - margin
+    await win.setAlwaysOnTop(true)
+    await win.setPosition(new LogicalPosition(Math.round(x), Math.round(y)))
   } catch (e) {
     console.error('WorkBase: could not fit widget', e)
   }
