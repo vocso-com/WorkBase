@@ -10,6 +10,7 @@ import { useDetail } from '../hooks/useDetail'
 import { useView, type ViewKind } from '../hooks/useView'
 import { useNewProject } from '../hooks/useNewProject'
 import { useSearch } from '../hooks/useSearch'
+import { useActivityFeed } from '../hooks/useActivityFeed'
 import { useTabs } from '../hooks/useTabs'
 import { useVocab } from '../hooks/useVocab'
 import { AvatarMenu } from './AvatarMenu'
@@ -62,6 +63,9 @@ export function AppHeader({
         <TabBar />
         <div className="phead-fill" />
 
+        <button className="iconbtn" onClick={() => useActivityFeed.getState().toggle()} title="Activity" aria-label="Activity">
+          <Icon name="ti-history" />
+        </button>
         <button className="searchbtn" onClick={() => useSearch.getState().show()} title="Search (⌘K)">
           <Icon name="ti-search" />
           <span className="searchbtn-txt">Search</span>

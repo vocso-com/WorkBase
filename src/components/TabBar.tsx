@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef, useState } from 'react'
 import { useStore } from '../store/useStore'
 import { useTabs } from '../hooks/useTabs'
 import { findNode } from '../lib/tree'
+import { DEFAULT_WORKSPACE_ID } from '../lib/serialize'
 import { hex } from '../theme'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { Icon } from './ui/Icon'
@@ -55,6 +56,10 @@ export function TabBar() {
   const myworkActive = active?.kind === 'mywork'
   const iconOnly = projectTabs.length >= 3
   const neutralActive = { background: 'color-mix(in srgb, var(--dot) 16%, var(--card))', borderColor: 'color-mix(in srgb, var(--dot) 32%, var(--line))' }
+  // My Work is pointless in an empty WorkBase — hide it until there's a project
+  // (unless you're already on it).
+  const wsHasProjects = roots.some(r => (r.workspace ?? DEFAULT_WORKSPACE_ID) === activeWorkspace)
+  const showMyWork = wsHasProjects || myworkActive
 
   return (
     <div className="tabbar" ref={barRef}>
@@ -68,15 +73,17 @@ export function TabBar() {
         {iconOnly ? null : <span className="tab-label">Home</span>}
       </button>
 
-      <button
-        className={`tab tab-pinned tab-mywork${myworkActive ? ' on' : ''}${iconOnly ? ' tab-icononly' : ''}`}
-        style={myworkActive ? neutralActive : undefined}
-        onClick={() => useTabs.getState().openMyWork()}
-        title="My Work — what to do next"
-      >
-        <span className="tab-ic"><Icon name="ti-target-arrow" /></span>
-        {iconOnly ? null : <span className="tab-label">My Work</span>}
-      </button>
+      {showMyWork ? (
+        <button
+          className={`tab tab-pinned tab-mywork${myworkActive ? ' on' : ''}${iconOnly ? ' tab-icononly' : ''}`}
+          style={myworkActive ? neutralActive : undefined}
+          onClick={() => useTabs.getState().openMyWork()}
+          title="My Work — what to do next"
+        >
+          <span className="tab-ic"><Icon name="ti-target-arrow" /></span>
+          {iconOnly ? null : <span className="tab-label">My Work</span>}
+        </button>
+      ) : null}
 
       <div className={`tab-scroll${edges.l ? ' fade-l' : ''}${edges.r ? ' fade-r' : ''}`} ref={scrollRef}>
         {projectTabs.map(t => {

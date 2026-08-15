@@ -6,6 +6,7 @@ import { useStore } from '../store/useStore'
 import { useDetail } from '../hooks/useDetail'
 import { useNav } from '../hooks/useNav'
 import { findNode, findParent, leaves, pathTo } from '../lib/tree'
+import { ago, fmtDate } from '../lib/time'
 import { CHECKLIST_TEMPLATES } from '../lib/templates'
 import { progressOf } from '../lib/progress'
 import { linkifyText } from '../lib/linkify'
@@ -24,18 +25,6 @@ const PRIORITIES: Priority[] = ['low', 'med', 'high']
 
 const SWATCHES: ColorKey[] = ['blue', 'indigo', 'violet', 'pink', 'coral', 'red', 'amber', 'lime', 'teal', 'cyan', 'slate', 'gray']
 
-function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
-}
-
-function ago(iso: string): string {
-  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
-  if (s < 45) return 'just now'
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`
-  if (s < 86400) return `${Math.floor(s / 3600)}h ago`
-  if (s < 604800) return `${Math.floor(s / 86400)}d ago`
-  return new Date(iso).toLocaleDateString()
-}
 
 // Renders the full card detail. As the app's singleton overlay when driven by
 // useDetail.openId, or inline in the page (Outline view) when given `inlineNode`.

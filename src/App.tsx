@@ -11,6 +11,7 @@ import { NewProjectModal } from './components/NewProjectModal'
 import { SettingsModal } from './components/SettingsModal'
 import { OnboardingModal } from './components/OnboardingModal'
 import { SearchPalette } from './components/SearchPalette'
+import { ActivityFeed } from './components/ActivityFeed'
 import { VerifyNudge } from './components/VerifyNudge'
 import { ConfirmDialog } from './components/ConfirmDialog'
 import { useOnboarding } from './hooks/useOnboarding'
@@ -71,6 +72,7 @@ export default function App() {
       <NewProjectModal />
       <SettingsModal />
       <SearchPalette />
+      <ActivityFeed />
       <OnboardingModal />
       <ConfirmDialog />
     </div>
