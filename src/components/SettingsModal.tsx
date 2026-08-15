@@ -112,6 +112,21 @@ export function SettingsModal() {
           </div>
 
           <div className="set-sec">
+            <div className="set-sec-h">Desktop nudge</div>
+            <div className="set-hint">A small sticky card in the bottom-right corner.</div>
+            <label className="set-toggle">
+              <input type="checkbox" checked={profile?.nudgeReminders !== false} onChange={e => useStore.getState().setProfile({ nudgeReminders: e.target.checked })} />
+              <span className="set-toggle-track"><span className="set-toggle-knob" /></span>
+              <span className="set-toggle-txt"><b>Reminders</b><span>Overdue &amp; due-today tasks</span></span>
+            </label>
+            <label className="set-toggle">
+              <input type="checkbox" checked={!!profile?.nudgeMyWork} onChange={e => useStore.getState().setProfile({ nudgeMyWork: e.target.checked })} />
+              <span className="set-toggle-track"><span className="set-toggle-knob" /></span>
+              <span className="set-toggle-txt"><b>My Work nudge</b><span>A soft summary of what to do next</span></span>
+            </label>
+          </div>
+
+          <div className="set-sec">
             <div className="set-sec-h">Cloud image storage (Cloudflare R2)</div>
             <label className="modal-field"><span>Worker URL</span>
               <input value={endpoint} onChange={e => setEndpoint(e.target.value)} placeholder="https://manage-uploads.you.workers.dev" />

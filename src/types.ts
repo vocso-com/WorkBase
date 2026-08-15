@@ -114,6 +114,10 @@ export interface Profile {
   // First-run account info.
   userEmail?: string
   emailVerified?: boolean
+  // Desktop nudge / reminder widget. `nudgeReminders` shows overdue + due-today
+  // tasks (default on); `nudgeMyWork` adds a soft My Work summary (default off).
+  nudgeReminders?: boolean
+  nudgeMyWork?: boolean
 }
 
 export interface StoreDoc {

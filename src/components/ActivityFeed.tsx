@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useActivityFeed } from '../hooks/useActivityFeed'
 import { useStore } from '../store/useStore'
 import { collectActivity } from '../lib/activity'
@@ -14,9 +14,11 @@ export function ActivityFeed() {
   const open = useActivityFeed(s => s.open)
   const roots = useStore(s => s.doc.roots)
   const activeWs = useStore(s => s.doc.activeWorkspace)
+  const [count, setCount] = useState(50)
 
   useEffect(() => {
     if (!open) return
+    setCount(50)
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') useActivityFeed.getState().hide() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -25,7 +27,8 @@ export function ActivityFeed() {
   if (!open) return null
 
   const wsRoots = roots.filter(r => (r.workspace ?? DEFAULT_WORKSPACE_ID) === activeWs)
-  const entries = collectActivity(wsRoots)
+  const all = collectActivity(wsRoots)
+  const entries = all.slice(0, count)
 
   const openNode = (id: string) => { useActivityFeed.getState().hide(); goToNode(id) }
 
@@ -51,6 +54,9 @@ export function ActivityFeed() {
               </button>
             ))
           )}
+          {all.length > count ? (
+            <button className="af-more" onClick={() => setCount(c => c + 50)}>Load more ({all.length - count} older)</button>
+          ) : null}
         </div>
       </aside>
     </div>

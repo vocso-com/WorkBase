@@ -470,6 +470,47 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .af-text{font-size:13px;color:var(--ink);line-height:1.35;}
 .af-ctx{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .af-time{font-size:11px;color:var(--faint);flex-shrink:0;font-variant-numeric:tabular-nums;margin-top:1px;}
+.af-more{display:block;width:calc(100% - 12px);margin:6px;border:1px solid var(--edge);background:var(--card);cursor:pointer;font:inherit;
+  font-size:12.5px;font-weight:600;color:var(--muted);padding:9px;border-radius:9px;transition:border-color .12s,color .12s;}
+.af-more:hover{border-color:var(--edge-h);color:var(--ink);}
+
+/* Settings toggle */
+.set-toggle{display:flex;align-items:center;gap:12px;cursor:pointer;padding:8px 2px;}
+.set-toggle input{position:absolute;opacity:0;width:0;height:0;}
+.set-toggle-track{width:38px;height:22px;border-radius:20px;background:var(--edge);position:relative;flex-shrink:0;transition:background .16s;}
+.set-toggle-knob{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:var(--shadow-crisp);transition:transform .16s;}
+.set-toggle input:checked + .set-toggle-track{background:var(--blue);}
+.set-toggle input:checked + .set-toggle-track .set-toggle-knob{transform:translateX(16px);}
+.set-toggle-txt{display:flex;flex-direction:column;gap:1px;}
+.set-toggle-txt b{font-size:13.5px;font-weight:600;color:var(--ink);}
+.set-toggle-txt span{font-size:12px;color:var(--muted);}
+
+/* Desktop nudge / reminder widget */
+.nudge{position:fixed;right:20px;bottom:20px;width:320px;max-width:calc(100vw - 40px);z-index:1300;background:var(--card);
+  border:1px solid var(--edge);border-radius:14px;box-shadow:var(--shadow-hover);overflow:hidden;animation:nudge-in .2s ease;}
+@keyframes nudge-in{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
+.nudge-head{display:flex;align-items:center;gap:9px;padding:11px 12px;border-bottom:1px solid var(--line);}
+.nudge-logo{width:22px;height:22px;border-radius:6px;object-fit:contain;background:#000;padding:2px;box-sizing:border-box;}
+.nudge-title{font-size:13.5px;font-weight:700;color:var(--ink);flex:1;}
+.nudge-x{border:none;background:none;cursor:pointer;color:var(--muted);display:inline-flex;padding:3px;border-radius:6px;font-size:15px;}
+.nudge-x:hover{background:var(--btn);color:var(--ink);}
+.nudge-summary{display:flex;align-items:center;gap:14px;width:100%;border:none;background:none;cursor:pointer;padding:10px 12px;border-bottom:1px solid var(--line);font:inherit;}
+.nudge-summary:hover{background:var(--btn);}
+.nudge-stat{font-size:12px;color:var(--muted);}
+.nudge-stat b{font-size:14px;font-weight:700;color:var(--ink);margin-right:3px;}
+.nudge-summary .ti{margin-left:auto;color:var(--faint);}
+.nudge-list{padding:5px;display:flex;flex-direction:column;gap:1px;max-height:min(46vh,320px);overflow-y:auto;}
+.nudge-row{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:9px;}
+.nudge-row:hover{background:var(--btn);}
+.nudge-check{display:inline-flex;flex-shrink:0;}
+.nudge-item{flex:1;min-width:0;border:none;background:none;cursor:pointer;text-align:left;padding:0;display:flex;flex-direction:column;gap:1px;}
+.nudge-item-title{font-size:13px;font-weight:550;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.nudge-item-sub{font-size:11px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;}
+.nudge-item-sub::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--pc,var(--dot));flex-shrink:0;}
+.nudge-due{font-size:11px;font-weight:700;flex-shrink:0;font-variant-numeric:tabular-nums;}
+.nudge-due-overdue{color:var(--red);} .nudge-due-today,.nudge-due-soon{color:var(--amber);} .nudge-due-upcoming{color:var(--muted);}
+.nudge-more{border:none;background:none;cursor:pointer;font:inherit;font-size:12px;font-weight:600;color:var(--blue);padding:8px;text-align:center;}
+.nudge-more:hover{text-decoration:underline;}
 .searchbtn:hover{border-color:var(--edge-h);color:var(--ink);}
 .searchbtn .ti{font-size:16px;}
 .searchbtn-kbd{font-size:11px;font-weight:600;color:var(--faint);background:var(--chip);border-radius:5px;padding:1px 5px;font-family:inherit;}

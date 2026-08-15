@@ -12,6 +12,7 @@ import { SettingsModal } from './components/SettingsModal'
 import { OnboardingModal } from './components/OnboardingModal'
 import { SearchPalette } from './components/SearchPalette'
 import { ActivityFeed } from './components/ActivityFeed'
+import { NudgeWidget } from './components/NudgeWidget'
 import { VerifyNudge } from './components/VerifyNudge'
 import { ConfirmDialog } from './components/ConfirmDialog'
 import { useOnboarding } from './hooks/useOnboarding'
@@ -75,6 +76,7 @@ export default function App() {
       <ActivityFeed />
       <OnboardingModal />
       <ConfirmDialog />
+      <NudgeWidget />
     </div>
   )
 }

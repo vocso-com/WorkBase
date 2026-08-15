@@ -14,7 +14,7 @@ export interface ActivityEntry {
  * Flatten every node's activity log across `roots` into one reverse-chronological
  * feed. Cheap enough to compute on open.
  */
-export function collectActivity(roots: Node[], limit = 150): ActivityEntry[] {
+export function collectActivity(roots: Node[]): ActivityEntry[] {
   const out: ActivityEntry[] = []
   const walk = (n: Node, rootTitle: string, rootColor: string) => {
     for (const a of n.activities ?? []) {
@@ -24,5 +24,5 @@ export function collectActivity(roots: Node[], limit = 150): ActivityEntry[] {
   }
   roots.forEach(r => walk(r, r.title, r.color ?? 'gray'))
   out.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0))
-  return out.slice(0, limit)
+  return out
 }
