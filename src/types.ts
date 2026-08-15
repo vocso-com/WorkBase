@@ -61,6 +61,9 @@ export interface Node {
   description?: string
   priority?: Priority
   dueDate?: string
+  // Ids of nodes this one is blocked by. Optional and opt-in: absent means no
+  // dependencies and the app behaves exactly as before.
+  dependsOn?: string[]
   tags?: Tag[]
   notes?: string
   comments?: Comment[]

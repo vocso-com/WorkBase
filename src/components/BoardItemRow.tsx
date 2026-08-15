@@ -4,6 +4,7 @@ import type { Node } from '../types'
 import { leaves, pathTo } from '../lib/tree'
 import { statusCounts } from '../lib/progress'
 import { dueInfo } from '../lib/due'
+import { isBlocked } from '../lib/deps'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { useStore } from '../store/useStore'
 import { useNav } from '../hooks/useNav'
@@ -17,6 +18,7 @@ import { DueChip } from './DueChip'
 // to reorder within its card, moved to another card, or dropped onto a card
 // header to nest. The drag grip is a dedicated handle so row clicks still work.
 export function BoardItemRow({ child, color, parentId }: { child: Node; color: string; parentId: string }) {
+  const roots = useStore(s => s.doc.roots)
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: child.id,
     data: { type: 'item', parentId },
@@ -64,6 +66,7 @@ export function BoardItemRow({ child, color, parentId }: { child: Node; color: s
   }
 
   const overdue = child.status !== 'done' && dueInfo(child.dueDate)?.tone === 'overdue'
+  const blocked = child.dependsOn?.length ? isBlocked(roots, child) : false
   const state = child.status === 'done' ? 'done' : overdue ? 'overdue' : ''
   return (
     <div
@@ -80,6 +83,7 @@ export function BoardItemRow({ child, color, parentId }: { child: Node; color: s
       </span>
       <DueChip dueDate={child.dueDate} />
       {(child.tags ?? []).map(t => <Tag key={t.name} tag={t} />)}
+      {blocked ? <span className="row-blocked" title="Blocked by an unfinished dependency"><Icon name="ti-lock" /> Blocked</span> : null}
       {child.status === 'blocked' ? (
         <span className="mini" style={{ background: tagBg('red'), color: tagFg('red') }}>Blocked</span>
       ) : null}

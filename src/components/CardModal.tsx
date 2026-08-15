@@ -15,6 +15,7 @@ import { askConfirm } from '../hooks/useConfirm'
 import { RichText } from './RichText'
 import { ChecklistTree } from './ChecklistTree'
 import { ProgressBar } from './ui/ProgressBar'
+import { Dependencies } from './Dependencies'
 import { Icon } from './ui/Icon'
 import { Tag } from './ui/Tag'
 import { Checkbox } from './ui/Checkbox'
@@ -528,6 +529,8 @@ export function CardModal({ inlineNode }: { inlineNode?: Node } = {}) {
                 ) : null}
               </div>
             </div>
+
+            <Dependencies node={node} />
 
             <section className="cm-sec">
               <div className="cm-sec-h"><Icon name="ti-align-left" /> Description</div>

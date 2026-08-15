@@ -6,6 +6,7 @@ import { tagBg, tagFg } from '../lib/colorMode'
 import { useStore } from '../store/useStore'
 import { useDetail } from '../hooks/useDetail'
 import { toText } from '../lib/text'
+import { isBlocked } from '../lib/deps'
 import { Tag } from './ui/Tag'
 import { Icon } from './ui/Icon'
 import { Checkbox } from './ui/Checkbox'
@@ -17,6 +18,8 @@ export function TaskCard({ node, color }: { node: Node; color: string; label?: s
   const tags = node.tags ?? []
   const attachCount = node.attachments?.length ?? 0
   const hasDesc = !!toText(node.description).trim()
+  const roots = useStore(s => s.doc.roots)
+  const blocked = node.dependsOn?.length ? isBlocked(roots, node) : false
   const done = node.status === 'done'
   const initial = node.title.trim().charAt(0).toUpperCase() || '?'
   const base = CSS.Translate.toString(transform)
@@ -46,6 +49,7 @@ export function TaskCard({ node, color }: { node: Node; color: string; label?: s
         </div>
       </div>
       <div className="meta">
+        {blocked ? <span className="tblocked" title="Blocked by an unfinished dependency"><Icon name="ti-lock" /> Blocked</span> : null}
         {node.priority ? (
           <span className="tprio" style={{ background: tagBg(PRIORITY_META[node.priority].color), color: tagFg(PRIORITY_META[node.priority].color) }}>
             {PRIORITY_META[node.priority].label}
