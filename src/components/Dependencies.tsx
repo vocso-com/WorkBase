@@ -109,7 +109,7 @@ export function Dependencies({ node }: { node: Node }) {
 
       {deps.length > 0 ? (
         <div className="dep-group">
-          <div className="dep-label">Blocked by</div>
+          <div className="dep-label">{isBlocked ? 'Blocked by' : 'Depends on'}</div>
           {deps.map(d => (
             <DepChip key={d.id} n={d} onGo={() => goToNode(d.id)} onRemove={() => useStore.getState().removeDependency(node.id, d.id)} />
           ))}

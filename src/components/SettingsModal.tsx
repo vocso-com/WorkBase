@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { getCloud, setCloud, uploadFile } from '../lib/uploads'
+import { useEffect } from 'react'
+import { uploadFile } from '../lib/uploads'
 import { useStore } from '../store/useStore'
 import { useSettings } from '../hooks/useSettings'
 import { VOCAB, VOCAB_KEYS } from '../lib/vocab'
@@ -16,16 +16,9 @@ export function SettingsModal() {
   const open = useSettings(s => s.open)
   const hide = useSettings(s => s.hide)
   const profile = useStore(s => s.doc.profile)
-  const [endpoint, setEndpoint] = useState('')
-  const [token, setToken] = useState('')
-  const [saved, setSaved] = useState(false)
 
   useEffect(() => {
     if (!open) return
-    const c = getCloud()
-    setEndpoint(c?.endpoint ?? '')
-    setToken(c?.token ?? '')
-    setSaved(false)
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') hide() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -42,7 +35,6 @@ export function SettingsModal() {
       useStore.getState().setProfile({ [key]: url })
     } catch (err) { alert((err as Error).message) }
   }
-  const saveCloud = () => { setCloud(endpoint.trim() ? { endpoint, token } : null); setSaved(true); setTimeout(() => setSaved(false), 1500) }
 
   return (
     <div className="modal-overlay" onClick={hide}>
@@ -50,7 +42,7 @@ export function SettingsModal() {
         <div className="modal-head">
           <div>
             <div className="modal-title">Settings</div>
-            <div className="modal-desc">Profile, workspace, and image storage.</div>
+            <div className="modal-desc">Profile, reminders, and privacy.</div>
           </div>
           <button className="modal-x" onClick={hide} aria-label="Close"><Icon name="ti-x" /></button>
         </div>
@@ -124,22 +116,21 @@ export function SettingsModal() {
               <span className="set-toggle-track"><span className="set-toggle-knob" /></span>
               <span className="set-toggle-txt"><b>My Work nudge</b><span>A soft summary of what to do next</span></span>
             </label>
+            <label className="set-toggle">
+              <input type="checkbox" checked={profile?.soundsEnabled !== false} onChange={e => useStore.getState().setProfile({ soundsEnabled: e.target.checked })} />
+              <span className="set-toggle-track"><span className="set-toggle-knob" /></span>
+              <span className="set-toggle-txt"><b>Sounds</b><span>A chime when you finish a task or a reminder pops</span></span>
+            </label>
           </div>
 
           <div className="set-sec">
-            <div className="set-sec-h">Cloud image storage (Cloudflare R2)</div>
-            <label className="modal-field"><span>Worker URL</span>
-              <input value={endpoint} onChange={e => setEndpoint(e.target.value)} placeholder="https://manage-uploads.you.workers.dev" />
-            </label>
-            <label className="modal-field"><span>Upload token</span>
-              <input type="password" value={token} onChange={e => setToken(e.target.value)} placeholder="UPLOAD_TOKEN" />
-            </label>
-            <div style={{ display: 'flex', gap: 10, marginTop: 2 }}>
-              <button className="newbtn" onClick={saveCloud}><Icon name={saved ? 'ti-check' : 'ti-device-floppy'} /> {saved ? 'Saved' : 'Save'}</button>
-              <button className="ghostbtn" onClick={() => { setCloud(null); setEndpoint(''); setToken('') }}><Icon name="ti-folder" /> Use local storage</button>
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 12, lineHeight: 1.5 }}>
-              Deploy the Worker in <code style={{ background: 'var(--chip)', padding: '1px 5px', borderRadius: 5 }}>worker/</code> (see its README). Until configured, images are stored inline and work offline.
+            <div className="set-sec-h">Storage &amp; privacy</div>
+            <div className="set-privacy">
+              <Icon name="ti-lock" />
+              <div>
+                <b>Everything stays on this device.</b>
+                <span>Your projects, tasks and images are saved locally in WorkBase's app data — no account, no cloud, nothing leaves your machine. Use Export from the menu to back up or move your data.</span>
+              </div>
             </div>
           </div>
         </div>

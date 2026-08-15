@@ -79,6 +79,22 @@ export async function fitWidget(w: number, h: number): Promise<void> {
 }
 
 export const QUICK_ADD_EVENT = 'workbase://quick-add'
+export const TOGGLE_DONE_EVENT = 'workbase://toggle-done'
+export const SNOOZE_EVENT = 'workbase://snooze'
+
+/**
+ * From the WIDGET window: ask the main window (the single writer) to apply a
+ * change to the document, so the widget never writes the shared file itself.
+ */
+export async function commitToMain(event: string, payload: unknown): Promise<void> {
+  if (!isTauri()) return
+  try {
+    const { emit } = await import('@tauri-apps/api/event')
+    await emit(event, payload)
+  } catch (e) {
+    console.error('WorkBase: could not sync change to main window', e)
+  }
+}
 
 /**
  * From the WIDGET window: bring the main window forward and ask it to open the

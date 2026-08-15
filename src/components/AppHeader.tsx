@@ -8,7 +8,7 @@ import { useStore } from '../store/useStore'
 import { useNav } from '../hooks/useNav'
 import { useDetail } from '../hooks/useDetail'
 import { useView, type ViewKind } from '../hooks/useView'
-import { useNewProject } from '../hooks/useNewProject'
+import { useQuickCapture } from '../hooks/useQuickCapture'
 import { useSearch } from '../hooks/useSearch'
 import { useActivityFeed } from '../hooks/useActivityFeed'
 import { useNudge } from '../hooks/useNudge'
@@ -84,8 +84,8 @@ export function AppHeader({
           <span className="searchbtn-txt">Search</span>
           <kbd className="searchbtn-kbd">⌘K</kbd>
         </button>
-        <button className="newbtn" onClick={() => useNewProject.getState().show()}>
-          <Icon name="ti-plus" /> New
+        <button className="addbtn" onClick={() => useQuickCapture.getState().show()} title="Add a project or task" aria-label="Add">
+          <Icon name="ti-plus" />
         </button>
         <AvatarMenu onExport={onExport} onImport={onImport} />
       </div>

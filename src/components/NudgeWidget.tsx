@@ -7,7 +7,7 @@ import { useTabs } from '../hooks/useTabs'
 import { useQuickCapture } from '../hooks/useQuickCapture'
 import { DEFAULT_WORKSPACE_ID } from '../lib/serialize'
 import { goToNode } from '../lib/goto'
-import { focusMain, setWidgetVisible, quickAddFromWidget } from '../lib/desktopWidget'
+import { focusMain, setWidgetVisible, quickAddFromWidget, commitToMain, TOGGLE_DONE_EVENT, SNOOZE_EVENT } from '../lib/desktopWidget'
 import { dueInfo } from '../lib/due'
 import { hex } from '../theme'
 import { Checkbox } from './ui/Checkbox'
@@ -87,6 +87,12 @@ export function NudgeWidget({ standalone }: { standalone?: boolean } = {}) {
   const dismiss = () => { if (standalone) { void setWidgetVisible(false) } else { useNudge.getState().close() } }
   const toggle = () => useNudge.getState().toggleCollapsed()
   const quickAdd = () => { if (standalone) { void quickAddFromWidget() } else { useQuickCapture.getState().show() } }
+  // Optimistic local update for instant feedback; the main window (single
+  // writer) applies the authoritative, persisted change.
+  const tickDone = (id: string) => {
+    useStore.getState().toggleDone(id)
+    if (standalone) void commitToMain(TOGGLE_DONE_EVENT, { id })
+  }
 
   return (
     <div className={`nudge${standalone ? ' nudge-standalone' : ''}${collapsed ? ' is-collapsed' : ''}${celebrate ? ' is-celebrating' : ''}`} role="status" aria-label="Reminders">
@@ -119,14 +125,14 @@ export function NudgeWidget({ standalone }: { standalone?: boolean } = {}) {
               <div className="nudge-card" key={i.node.id} style={{ ['--pc' as string]: hex(i.rootColor) }}>
                 <span className="nudge-dot" title={i.rootTitle} />
                 <span className="nudge-check" onPointerDown={e => e.stopPropagation()}>
-                  <Checkbox status={i.node.status} onToggle={() => useStore.getState().toggleDone(i.node.id)} />
+                  <Checkbox status={i.node.status} onToggle={() => tickDone(i.node.id)} />
                 </span>
                 <button className="nudge-card-main" onClick={() => openNode(i.node.id)}>
                   <span className="nudge-card-title">{i.node.title}</span>
                   <span className="nudge-card-sub">{i.rootTitle}</span>
                 </button>
                 {di ? <span className={`nudge-due nudge-due-${di.tone}`}>{di.label}</span> : null}
-                <SnoozeButton nodeId={i.node.id} />
+                <SnoozeButton nodeId={i.node.id} standalone={standalone} />
               </div>
             )
           })}
@@ -144,11 +150,13 @@ export function NudgeWidget({ standalone }: { standalone?: boolean } = {}) {
  * dates still live in the task's due-date picker; a dropdown here would be
  * clipped by the auto-sized widget window.)
  */
-function SnoozeButton({ nodeId }: { nodeId: string }) {
+function SnoozeButton({ nodeId, standalone }: { nodeId: string; standalone?: boolean }) {
   const snooze = () => {
     const d = new Date(); d.setDate(d.getDate() + 1)
-    useStore.getState().patch(nodeId, { dueDate: localISO(d) })
+    const dueDate = localISO(d)
+    useStore.getState().patch(nodeId, { dueDate })
     useStore.getState().logActivity(nodeId, 'Snoozed to tomorrow')
+    if (standalone) void commitToMain(SNOOZE_EVENT, { id: nodeId, dueDate })
   }
   return (
     <button

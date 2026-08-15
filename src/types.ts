@@ -118,6 +118,8 @@ export interface Profile {
   // tasks (default on); `nudgeMyWork` adds a soft My Work summary (default off).
   nudgeReminders?: boolean
   nudgeMyWork?: boolean
+  // Play a chime on task completion and when a reminder surfaces (default on).
+  soundsEnabled?: boolean
 }
 
 export interface StoreDoc {

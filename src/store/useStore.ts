@@ -8,6 +8,7 @@ import { projectPrefix, nextShortId } from '../lib/shortid'
 import { addChild, updateNode, deleteNode, moveNode, reorderChildren, findNode, findParent } from '../lib/tree'
 import { wouldCycle, dependents } from '../lib/deps'
 import { instantiateTemplate, projectToTemplate } from '../lib/templates'
+import { playComplete } from '../lib/sound'
 import { PROJECT_ICONS, mergedStages } from '../theme'
 import { sampleDoc } from '../lib/seed'
 
@@ -32,7 +33,7 @@ interface State {
   saveAsTemplate: (nodeId: string) => string | null
   deleteTemplate: (id: string) => void
   addChildNode: (parentId: string, title: string) => string
-  quickAddTask: (title: string, dueDate?: string) => string
+  quickAddTask: (title: string, dueDate?: string, targetId?: string) => string
   logActivity: (id: string, text: string) => void
   rename: (id: string, title: string) => void
   setStatus: (id: string, status: Status) => void
@@ -62,15 +63,24 @@ interface State {
   reload: () => Promise<void>
 }
 
+// The reminder widget runs in a second window that shares the same data file.
+// To avoid two writers racing (a stale widget save clobbering the main window's
+// edits), the widget NEVER persists — it routes its changes to the main window,
+// the single source of truth.
+function isWidgetWindow(): boolean {
+  return typeof window !== 'undefined' && (window as unknown as { __WB_WIDGET__?: boolean }).__WB_WIDGET__ === true
+}
+
 let timer: ReturnType<typeof setTimeout> | null = null
 function schedulePersist(get: () => State) {
+  if (isWidgetWindow()) return
   if (timer) clearTimeout(timer)
   timer = setTimeout(() => { void get().adapter.save(get().doc) }, 300)
 }
 
 let flushListenerAdded = false
 function ensureFlushOnUnload(get: () => State) {
-  if (flushListenerAdded || typeof window === 'undefined') return
+  if (flushListenerAdded || typeof window === 'undefined' || isWidgetWindow()) return
   flushListenerAdded = true
   window.addEventListener('beforeunload', () => {
     if (timer) clearTimeout(timer)
@@ -182,17 +192,17 @@ export const useStore = create<State>((set, get) => ({
     schedulePersist(get)
     return node.id
   },
-  quickAddTask(title, dueDate) {
-    const ws = get().doc.activeWorkspace
-    const existing = get().doc.roots.find(r => r.title === 'Inbox' && (r.workspace ?? DEFAULT_WORKSPACE_ID) === ws)
-    let inboxId: string
-    if (existing) {
-      inboxId = existing.id
-    } else {
-      inboxId = get().addProject('Inbox')
-      get().patch(inboxId, { icon: 'ti-inbox' })
+  quickAddTask(title, dueDate, targetId) {
+    // Explicit destination wins; otherwise land in the WorkBase's Inbox project
+    // (created on first use).
+    let parentId = targetId && findNode(get().doc.roots, targetId) ? targetId : ''
+    if (!parentId) {
+      const ws = get().doc.activeWorkspace
+      const existing = get().doc.roots.find(r => r.title === 'Inbox' && (r.workspace ?? DEFAULT_WORKSPACE_ID) === ws)
+      parentId = existing ? existing.id : get().addProject('Inbox')
+      if (!existing) get().patch(parentId, { icon: 'ti-inbox' })
     }
-    const id = get().addChildNode(inboxId, title)
+    const id = get().addChildNode(parentId, title)
     if (dueDate) get().patch(id, { dueDate })
     return id
   },
@@ -224,6 +234,7 @@ export const useStore = create<State>((set, get) => ({
     const parent = findParent(get().doc.roots, id)
     if (parent) get().logActivity(parent.id, `${verb} “${n.title}”`)
     get().logActivity(id, done ? 'Marked not done' : 'Marked complete')
+    if (!done && get().doc.profile?.soundsEnabled !== false) playComplete()
   },
   patch(id, patch) {
     const stamped = { ...patch, updatedAt: new Date().toISOString() }

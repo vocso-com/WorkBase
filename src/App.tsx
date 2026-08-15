@@ -39,16 +39,22 @@ export default function App() {
   useEffect(() => { initTheme(); void useStore.getState().init().then(() => { initRouter(); initTabs() }) }, [])
   // First launch (no email captured yet) → open onboarding.
   useEffect(() => { if (ready && !hasEmail) useOnboarding.getState().show() }, [ready, hasEmail])
-  // The reminder widget (a separate window) asks us to open quick-add.
+  // The reminder widget runs in a separate window and routes its changes here
+  // (the main window is the single writer of the data file).
   useEffect(() => {
     if (!isTauri()) return
-    let un: (() => void) | undefined
+    const uns: (() => void)[] = []
     void (async () => {
       const { listen } = await import('@tauri-apps/api/event')
-      const { QUICK_ADD_EVENT } = await import('./lib/desktopWidget')
-      un = await listen(QUICK_ADD_EVENT, () => useQuickCapture.getState().show())
+      const { QUICK_ADD_EVENT, TOGGLE_DONE_EVENT, SNOOZE_EVENT } = await import('./lib/desktopWidget')
+      uns.push(await listen(QUICK_ADD_EVENT, () => useQuickCapture.getState().show()))
+      uns.push(await listen<{ id: string }>(TOGGLE_DONE_EVENT, e => useStore.getState().toggleDone(e.payload.id)))
+      uns.push(await listen<{ id: string; dueDate: string }>(SNOOZE_EVENT, e => {
+        useStore.getState().patch(e.payload.id, { dueDate: e.payload.dueDate })
+        useStore.getState().logActivity(e.payload.id, 'Snoozed to tomorrow')
+      }))
     })()
-    return () => un?.()
+    return () => uns.forEach(u => u())
   }, [])
   // Ambient dock badge: overdue + due-today count for the active WorkBase.
   const activeWs = useStore(s => s.doc.activeWorkspace)

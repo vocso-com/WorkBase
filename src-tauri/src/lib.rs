@@ -1,5 +1,5 @@
 use tauri::{
-    menu::{Menu, MenuItem},
+    menu::{AboutMetadataBuilder, Menu, MenuBuilder, MenuItem, SubmenuBuilder},
     tray::TrayIconBuilder,
     Manager,
 };
@@ -29,6 +29,44 @@ pub fn run() {
         // A menu-bar (tray) icon so the reminder widget and the app are always
         // reachable even when every window is hidden.
         .setup(|app| {
+            // Proper macOS menu bar with an About panel carrying our company info.
+            let about = AboutMetadataBuilder::new()
+                .name(Some("WorkBase"))
+                .version(Some(env!("CARGO_PKG_VERSION")))
+                .copyright(Some("© VOCSO Technologies Pvt Ltd"))
+                .website(Some("https://vocso.com"))
+                .website_label(Some("vocso.com"))
+                .comments(Some("Local-first project management by VOCSO Technologies Pvt Ltd.\nSupport: info@vocso.com"))
+                .authors(Some(vec!["VOCSO Technologies Pvt Ltd".to_string()]))
+                .build();
+            let app_menu = SubmenuBuilder::new(app, "WorkBase")
+                .about(Some(about))
+                .separator()
+                .services()
+                .separator()
+                .hide()
+                .hide_others()
+                .show_all()
+                .separator()
+                .quit()
+                .build()?;
+            let edit_menu = SubmenuBuilder::new(app, "Edit")
+                .undo()
+                .redo()
+                .separator()
+                .cut()
+                .copy()
+                .paste()
+                .select_all()
+                .build()?;
+            let window_menu = SubmenuBuilder::new(app, "Window")
+                .minimize()
+                .separator()
+                .close_window()
+                .build()?;
+            let menubar = MenuBuilder::new(app).items(&[&app_menu, &edit_menu, &window_menu]).build()?;
+            app.set_menu(menubar)?;
+
             let toggle = MenuItem::with_id(app, "toggle_widget", "Show / Hide Reminders", true, None::<&str>)?;
             let open = MenuItem::with_id(app, "open_main", "Open WorkBase", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "Quit WorkBase", true, None::<&str>)?;

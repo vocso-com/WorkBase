@@ -5,6 +5,7 @@ import { DEFAULT_WORKSPACE_ID } from '../lib/serialize'
 import { fitWidget, setWidgetVisible } from '../lib/desktopWidget'
 import { isTauri } from '../lib/platform'
 import { useNudge } from '../hooks/useNudge'
+import { playReminder } from '../lib/sound'
 import { NudgeWidget } from './NudgeWidget'
 
 /**
@@ -83,6 +84,7 @@ export function WidgetApp() {
     if (ids.length > 0 && (hasNew || (first && morning))) {
       useNudge.getState().expand()
       void setWidgetVisible(true)
+      if (hasNew && !first && profile?.soundsEnabled !== false) playReminder()
     }
   }, [ready, reminderKey])
 
