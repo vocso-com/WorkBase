@@ -10,6 +10,7 @@ import { useDetail } from '../hooks/useDetail'
 import { useView, type ViewKind } from '../hooks/useView'
 import { useNewProject } from '../hooks/useNewProject'
 import { useSearch } from '../hooks/useSearch'
+import { useMyWork } from '../hooks/useMyWork'
 import { useVocab } from '../hooks/useVocab'
 import { AvatarMenu } from './AvatarMenu'
 import { WorkspaceSwitcher } from './WorkspaceSwitcher'
@@ -42,6 +43,7 @@ export function AppHeader({
   const current = crumbs[crumbs.length - 1] ?? null
   const parents = crumbs.slice(0, -1)
   const profile = useStore(s => s.doc.profile)
+  const myWorkOpen = useMyWork(s => s.open)
 
   return (
     <header className="phead">
@@ -58,6 +60,10 @@ export function AppHeader({
         <TabBar />
         <div className="phead-fill" />
 
+        <button className={`myworkbtn${myWorkOpen ? ' on' : ''}`} onClick={() => useMyWork.getState().toggle()} title="My Work — what to do next">
+          <Icon name="ti-target-arrow" />
+          <span className="myworkbtn-txt">My Work</span>
+        </button>
         <button className="searchbtn" onClick={() => useSearch.getState().show()} title="Search (⌘K)">
           <Icon name="ti-search" />
           <span className="searchbtn-txt">Search</span>
@@ -69,7 +75,12 @@ export function AppHeader({
         <AvatarMenu onExport={onExport} onImport={onImport} />
       </div>
 
-      {current ? (
+      {myWorkOpen ? (
+        <div className="phead-sub" style={{ ['--pj' as string]: 'var(--dot)' }}>
+          <nav className="phead-crumb"><span className="cl cl-static"><Icon name="ti-target-arrow" /> My Work</span></nav>
+          <div className="phead-fill" />
+        </div>
+      ) : current ? (
         <div className="phead-sub" style={{ ['--pj' as string]: hex(current.color ?? 'gray') }}>
           <nav className="phead-crumb">
             <span className="cl" onClick={onHome}>Projects</span>

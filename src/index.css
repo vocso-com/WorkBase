@@ -497,11 +497,56 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .dep-result:hover{background:var(--btn);}
 .dep-result-title{font-size:13px;font-weight:500;color:var(--ink);}
 .dep-result-trail{font-size:11px;color:var(--muted);}
+.dep-scope{display:inline-flex;align-items:center;gap:5px;border:none;background:none;cursor:pointer;font:inherit;font-size:11.5px;
+  font-weight:600;color:var(--muted);padding:6px 7px;margin-top:2px;border-radius:7px;}
+.dep-scope:hover{background:var(--btn);color:var(--ink);}
+.dep-scope .ti{font-size:14px;}
 /* Blocked chip on cards / rows */
 .tblocked,.row-blocked{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;
   background:color-mix(in srgb,var(--red) 14%,var(--card));color:var(--red);padding:1px 7px;border-radius:20px;}
 .tblocked .ti,.row-blocked .ti{font-size:12px;}
 .row-blocked{flex-shrink:0;}
+
+/* My Work (execution engine) */
+.myworkbtn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--edge);cursor:pointer;font:inherit;font-size:13px;
+  font-weight:600;color:var(--muted);background:var(--card);padding:7px 12px;border-radius:10px;transition:border-color .12s,color .12s,background .12s;}
+.myworkbtn:hover{border-color:var(--edge-h);color:var(--ink);}
+.myworkbtn .ti{font-size:16px;}
+.myworkbtn.on{color:#fff;background:linear-gradient(135deg,#6d5ce0,#3b82c4);border-color:transparent;box-shadow:var(--shadow-flat);}
+@media (max-width:820px){.myworkbtn-txt{display:none;}}
+.mw{max-width:920px;margin:0 auto;}
+.mw-head{margin-bottom:18px;}
+.mw-title-lg{font-size:26px;font-weight:750;letter-spacing:-.02em;}
+.mw-sub{font-size:13.5px;color:var(--muted);margin-top:3px;}
+.mw-focus{background:linear-gradient(135deg,color-mix(in srgb,var(--violet) 10%,var(--card)),color-mix(in srgb,var(--blue) 8%,var(--card)));
+  border:1px solid color-mix(in srgb,var(--violet) 22%,var(--line));border-radius:16px;padding:14px 16px;margin-bottom:22px;box-shadow:var(--shadow-crisp);}
+.mw-focus-h{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--ink);margin-bottom:8px;}
+.mw-focus-h .ti{font-size:18px;color:var(--violet);}
+.mw-sec{margin-bottom:18px;}
+.mw-sec-h{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px;text-transform:uppercase;letter-spacing:.03em;}
+.mw-sec-h .ti{font-size:16px;}
+.mw-count{background:var(--chip);color:var(--muted);border-radius:20px;padding:0 8px;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;}
+.mw-tone-overdue{color:var(--red);} .mw-tone-overdue .ti{color:var(--red);}
+.mw-tone-today{color:var(--amber);} .mw-tone-today .ti{color:var(--amber);}
+.mw-tone-blocked{color:var(--muted);} .mw-tone-blocked .ti{color:var(--muted);}
+.mw-list{display:flex;flex-direction:column;gap:7px;}
+.mw-row{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 13px;box-shadow:var(--card-shadow);}
+.mw-pri{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.mw-title{border:none;background:none;cursor:pointer;font:inherit;font-size:14px;font-weight:550;color:var(--ink);text-align:left;padding:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;max-width:44%;}
+.mw-title:hover{text-decoration:underline;}
+.mw-crumb{font-size:12px;color:var(--muted);cursor:pointer;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mw-meta{display:flex;align-items:center;gap:9px;flex-shrink:0;}
+.mw-blocked{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--red);}
+.mw-blocked .ti{font-size:12px;}
+.mw-due{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:600;font-variant-numeric:tabular-nums;}
+.mw-due .ti{font-size:13px;}
+.mw-due-overdue{color:var(--red);} .mw-due-today,.mw-due-soon{color:var(--amber);} .mw-due-upcoming{color:var(--muted);}
+.mw-sid{font-size:11px;font-weight:600;color:var(--faint);font-variant-numeric:tabular-nums;}
+.mw-clear{text-align:center;padding:60px 20px;color:var(--muted);}
+.mw-clear .ti{font-size:44px;color:var(--teal);}
+.mw-clear-t{font-size:18px;font-weight:700;color:var(--ink);margin-top:10px;}
+.mw-clear-s{font-size:13.5px;color:var(--muted);margin-top:5px;max-width:380px;margin-inline:auto;line-height:1.5;}
 .newbtn-danger:hover{background:color-mix(in srgb,var(--red) 88%,#000);}
 
 /* Confirm dialog */
