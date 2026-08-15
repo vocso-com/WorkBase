@@ -16,6 +16,7 @@ import { NudgeWidget } from './components/NudgeWidget'
 import { VerifyNudge } from './components/VerifyNudge'
 import { ConfirmDialog } from './components/ConfirmDialog'
 import { useOnboarding } from './hooks/useOnboarding'
+import { useNewProject } from './hooks/useNewProject'
 import { exportDoc, importDoc } from './lib/transfer'
 import { isTauri } from './lib/platform'
 import { initRouter } from './lib/router'
@@ -34,6 +35,17 @@ export default function App() {
   useEffect(() => { initTheme(); void useStore.getState().init().then(() => { initRouter(); initTabs() }) }, [])
   // First launch (no email captured yet) → open onboarding.
   useEffect(() => { if (ready && !hasEmail) useOnboarding.getState().show() }, [ready, hasEmail])
+  // The reminder widget (a separate window) asks us to open quick-add.
+  useEffect(() => {
+    if (!isTauri()) return
+    let un: (() => void) | undefined
+    void (async () => {
+      const { listen } = await import('@tauri-apps/api/event')
+      const { QUICK_ADD_EVENT } = await import('./lib/desktopWidget')
+      un = await listen(QUICK_ADD_EVENT, () => useNewProject.getState().show())
+    })()
+    return () => un?.()
+  }, [])
 
   if (!ready) return <div style={{ padding: 40, color: 'var(--muted)' }}>Loading…</div>
 

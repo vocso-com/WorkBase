@@ -54,6 +54,60 @@ export async function positionWidget(): Promise<void> {
   }
 }
 
+/**
+ * From the WIDGET window: resize the native window to match the card's content
+ * (so a transparent window shows only the rounded card, and collapsing/expanding
+ * shrinks/grows it), then re-dock bottom-right.
+ */
+export async function fitWidget(w: number, h: number): Promise<void> {
+  if (!isTauri()) return
+  try {
+    const { getCurrentWindow, currentMonitor } = await import('@tauri-apps/api/window')
+    const { LogicalSize, PhysicalPosition } = await import('@tauri-apps/api/dpi')
+    const win = getCurrentWindow()
+    await win.setSize(new LogicalSize(w, h))
+    const mon = await currentMonitor()
+    if (!mon) return
+    const size = await win.outerSize()
+    const margin = Math.round(18 * mon.scaleFactor)
+    const x = mon.position.x + mon.size.width - size.width - margin
+    const y = mon.position.y + mon.size.height - size.height - margin
+    await win.setPosition(new PhysicalPosition(Math.round(x), Math.round(y)))
+  } catch (e) {
+    console.error('WorkBase: could not fit widget', e)
+  }
+}
+
+export const QUICK_ADD_EVENT = 'workbase://quick-add'
+
+/**
+ * From the WIDGET window: bring the main window forward and ask it to open the
+ * quick-add flow (windows have separate JS contexts, so we hand off via a
+ * Tauri event the main window listens for).
+ */
+export async function quickAddFromWidget(): Promise<void> {
+  if (!isTauri()) return
+  try {
+    await focusMain()
+    const { emit } = await import('@tauri-apps/api/event')
+    await emit(QUICK_ADD_EVENT)
+  } catch (e) {
+    console.error('WorkBase: could not trigger quick add', e)
+  }
+}
+
+/** From the MAIN window: reveal the reminder widget (used by the in-app toggle). */
+export async function showWidgetFromMain(): Promise<void> {
+  if (!isTauri()) return
+  try {
+    const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow')
+    const w = await WebviewWindow.getByLabel(LABEL)
+    if (w) { await w.show(); await w.setFocus() }
+  } catch (e) {
+    console.error('WorkBase: could not show widget', e)
+  }
+}
+
 /** From the widget: bring the main WorkBase window forward. */
 export async function focusMain(): Promise<void> {
   if (!isTauri()) return

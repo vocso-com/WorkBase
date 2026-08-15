@@ -2,9 +2,10 @@ import { buildWork } from '../lib/execution'
 import { useStore } from '../store/useStore'
 import { useNudge } from '../hooks/useNudge'
 import { useTabs } from '../hooks/useTabs'
+import { useNewProject } from '../hooks/useNewProject'
 import { DEFAULT_WORKSPACE_ID } from '../lib/serialize'
 import { goToNode } from '../lib/goto'
-import { focusMain, setWidgetVisible } from '../lib/desktopWidget'
+import { focusMain, setWidgetVisible, quickAddFromWidget } from '../lib/desktopWidget'
 import { dueInfo } from '../lib/due'
 import { hex } from '../theme'
 import { Checkbox } from './ui/Checkbox'
@@ -16,19 +17,31 @@ import { Icon } from './ui/Icon'
  * native always-on-top window (`standalone`) that sits above every app, so
  * its actions target the main window instead of navigating in place.
  */
+function headline(od: number, td: number): string {
+  if (od > 0) return 'Let’s clear what’s slipping'
+  if (td > 0) return 'A few due today — you’ve got this'
+  return 'You’re all caught up ✨'
+}
+
 export function NudgeWidget({ standalone }: { standalone?: boolean } = {}) {
   const roots = useStore(s => s.doc.roots)
   const activeWs = useStore(s => s.doc.activeWorkspace)
   const profile = useStore(s => s.doc.profile)
   const closed = useNudge(s => s.closed)
+  const collapsed = useNudge(s => s.collapsed)
 
   const remindersOn = profile?.nudgeReminders !== false // default on
   const myWorkOn = !!profile?.nudgeMyWork
+  const firstName = profile?.userName?.trim().split(/\s+/)[0]
+  const hour = new Date().getHours()
+  const part = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
+  const greeting = firstName ? `Good ${part}, ${firstName}` : `Good ${part}`
 
   const wsRoots = roots.filter(r => (r.workspace ?? DEFAULT_WORKSPACE_ID) === activeWs)
   const work = buildWork(wsRoots)
   const reminders = [...work.overdue, ...work.today]
-  const shown = reminders.slice(0, 4)
+  const shown = reminders.slice(0, 5)
+  const ready = work.focus.length || work.anytime.length
 
   const hasReminders = remindersOn && reminders.length > 0
   const hasNudge = myWorkOn && work.total > 0
@@ -39,36 +52,44 @@ export function NudgeWidget({ standalone }: { standalone?: boolean } = {}) {
   const openNode = (id: string) => { if (standalone) { void focusMain() } else { goToNode(id) } }
   const openMyWork = () => { if (standalone) { void focusMain() } else { useTabs.getState().openMyWork() } }
   const dismiss = () => { if (standalone) { void setWidgetVisible(false) } else { useNudge.getState().close() } }
+  const toggle = () => useNudge.getState().toggleCollapsed()
+  const quickAdd = () => { if (standalone) { void quickAddFromWidget() } else { useNewProject.getState().show() } }
 
   return (
-    <div className={`nudge${standalone ? ' nudge-standalone' : ''}`} role="status" aria-label="Reminders">
+    <div className={`nudge${standalone ? ' nudge-standalone' : ''}${collapsed ? ' is-collapsed' : ''}`} role="status" aria-label="Reminders">
       <div className="nudge-head" data-tauri-drag-region>
         <img className="nudge-logo" src="/workbase-logo.png" alt="" />
-        <span className="nudge-title">{hasReminders ? 'Reminders' : 'My Work'}</span>
-        <button className="nudge-x" onClick={dismiss} aria-label="Dismiss"><Icon name="ti-x" /></button>
+        <div className="nudge-head-txt">
+          <span className="nudge-title">{greeting}</span>
+          <span className="nudge-sub">{hasReminders ? headline(work.overdue.length, work.today.length) : 'Here’s what’s on your plate'}</span>
+        </div>
+        <button className="nudge-ic" onClick={quickAdd} aria-label="Add task" title="Add task"><Icon name="ti-plus" /></button>
+        <button className="nudge-ic" onClick={toggle} aria-label={collapsed ? 'Expand' : 'Collapse'} title={collapsed ? 'Expand' : 'Collapse'}>
+          <Icon name={collapsed ? 'ti-chevron-down' : 'ti-chevron-up'} />
+        </button>
+        <button className="nudge-ic" onClick={dismiss} aria-label="Hide"><Icon name="ti-x" /></button>
       </div>
 
-      {hasNudge ? (
-        <button className="nudge-summary" onClick={openMyWork}>
-          <span className="nudge-stat"><b>{work.overdue.length}</b> overdue</span>
-          <span className="nudge-stat"><b>{work.today.length}</b> today</span>
-          <span className="nudge-stat"><b>{work.focus.length || work.anytime.length}</b> ready</span>
-          <Icon name="ti-chevron-right" />
-        </button>
-      ) : null}
+      <button className="nudge-stats" onClick={openMyWork} title="Open My Work">
+        {work.overdue.length > 0 ? <span className="nudge-pill pill-overdue"><b>{work.overdue.length}</b> overdue</span> : null}
+        {work.today.length > 0 ? <span className="nudge-pill pill-today"><b>{work.today.length}</b> today</span> : null}
+        <span className="nudge-pill pill-ready"><b>{ready}</b> ready</span>
+        <Icon name="ti-arrow-right" className="nudge-stats-go" />
+      </button>
 
-      {hasReminders ? (
+      {!collapsed && hasReminders ? (
         <div className="nudge-list">
           {shown.map(i => {
             const di = dueInfo(i.node.dueDate)
             return (
-              <div className="nudge-row" key={i.node.id}>
+              <div className="nudge-card" key={i.node.id} style={{ ['--pc' as string]: hex(i.rootColor) }}>
+                <span className="nudge-dot" title={i.rootTitle} />
                 <span className="nudge-check" onPointerDown={e => e.stopPropagation()}>
                   <Checkbox status={i.node.status} onToggle={() => useStore.getState().toggleDone(i.node.id)} />
                 </span>
-                <button className="nudge-item" onClick={() => openNode(i.node.id)}>
-                  <span className="nudge-item-title">{i.node.title}</span>
-                  <span className="nudge-item-sub" style={{ ['--pc' as string]: hex(i.rootColor) }}>{i.rootTitle}</span>
+                <button className="nudge-card-main" onClick={() => openNode(i.node.id)}>
+                  <span className="nudge-card-title">{i.node.title}</span>
+                  <span className="nudge-card-sub">{i.rootTitle}</span>
                 </button>
                 {di ? <span className={`nudge-due nudge-due-${di.tone}`}>{di.label}</span> : null}
               </div>

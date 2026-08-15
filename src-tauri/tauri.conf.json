@@ -23,15 +23,18 @@
         "label": "widget",
         "url": "widget.html",
         "title": "WorkBase Reminders",
-        "width": 360,
-        "height": 460,
+        "width": 368,
+        "height": 300,
         "resizable": false,
         "decorations": false,
+        "transparent": true,
+        "shadow": false,
         "alwaysOnTop": true,
         "skipTaskbar": true,
         "visible": true
       }
     ],
+    "macOSPrivateApi": true,
     "security": {
       "csp": "default-src 'self'; connect-src 'self' ipc: http://ipc.localhost; img-src 'self' data: asset: http://asset.localhost; style-src 'self' 'unsafe-inline'; font-src 'self' data:; script-src 'self'"
     }

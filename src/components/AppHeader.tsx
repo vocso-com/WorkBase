@@ -11,12 +11,22 @@ import { useView, type ViewKind } from '../hooks/useView'
 import { useNewProject } from '../hooks/useNewProject'
 import { useSearch } from '../hooks/useSearch'
 import { useActivityFeed } from '../hooks/useActivityFeed'
+import { useNudge } from '../hooks/useNudge'
+import { showWidgetFromMain } from '../lib/desktopWidget'
+import { isTauri } from '../lib/platform'
 import { useTabs } from '../hooks/useTabs'
 import { useVocab } from '../hooks/useVocab'
 import { AvatarMenu } from './AvatarMenu'
 import { WorkspaceSwitcher } from './WorkspaceSwitcher'
 import { TabBar } from './TabBar'
 import { Icon } from './ui/Icon'
+
+// Bring the reminder widget forward: the native always-on-top window on
+// desktop, or the in-app floating nudge on the web.
+function revealReminders() {
+  if (isTauri()) void showWidgetFromMain()
+  else useNudge.getState().reopen()
+}
 
 const VIEWS: { key: ViewKind; label: string; icon: string }[] = [
   { key: 'board', label: 'Board', icon: 'ti-layout-grid' },
@@ -63,6 +73,9 @@ export function AppHeader({
         <TabBar />
         <div className="phead-fill" />
 
+        <button className="iconbtn" onClick={() => revealReminders()} title="Reminders" aria-label="Reminders">
+          <Icon name="ti-bell" />
+        </button>
         <button className="iconbtn" onClick={() => useActivityFeed.getState().toggle()} title="Activity" aria-label="Activity">
           <Icon name="ti-history" />
         </button>
