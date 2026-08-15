@@ -598,6 +598,9 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 /* Standalone (native always-on-top window): a floating rounded card. The
    window itself is transparent so only the card shows, with real rounded
    corners; a small margin gives room for the drop shadow. */
+/* The reminder widget's native window is transparent — force every layer clear
+   so only the card shows (no dotted canvas, no translucent fill). */
+.wb-widget-window,.wb-widget-window body,.wb-widget-window #root{background:transparent !important;background-image:none !important;}
 .widget-shell{width:100vw;height:100vh;overflow:hidden;background:transparent;
   display:flex;align-items:flex-end;justify-content:flex-end;padding:14px;box-sizing:border-box;}
 .nudge-standalone{position:static;inset:auto;width:100%;max-width:none;margin:0;animation:none;

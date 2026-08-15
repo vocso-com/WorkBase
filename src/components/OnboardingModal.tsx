@@ -109,14 +109,21 @@ export function OnboardingModal() {
               <input value={org} onChange={e => setOrg(e.target.value)} placeholder="Acme Studio" />
             </label>
             <label className="onb-field">
-              <span>You are… <span className="onb-opt">(optional)</span></span>
-              <select value={userType} onChange={e => setUserType(e.target.value)}>
-                <option value="">Select one…</option>
-                <option value="agency">An agency</option>
-                <option value="consultant">A consultant / freelancer</option>
-                <option value="inhouse">An in-house team</option>
-                <option value="personal">Personal use</option>
-              </select>
+              <span>You are… <span className="onb-opt">(pick or type)</span></span>
+              <input list="wb-usertypes" value={userType} onChange={e => setUserType(e.target.value)} placeholder="e.g. Agency" />
+              <datalist id="wb-usertypes">
+                <option value="Agency" />
+                <option value="Consultant" />
+                <option value="Freelancer" />
+                <option value="In-house team" />
+                <option value="Startup" />
+                <option value="Enterprise" />
+                <option value="Developer" />
+                <option value="Designer" />
+                <option value="Marketer" />
+                <option value="Product manager" />
+                <option value="Personal use" />
+              </datalist>
             </label>
             {err ? <div className="onb-err">{err}</div> : null}
             <button className="onb-primary" onClick={() => void sendCode()} disabled={busy}>{busy ? 'Sending…' : 'Continue'}</button>

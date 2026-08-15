@@ -7,7 +7,7 @@ import { useTabs } from '../hooks/useTabs'
 import { useQuickCapture } from '../hooks/useQuickCapture'
 import { DEFAULT_WORKSPACE_ID } from '../lib/serialize'
 import { goToNode } from '../lib/goto'
-import { focusMain, setWidgetVisible, quickAddFromWidget, commitToMain, TOGGLE_DONE_EVENT, SNOOZE_EVENT } from '../lib/desktopWidget'
+import { focusMain, setWidgetVisible, quickAddFromWidget, commitToMain, startWidgetDrag, TOGGLE_DONE_EVENT, SNOOZE_EVENT } from '../lib/desktopWidget'
 import { dueInfo } from '../lib/due'
 import { hex } from '../theme'
 import { Checkbox } from './ui/Checkbox'
@@ -96,7 +96,7 @@ export function NudgeWidget({ standalone }: { standalone?: boolean } = {}) {
 
   return (
     <div className={`nudge${standalone ? ' nudge-standalone' : ''}${collapsed ? ' is-collapsed' : ''}${celebrate ? ' is-celebrating' : ''}`} role="status" aria-label="Reminders">
-      <div className="nudge-head" data-tauri-drag-region>
+      <div className="nudge-head" data-tauri-drag-region onMouseDown={standalone ? startWidgetDrag : undefined}>
         <img className="nudge-logo" src="/workbase-logo.png" alt="" />
         <div className="nudge-head-txt">
           <span className="nudge-title">{greeting}</span>

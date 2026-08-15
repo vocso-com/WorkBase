@@ -117,6 +117,14 @@ export async function quickAddFromWidget(): Promise<void> {
   }
 }
 
+/** Start dragging the widget window (from a header mousedown, ignoring buttons). */
+export function startWidgetDrag(e: { target: EventTarget | null }): void {
+  const el = e.target as HTMLElement | null
+  if (el && typeof el.closest === 'function' && el.closest('button')) return
+  if (!isTauri()) return
+  void import('@tauri-apps/api/window').then(m => m.getCurrentWindow().startDragging()).catch(() => {})
+}
+
 /** Ambient dock/taskbar badge with the overdue + due-today count (0 clears it). */
 export async function setDockBadge(count: number): Promise<void> {
   if (!isTauri()) return
