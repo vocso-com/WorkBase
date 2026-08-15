@@ -66,13 +66,16 @@ export async function fitWidget(w: number, h: number): Promise<void> {
     const { LogicalSize, LogicalPosition } = await import('@tauri-apps/api/dpi')
     const win = getCurrentWindow()
     await win.setSize(new LogicalSize(w, h))
-    // `screen.avail*` is in logical (CSS) pixels and already excludes the macOS
-    // Dock and menu bar, so docking to its bottom-right sits neatly above the
-    // Dock instead of behind it.
+    // `screen.avail*` (logical px) usually excludes the macOS Dock + menu bar.
+    // But some webviews report the full height there, which would drop the
+    // widget behind the Dock — so if the available height isn't smaller than the
+    // full height, add a Dock-sized clearance ourselves.
     const s = window.screen as Screen & { availLeft?: number; availTop?: number }
+    const excludesDock = (s.availHeight ?? 0) < (s.height ?? 0) - 4
     const margin = 16
+    const dockClearance = excludesDock ? 0 : 78
     const x = (s.availLeft ?? 0) + s.availWidth - w - margin
-    const y = (s.availTop ?? 0) + s.availHeight - h - margin
+    const y = (s.availTop ?? 0) + s.availHeight - h - margin - dockClearance
     await win.setAlwaysOnTop(true)
     await win.setPosition(new LogicalPosition(Math.round(x), Math.round(y)))
   } catch (e) {
