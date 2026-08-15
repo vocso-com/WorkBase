@@ -703,9 +703,10 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .mw-row{display:flex;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:12px 14px;box-shadow:var(--card-shadow);transition:box-shadow .14s ease;}
 .mw-row:hover{box-shadow:var(--card-shadow-h);}
 .mw-projdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-right:10px;margin-top:6px;}
-/* Tick always present (faint), so it's never missed; solid on hover/done. */
-.mw-check{display:inline-flex;flex-shrink:0;width:18px;margin-right:9px;margin-top:1px;opacity:.4;transition:opacity .12s ease;}
-.mw-row:hover .mw-check,.mw-row-done .mw-check{opacity:1;}
+/* Tick hidden until you hover the card; the title sits where the tick will be,
+   and the tick slides in on hover, pushing the title right. (Done rows keep it.) */
+.mw-check{display:inline-flex;flex-shrink:0;overflow:hidden;width:0;margin-right:0;opacity:0;margin-top:1px;transition:width .14s ease,margin-right .14s ease,opacity .12s ease;}
+.mw-row:hover .mw-check,.mw-row-done .mw-check{width:18px;margin-right:9px;opacity:1;}
 .mw-body{flex:1;min-width:0;cursor:pointer;display:flex;flex-direction:column;gap:5px;}
 .mw-line1{display:flex;align-items:center;gap:9px;}
 .mw-line2{display:flex;align-items:center;gap:8px;min-width:0;}
