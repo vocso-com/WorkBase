@@ -176,6 +176,27 @@ export function CardModal({ inlineNode }: { inlineNode?: Node } = {}) {
       } catch (err) { alert((err as Error).message) }
     }
   }
+  // Attachments are stored as data-URLs (or remote URLs). Convert to a blob URL
+  // for a reliable preview/download in both the browser and the Tauri webview.
+  const attBlobUrl = async (a: { dataUrl: string }) => {
+    const res = await fetch(a.dataUrl)
+    return URL.createObjectURL(await res.blob())
+  }
+  const openAttachment = async (a: { name: string; type: string; dataUrl: string }) => {
+    try {
+      const url = await attBlobUrl(a)
+      const w = window.open(url, '_blank')
+      if (!w) { const link = document.createElement('a'); link.href = url; link.download = a.name; link.click() }
+      setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    } catch { window.open(a.dataUrl, '_blank') }
+  }
+  const downloadAttachment = async (a: { name: string; type: string; dataUrl: string }) => {
+    try {
+      const url = await attBlobUrl(a)
+      const link = document.createElement('a'); link.href = url; link.download = a.name; link.click()
+      setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    } catch { const link = document.createElement('a'); link.href = a.dataUrl; link.download = a.name; link.click() }
+  }
   const del = () => {
     const id = node.id
     const title = node.title
@@ -525,16 +546,20 @@ export function CardModal({ inlineNode }: { inlineNode?: Node } = {}) {
                 {attachments.map(a => (
                   a.type.startsWith('image/') ? (
                     <div key={a.id} className="cm-att cm-att-img">
-                      <img src={a.dataUrl} alt={a.name} />
+                      <img src={a.dataUrl} alt={a.name} onClick={() => openAttachment(a)} style={{ cursor: 'zoom-in' }} />
+                      <button className="cm-att-dl" onClick={() => downloadAttachment(a)} aria-label="Download" title="Download"><Icon name="ti-download" /></button>
                       <button className="cm-att-del" onClick={() => useStore.getState().removeAttachment(node.id, a.id)} aria-label="Remove"><Icon name="ti-x" /></button>
                     </div>
                   ) : (
                     <div key={a.id} className="cm-att cm-att-file">
-                      <span className="cm-att-ic"><Icon name="ti-file-text" /></span>
-                      <span className="cm-att-info">
-                        <span className="cm-att-name">{a.name}</span>
-                        <span className="cm-att-type">{(a.name.split('.').pop() || 'file').toUpperCase()}</span>
-                      </span>
+                      <button className="cm-att-open" onClick={() => openAttachment(a)} title="Open preview">
+                        <span className="cm-att-ic"><Icon name="ti-file-text" /></span>
+                        <span className="cm-att-info">
+                          <span className="cm-att-name">{a.name}</span>
+                          <span className="cm-att-type">{(a.name.split('.').pop() || 'file').toUpperCase()}</span>
+                        </span>
+                      </button>
+                      <button className="cm-att-dl" onClick={() => downloadAttachment(a)} aria-label="Download" title="Download"><Icon name="ti-download" /></button>
                       <button className="cm-att-del" onClick={() => useStore.getState().removeAttachment(node.id, a.id)} aria-label="Remove"><Icon name="ti-x" /></button>
                     </div>
                   )

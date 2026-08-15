@@ -354,11 +354,12 @@ function FlowNodeCard({ fn, stages, pos, dragging, isDropTarget, onPointerDown, 
   if (depth === 0) {
     return (
       <div className={`fn fn-root${dragging ? ' fn-drag' : ''}${drop}`} style={style} {...handlers}>
-        <div
-          className={`fn-band${node.image ? ' fn-band-img' : ''}`}
-          style={node.image ? { backgroundImage: `url(${node.image})` } : { background: `linear-gradient(135deg, ${hex(color)}, ${hex(color)}bb)` }}
-        >
-          {node.image ? null : <div className="fn-band-ic"><Icon name={node.icon ?? 'ti-folder'} /></div>}
+        <div className="fn-band" style={{ background: `linear-gradient(135deg, ${hex(color)}, ${hex(color)}bb)` }}>
+          {node.image ? (
+            <div className="fn-band-ic fn-band-ic-img" style={{ backgroundImage: `url(${node.image})` }} />
+          ) : (
+            <div className="fn-band-ic"><Icon name={node.icon ?? 'ti-folder'} /></div>
+          )}
         </div>
         <div className="fn-root-body">
           <div className="fn-title">{node.title}</div>
