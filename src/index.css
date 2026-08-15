@@ -434,6 +434,35 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .newbtn:hover{transform:translateY(-1px);box-shadow:var(--shadow-flat-hover);}
 .newbtn:active{transform:translateY(0) scale(.98);transition-duration:.08s;}
 .newbtn-danger{background:var(--red);}
+
+/* Header search button + ⌘K quick-switcher */
+.searchbtn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--edge);cursor:pointer;font:inherit;font-size:13px;
+  font-weight:500;color:var(--muted);background:var(--card);padding:7px 10px;border-radius:10px;transition:border-color .12s,color .12s,background .12s;}
+.searchbtn:hover{border-color:var(--edge-h);color:var(--ink);}
+.searchbtn .ti{font-size:16px;}
+.searchbtn-kbd{font-size:11px;font-weight:600;color:var(--faint);background:var(--chip);border-radius:5px;padding:1px 5px;font-family:inherit;}
+@media (max-width:720px){.searchbtn-txt,.searchbtn-kbd{display:none;}}
+.cmdk-overlay{position:fixed;inset:0;z-index:1200;background:color-mix(in srgb,var(--ink) 30%,transparent);
+  backdrop-filter:blur(2px);display:flex;justify-content:center;align-items:flex-start;padding-top:12vh;}
+.cmdk{width:min(600px,92vw);max-height:70vh;background:var(--card);border:1px solid var(--edge);border-radius:16px;
+  box-shadow:var(--shadow-hover);display:flex;flex-direction:column;overflow:hidden;}
+.cmdk-input{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);}
+.cmdk-input .ti{font-size:19px;color:var(--muted);flex-shrink:0;}
+.cmdk-input input{flex:1;min-width:0;border:none;background:none;outline:none;font:inherit;font-size:16px;color:var(--ink);}
+.cmdk-esc{font-size:11px;font-weight:600;color:var(--faint);background:var(--chip);border-radius:5px;padding:2px 6px;}
+.cmdk-list{overflow-y:auto;padding:6px;}
+.cmdk-empty{padding:26px 16px;text-align:center;color:var(--faint);font-size:13.5px;}
+.cmdk-row{display:flex;align-items:center;gap:11px;width:100%;border:none;background:none;cursor:pointer;text-align:left;
+  padding:9px 11px;border-radius:10px;}
+.cmdk-row.on{background:var(--btn);}
+.cmdk-ic{width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;
+  background-size:cover;background-position:center;}
+.cmdk-main{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1;}
+.cmdk-title{font-size:14px;font-weight:550;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cmdk-trail{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cmdk-sid{font-size:11px;font-weight:600;color:var(--faint);font-variant-numeric:tabular-nums;flex-shrink:0;}
+.cmdk-foot{display:flex;gap:16px;padding:9px 16px;border-top:1px solid var(--line);font-size:11.5px;color:var(--faint);}
+.cmdk-foot kbd{font-family:inherit;font-weight:600;background:var(--chip);border-radius:4px;padding:1px 5px;margin-right:3px;}
 .newbtn-danger:hover{background:color-mix(in srgb,var(--red) 88%,#000);}
 
 /* Confirm dialog */

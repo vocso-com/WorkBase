@@ -9,6 +9,7 @@ import { useNav } from '../hooks/useNav'
 import { useDetail } from '../hooks/useDetail'
 import { useView, type ViewKind } from '../hooks/useView'
 import { useNewProject } from '../hooks/useNewProject'
+import { useSearch } from '../hooks/useSearch'
 import { useVocab } from '../hooks/useVocab'
 import { AvatarMenu } from './AvatarMenu'
 import { WorkspaceSwitcher } from './WorkspaceSwitcher'
@@ -57,6 +58,11 @@ export function AppHeader({
         <TabBar />
         <div className="phead-fill" />
 
+        <button className="searchbtn" onClick={() => useSearch.getState().show()} title="Search (⌘K)">
+          <Icon name="ti-search" />
+          <span className="searchbtn-txt">Search</span>
+          <kbd className="searchbtn-kbd">⌘K</kbd>
+        </button>
         <button className="newbtn" onClick={() => useNewProject.getState().show()}>
           <Icon name="ti-plus" /> New
         </button>
