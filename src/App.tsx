@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useStore } from './store/useStore'
 import { useNav } from './hooks/useNav'
 import { useDetail } from './hooks/useDetail'
@@ -10,6 +10,8 @@ import { CardModal } from './components/CardModal'
 import { NewProjectModal } from './components/NewProjectModal'
 import { SettingsModal } from './components/SettingsModal'
 import { OnboardingModal } from './components/OnboardingModal'
+import { AppLock } from './components/AppLock'
+import { checkStatus } from './lib/registry'
 import { SearchPalette } from './components/SearchPalette'
 import { ActivityFeed } from './components/ActivityFeed'
 import { NudgeWidget } from './components/NudgeWidget'
@@ -35,10 +37,19 @@ export default function App() {
   // JS-computed tint colors (tags, avatars) alongside the CSS variables.
   useTheme(s => s.dark)
   const hasEmail = useStore(s => !!s.doc.profile?.userEmail)
+  const email = useStore(s => s.doc.profile?.userEmail)
+  const emailVerified = useStore(s => !!s.doc.profile?.emailVerified)
   const myWork = useTabs(s => s.tabs.find(t => t.id === s.activeId)?.kind === 'mywork')
+  const [lock, setLock] = useState<string | null>(null)
   useEffect(() => { initTheme(); void useStore.getState().init().then(() => { initRouter(); initTabs() }) }, [])
   // First launch (no email captured yet) → open onboarding.
   useEffect(() => { if (ready && !hasEmail) useOnboarding.getState().show() }, [ready, hasEmail])
+  // Once-a-day registry check → lock the app if the server says so (disabled,
+  // or unverified past the grace period). No-ops when there's no endpoint/email.
+  useEffect(() => {
+    if (!ready) return
+    void checkStatus(email).then(r => setLock(r.blocked ? r.reason : null))
+  }, [ready, email, emailVerified])
   // The reminder widget runs in a separate window and routes its changes here
   // (the main window is the single writer of the data file).
   useEffect(() => {
@@ -66,6 +77,7 @@ export default function App() {
   useEffect(() => { void setDockBadge(badge) }, [badge])
 
   if (!ready) return <div style={{ padding: 40, color: 'var(--muted)' }}>Loading…</div>
+  if (lock) return <><AppLock reason={lock} /><OnboardingModal /><ConfirmDialog /></>
 
   return (
     <div style={{ display: 'flex', alignItems: 'stretch', minHeight: '100vh' }}>

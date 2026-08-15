@@ -448,6 +448,13 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .addbtn:hover{transform:translateY(-1px);box-shadow:var(--shadow-flat-hover);filter:brightness(1.05);}
 .addbtn:active{transform:translateY(0) scale(.95);transition-duration:.08s;}
 .addbtn .ti{font-size:19px;}
+.addmenu-wrap{position:relative;display:inline-flex;}
+.addmenu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:180px;background:var(--card);border:1px solid var(--edge);
+  border-radius:11px;box-shadow:var(--shadow-hover);padding:5px;display:flex;flex-direction:column;gap:1px;}
+.addmenu-item{display:flex;align-items:center;gap:9px;border:none;background:none;cursor:pointer;font:inherit;font-size:13px;font-weight:550;
+  color:var(--ink);padding:8px 10px;border-radius:8px;text-align:left;width:100%;}
+.addmenu-item:hover{background:var(--btn);}
+.addmenu-item .ti{font-size:16px;color:var(--muted);}
 
 /* Header search button + ⌘K quick-switcher */
 .iconbtn{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--edge);cursor:pointer;font:inherit;
@@ -738,6 +745,17 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .set-privacy{display:flex;gap:11px;align-items:flex-start;background:color-mix(in srgb,var(--teal) 7%,var(--card));
   border:1px solid color-mix(in srgb,var(--teal) 22%,var(--line));border-radius:11px;padding:13px 14px;}
 .set-privacy>.ti{font-size:19px;color:var(--teal);flex-shrink:0;margin-top:1px;}
+/* Registry lock screen */
+.lock{position:fixed;inset:0;z-index:2000;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;}
+.lock-card{width:min(400px,92vw);text-align:center;background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow-hover);padding:32px 28px;}
+.lock-logo{width:52px;height:52px;border-radius:13px;background:#000;padding:7px;box-sizing:border-box;object-fit:contain;margin-bottom:18px;}
+.lock-title{font-size:20px;font-weight:750;color:var(--ink);letter-spacing:-.01em;margin-bottom:8px;}
+.lock-sub{font-size:14px;color:var(--muted);line-height:1.55;margin:0 0 22px;}
+.lock-btn{display:inline-flex;align-items:center;gap:8px;border:none;cursor:pointer;font:inherit;font-size:14px;font-weight:650;
+  color:#fff;background:linear-gradient(135deg,var(--violet),var(--blue));padding:11px 20px;border-radius:11px;text-decoration:none;box-shadow:var(--shadow-flat);}
+.lock-btn:hover{filter:brightness(1.06);}
+.lock-btn .ti{font-size:17px;}
+.lock-foot{margin-top:18px;font-size:12px;color:var(--faint);}
 .set-privacy b{display:block;font-size:13.5px;color:var(--ink);margin-bottom:3px;}
 .set-privacy span{font-size:12.5px;color:var(--muted);line-height:1.5;}
 .set-vocab{display:flex;gap:8px;}

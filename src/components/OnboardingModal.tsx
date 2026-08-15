@@ -57,6 +57,9 @@ export function OnboardingModal() {
     const r = await verifyCode(email.trim(), code)
     setBusy(false)
     if (r.ok) {
+      // Drop the cached status so the app re-checks the registry immediately
+      // (lifts the grace-period lock now that we're verified).
+      try { localStorage.removeItem('wb.status') } catch { /* ignore */ }
       useStore.getState().setProfile({ emailVerified: true })
       hide()
     } else {

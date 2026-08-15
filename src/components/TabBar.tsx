@@ -118,10 +118,6 @@ export function TabBar() {
           )
         })}
       </div>
-
-      <button className="tab-new" onClick={() => useTabs.getState().newTab()} title="New tab (⌘T)" aria-label="New tab">
-        <Icon name="ti-plus" />
-      </button>
     </div>
   )
 }

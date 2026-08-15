@@ -9,6 +9,7 @@ import { useNav } from '../hooks/useNav'
 import { useDetail } from '../hooks/useDetail'
 import { useView, type ViewKind } from '../hooks/useView'
 import { useQuickCapture } from '../hooks/useQuickCapture'
+import { useNewProject } from '../hooks/useNewProject'
 import { useSearch } from '../hooks/useSearch'
 import { useActivityFeed } from '../hooks/useActivityFeed'
 import { useNudge } from '../hooks/useNudge'
@@ -20,6 +21,29 @@ import { AvatarMenu } from './AvatarMenu'
 import { WorkspaceSwitcher } from './WorkspaceSwitcher'
 import { TabBar } from './TabBar'
 import { Icon } from './ui/Icon'
+
+// The header "+" — a project (rich flow) or a quick task at any depth.
+function AddMenu() {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as globalThis.Node)) setOpen(false) }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [open])
+  return (
+    <div className="addmenu-wrap" ref={ref}>
+      <button className="addbtn" onClick={() => setOpen(o => !o)} title="Add a project or task" aria-label="Add"><Icon name="ti-plus" /></button>
+      {open ? (
+        <div className="addmenu">
+          <button className="addmenu-item" onClick={() => { useNewProject.getState().show(); setOpen(false) }}><Icon name="ti-folder-plus" /> New project</button>
+          <button className="addmenu-item" onClick={() => { useQuickCapture.getState().show(); setOpen(false) }}><Icon name="ti-bolt" /> Quick add task</button>
+        </div>
+      ) : null}
+    </div>
+  )
+}
 
 // Bring the reminder widget forward: the native always-on-top window on
 // desktop, or the in-app floating nudge on the web.
@@ -84,9 +108,7 @@ export function AppHeader({
           <span className="searchbtn-txt">Search</span>
           <kbd className="searchbtn-kbd">⌘K</kbd>
         </button>
-        <button className="addbtn" onClick={() => useQuickCapture.getState().show()} title="Add a project or task" aria-label="Add">
-          <Icon name="ti-plus" />
-        </button>
+        <AddMenu />
         <AvatarMenu onExport={onExport} onImport={onImport} />
       </div>
 
