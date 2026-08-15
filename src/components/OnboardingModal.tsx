@@ -1,22 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../store/useStore'
 import { useOnboarding } from '../hooks/useOnboarding'
+import { requestCode, verifyCode, activationConfigured } from '../lib/activation'
 import { Icon } from './ui/Icon'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-function genCode(): string {
-  return String(Math.floor(100000 + Math.random() * 900000))
-}
-
 /**
- * First-run onboarding + email verification.
- *
- * The app is local-first with no mail backend, so verification is stubbed: we
- * generate a 6-digit code on the client and show it as a demo hint. Swapping in
- * a real backend later means emailing `sent` instead of displaying it and
- * checking the code server-side — the UI/flow stays identical. Verification is
- * a *nudge*: the user can skip and keep using the app offline.
+ * First-run onboarding + email verification. The app is free and local-first —
+ * verification is a light nudge (skippable). Codes are sent by a tiny endpoint
+ * (see lib/activation); with no endpoint configured it falls back to a local
+ * demo code so the flow works offline.
  */
 export function OnboardingModal() {
   const open = useOnboarding(s => s.open)
@@ -27,46 +21,56 @@ export function OnboardingModal() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
-  const [sent, setSent] = useState('')
+  const [demo, setDemo] = useState('')
   const [err, setErr] = useState('')
+  const [busy, setBusy] = useState(false)
   const emailRef = useRef<HTMLInputElement>(null)
 
-  // Seed fields + starting step whenever the modal opens. Re-opening from the
-  // nudge (email already captured) jumps straight to the verify step.
   useEffect(() => {
     if (!open) return
     setName(profile?.userName ?? '')
     setEmail(profile?.userEmail ?? '')
     setCode('')
     setErr('')
-    if (profile?.userEmail && !profile?.emailVerified) {
-      setSent(genCode())
-      setStep('verify')
-    } else {
-      setStep('info')
-    }
+    setDemo('')
+    setStep(profile?.userEmail && !profile?.emailVerified ? 'verify' : 'info')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   if (!open) return null
 
-  const sendCode = () => {
+  const sendCode = async () => {
     const e = email.trim()
     if (!EMAIL_RE.test(e)) { setErr('Enter a valid email address.'); return }
+    setBusy(true); setErr('')
     useStore.getState().setProfile({ userName: name.trim() || undefined, userEmail: e })
-    setSent(genCode())
+    const r = await requestCode(e)
+    setBusy(false)
+    if (!r.ok) { setErr(r.error ?? 'Could not send the code.'); return }
+    setDemo(r.demoCode ?? '')
     setCode('')
-    setErr('')
     setStep('verify')
   }
 
-  const verify = () => {
-    if (code.trim() === sent) {
+  const verify = async () => {
+    setBusy(true); setErr('')
+    const r = await verifyCode(email.trim(), code)
+    setBusy(false)
+    if (r.ok) {
       useStore.getState().setProfile({ emailVerified: true })
       hide()
     } else {
-      setErr('That code doesn’t match. Check the code and try again.')
+      setErr(r.error ?? 'That code doesn’t match.')
     }
+  }
+
+  const resend = async () => {
+    setBusy(true); setErr('')
+    const r = await requestCode(email.trim())
+    setBusy(false)
+    setDemo(r.demoCode ?? '')
+    setCode('')
+    if (!r.ok) setErr(r.error ?? 'Could not resend.')
   }
 
   const skip = () => hide()
@@ -94,25 +98,27 @@ export function OnboardingModal() {
                 onKeyDown={e => { if (e.key === 'Enter') sendCode() }} />
             </label>
             {err ? <div className="onb-err">{err}</div> : null}
-            <button className="onb-primary" onClick={sendCode}>Continue</button>
+            <button className="onb-primary" onClick={() => void sendCode()} disabled={busy}>{busy ? 'Sending…' : 'Continue'}</button>
             <button className="onb-skip" onClick={skip}>Skip for now</button>
           </>
         ) : (
           <>
             <div className="onb-title">Verify your email</div>
             <div className="onb-sub">Enter the 6-digit code we sent to <b>{email}</b>.</div>
-            <div className="onb-demo"><Icon name="ti-info-circle" /> Demo build — no email is sent. Your code is <b>{sent}</b>.</div>
+            {!activationConfigured() && demo ? (
+              <div className="onb-demo"><Icon name="ti-info-circle" /> Demo build — no email is sent yet. Your code is <b>{demo}</b>.</div>
+            ) : null}
             <label className="onb-field">
               <span>Verification code</span>
               <input className="onb-code" value={code} inputMode="numeric" maxLength={6} autoFocus
                 onChange={e => { setCode(e.target.value.replace(/\D/g, '')); setErr('') }}
                 placeholder="000000"
-                onKeyDown={e => { if (e.key === 'Enter') verify() }} />
+                onKeyDown={e => { if (e.key === 'Enter') void verify() }} />
             </label>
             {err ? <div className="onb-err">{err}</div> : null}
-            <button className="onb-primary" onClick={verify}>Verify &amp; continue</button>
+            <button className="onb-primary" onClick={() => void verify()} disabled={busy || code.length < 6}>{busy ? 'Verifying…' : 'Verify & continue'}</button>
             <div className="onb-row">
-              <button className="onb-link" onClick={() => { setSent(genCode()); setCode(''); setErr('') }}>Resend code</button>
+              <button className="onb-link" onClick={() => void resend()} disabled={busy}>Resend code</button>
               <button className="onb-link" onClick={() => setStep('info')}>Change email</button>
             </div>
             <button className="onb-skip" onClick={skip}>I’ll verify later</button>
