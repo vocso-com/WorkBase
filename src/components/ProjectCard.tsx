@@ -14,11 +14,12 @@ export function ProjectCard({ node, onOpen }: { node: Node; onOpen: (e: MouseEve
   const color = node.color ?? 'gray'
   const v = useVocab()
   const stages = useStore(s => s.doc.stages)
-  const sm = stageMeta(stages, node.status)
+  const stageLabels = useStore(s => s.doc.stageLabels)
+  const sm = stageMeta(stages, node.status, stageLabels)
   const pct = progressOf(node)
 
   // Progress bar segmented by stage color (matches the header roll-up).
-  const allStages = mergedStages(stages)
+  const allStages = mergedStages(stages, stageLabels, useStore(s => s.doc.stageOrder))
   const ls = leaves(node)
   const total = ls.length
   const counts: Record<string, number> = {}

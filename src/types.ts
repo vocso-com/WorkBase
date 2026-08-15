@@ -106,6 +106,11 @@ export interface Profile {
   userName?: string
   userAvatar?: string
   vocab?: VocabKey
+  // Preferred view for opening a project that has no view of its own.
+  defaultView?: 'board' | 'kanban' | 'flow' | 'columns'
+  // First-run account info.
+  userEmail?: string
+  emailVerified?: boolean
 }
 
 export interface StoreDoc {
@@ -118,5 +123,11 @@ export interface StoreDoc {
   tagPalette: Tag[]
   templates: Template[]
   stages: Stage[]
+  // Optional per-stage-id label overrides — lets built-in stages (To do, In
+  // progress, …) be renamed without changing their status ids.
+  stageLabels?: Record<string, string>
+  // Optional explicit display order of stage ids (built-ins + customs). When
+  // absent, order is the four built-ins followed by customs in insertion order.
+  stageOrder?: string[]
   profile?: Profile
 }

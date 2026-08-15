@@ -5,6 +5,13 @@ import { useSettings } from '../hooks/useSettings'
 import { VOCAB, VOCAB_KEYS } from '../lib/vocab'
 import { Icon } from './ui/Icon'
 
+const DEFAULT_VIEW_OPTS: { key: NonNullable<import('../types').Profile['defaultView']>; label: string; icon: string }[] = [
+  { key: 'board', label: 'Board', icon: 'ti-layout-grid' },
+  { key: 'kanban', label: 'Kanban', icon: 'ti-layout-kanban' },
+  { key: 'flow', label: 'Flow', icon: 'ti-sitemap' },
+  { key: 'columns', label: 'Outline', icon: 'ti-layout-sidebar' },
+]
+
 export function SettingsModal() {
   const open = useSettings(s => s.open)
   const hide = useSettings(s => s.hide)
@@ -82,6 +89,22 @@ export function SettingsModal() {
                   <button key={k} className={`set-vocab-opt${on ? ' on' : ''}`} onClick={() => useStore.getState().setProfile({ vocab: k })}>
                     <span className="set-vocab-name">{vk.label}</span>
                     <span className="set-vocab-hint">{vk.hint}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="set-sec">
+            <div className="set-sec-h">Default view</div>
+            <div className="set-hint">The view a project opens in when it has no view of its own.</div>
+            <div className="set-views">
+              {DEFAULT_VIEW_OPTS.map(o => {
+                const on = (profile?.defaultView ?? 'board') === o.key
+                return (
+                  <button key={o.key} className={`set-view-opt${on ? ' on' : ''}`} onClick={() => useStore.getState().setProfile({ defaultView: o.key })}>
+                    <Icon name={o.icon} />
+                    <span>{o.label}</span>
                   </button>
                 )
               })}

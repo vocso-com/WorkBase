@@ -43,6 +43,8 @@ export function CardModal({ inlineNode }: { inlineNode?: Node } = {}) {
   const roots = useStore(s => s.doc.roots)
   const tagPalette = useStore(s => s.doc.tagPalette)
   const customStages = useStore(s => s.doc.stages)
+  const stageLabels = useStore(s => s.doc.stageLabels)
+  const stageOrder = useStore(s => s.doc.stageOrder)
   const profile = useStore(s => s.doc.profile)
   const workspaces = useStore(s => s.doc.workspaces)
   const templates = useStore(s => s.doc.templates)
@@ -105,7 +107,7 @@ export function CardModal({ inlineNode }: { inlineNode?: Node } = {}) {
   if (!node) return null
 
   const color = node.labelColor ?? node.color ?? 'gray'
-  const sm = stageMeta(customStages, node.status)
+  const sm = stageMeta(customStages, node.status, stageLabels)
   const parent = findParent(roots, node.id)
   const isProject = roots.some(r => r.id === node.id)
   const children = node.children
@@ -430,7 +432,7 @@ export function CardModal({ inlineNode }: { inlineNode?: Node } = {}) {
                 </button>
                 {pick === 'status' ? (
                   <div className="cm-qp-pop">
-                    {mergedStages(customStages).map(st => (
+                    {mergedStages(customStages, stageLabels, stageOrder).map(st => (
                       <button key={st.id} className={`cm-qp-opt${node.status === st.id ? ' on' : ''}`} onClick={() => { useStore.getState().setStatus(node.id, st.id as Status); setPick(null) }}>
                         <span className="sdot" style={{ background: st.dot }} /> {st.label}
                       </button>

@@ -33,6 +33,7 @@ function descendantsOf(n: Node): Set<string> {
 
 export function FlowView({ node }: { node: Node }) {
   const stages = useStore(s => s.doc.stages)
+  const stageLabels = useStore(s => s.doc.stageLabels)
   const [orient, setOrient] = useState<'h' | 'v'>(node.flowOrientation ?? 'h')
   // Restore the remembered orientation when switching to a different project.
   useEffect(() => { setOrient(node.flowOrientation ?? 'h') }, [node.id, node.flowOrientation])
@@ -257,6 +258,7 @@ export function FlowView({ node }: { node: Node }) {
               key={fn.id}
               fn={fn}
               stages={stages}
+              stageLabels={stageLabels}
               pos={posOf(fn)}
               dragging={live?.id === fn.id}
               isDropTarget={dropTarget === fn.id}
@@ -308,6 +310,7 @@ function zoomAt(t: Transform, vp: HTMLDivElement | null, dir: number): Transform
 interface CardProps {
   fn: FlowNode
   stages: Stage[]
+  stageLabels?: Record<string, string>
   pos: { x: number; y: number }
   dragging: boolean
   isDropTarget: boolean
@@ -320,10 +323,10 @@ interface CardProps {
   onDelete: () => void
 }
 
-function FlowNodeCard({ fn, stages, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onOpen, onToggle, onAdd, onDelete }: CardProps) {
+function FlowNodeCard({ fn, stages, stageLabels, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onOpen, onToggle, onAdd, onDelete }: CardProps) {
   const { node, depth } = fn
   const drop = isDropTarget ? ' fn-droptarget' : ''
-  const sm = stageMeta(stages, node.status)
+  const sm = stageMeta(stages, node.status, stageLabels)
   // Tasks are colored by status (a custom label color overrides); modules and
   // the root keep their identity color, also overridable.
   const color: string = depth === 2 ? (node.labelColor ?? sm.color) : (node.labelColor ?? node.color ?? 'gray')

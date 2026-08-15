@@ -11,6 +11,7 @@ import { useDetail } from '../hooks/useDetail'
 import { Icon } from './ui/Icon'
 import { ProgressBar } from './ui/ProgressBar'
 import { BoardItemRow } from './BoardItemRow'
+import { NodeMenu } from './NodeMenu'
 
 function isChildDone(child: Node): boolean {
   return child.children.length > 0 ? progressOf(child) === 100 : child.status === 'done'
@@ -81,7 +82,10 @@ export function ModuleCard({ node, onOpen }: { node: Node; onOpen: () => void })
               {node.title}
             </div>
           </div>
-          <span style={{ fontSize: 11.5, color: 'var(--faint)' }}>{done}/{total}</span>
+          <div className="mc-head-right">
+            <span style={{ fontSize: 11.5, color: 'var(--faint)' }}>{done}/{total}</span>
+            <NodeMenu id={node.id} className="mcard-menu" />
+          </div>
         </div>
         <ProgressBar node={node} className="bar2" />
         <SortableContext items={node.children.map(c => c.id)} strategy={verticalListSortingStrategy}>

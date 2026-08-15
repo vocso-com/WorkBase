@@ -78,14 +78,24 @@ export const DEFAULT_STAGES: StageMeta[] = STATUS_ORDER.map(id => ({
   id, label: STATUS[id].label, color: STATUS[id].color, dot: STATUS[id].dot,
 }))
 
-/** The four built-in stages plus any custom stages, in display order. */
-export function mergedStages(custom: Stage[] = []): StageMeta[] {
-  return [...DEFAULT_STAGES, ...custom.map(s => ({ id: s.id, label: s.label, color: s.color, dot: COLORS[s.color] }))]
+/**
+ * The four built-in stages plus any custom stages, in display order.
+ * `labels` overrides any stage's label by id; `order` sets an explicit
+ * left-to-right ordering (ids not listed keep their natural position at the end).
+ */
+export function mergedStages(custom: Stage[] = [], labels?: Record<string, string>, order?: string[]): StageMeta[] {
+  const base: StageMeta[] = [
+    ...DEFAULT_STAGES,
+    ...custom.map(s => ({ id: s.id, label: s.label, color: s.color, dot: COLORS[s.color] })),
+  ].map(s => (labels && labels[s.id] ? { ...s, label: labels[s.id] } : s))
+  if (!order || order.length === 0) return base
+  const rank = new Map(order.map((id, i) => [id, i]))
+  return [...base].sort((a, b) => (rank.get(a.id) ?? 900 + base.indexOf(a)) - (rank.get(b.id) ?? 900 + base.indexOf(b)))
 }
 
 /** Resolve a status id to its stage meta, falling back to a neutral stage. */
-export function stageMeta(custom: Stage[], id: Status): StageMeta {
-  return mergedStages(custom).find(s => s.id === id) ?? { id, label: id, color: 'gray', dot: COLORS.gray }
+export function stageMeta(custom: Stage[], id: Status, labels?: Record<string, string>): StageMeta {
+  return mergedStages(custom, labels).find(s => s.id === id) ?? { id, label: id, color: 'gray', dot: COLORS.gray }
 }
 
 export const PROJECT_ICONS = ['ti-cloud', 'ti-building-store', 'ti-users', 'ti-broadcast', 'ti-rocket', 'ti-briefcase', 'ti-bulb', 'ti-flame']

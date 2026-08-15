@@ -114,7 +114,7 @@ function ProjectChip({ node }: { node: Node }) {
 }
 
 function HeaderProgress({ node }: { node: Node }) {
-  const stages = mergedStages(useStore(s => s.doc.stages))
+  const stages = mergedStages(useStore(s => s.doc.stages), useStore(s => s.doc.stageLabels), useStore(s => s.doc.stageOrder))
   const ls = leaves(node)
   const total = ls.length
   const counts: Record<string, number> = {}

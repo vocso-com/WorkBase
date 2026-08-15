@@ -48,8 +48,10 @@ interface State {
   addStage: (label: string, color: ColorKey) => string
   removeStage: (id: string) => void
   renameStage: (id: string, label: string) => void
+  moveStageTo: (id: string, beforeId: string | null) => void
   setProfile: (patch: Partial<StoreDoc['profile']>) => void
   remove: (id: string) => void
+  duplicate: (id: string) => string | null
   move: (id: string, newParentId: string | null, index: number) => void
   reorder: (parentId: string | null, from: number, to: number) => void
   replaceDoc: (doc: StoreDoc) => void
@@ -280,7 +282,29 @@ export const useStore = create<State>((set, get) => ({
     return id
   },
   renameStage(id, label) {
-    set(s => ({ doc: { ...s.doc, stages: s.doc.stages.map(st => (st.id === id ? { ...st, label } : st)) } }))
+    const clean = label.trim()
+    set(s => {
+      // Store the new label as an override so built-in stages (To do, Done, …)
+      // can be renamed too, without touching their status ids.
+      const stageLabels = { ...(s.doc.stageLabels ?? {}) }
+      if (clean) stageLabels[id] = clean
+      else delete stageLabels[id]
+      // Keep a custom stage's own label in sync for exports/back-compat.
+      const stages = s.doc.stages.map(st => (st.id === id && clean ? { ...st, label: clean } : st))
+      return { doc: { ...s.doc, stages, stageLabels } }
+    })
+    schedulePersist(get)
+  },
+  moveStageTo(id, beforeId) {
+    set(s => {
+      const order = mergedStages(s.doc.stages, s.doc.stageLabels, s.doc.stageOrder).map(st => st.id)
+      if (!order.includes(id)) return s
+      const without = order.filter(x => x !== id)
+      let at = beforeId ? without.indexOf(beforeId) : without.length
+      if (at === -1) at = without.length
+      without.splice(at, 0, id)
+      return { doc: { ...s.doc, stageOrder: without } }
+    })
     schedulePersist(get)
   },
   setProfile(patch) {
@@ -307,6 +331,43 @@ export const useStore = create<State>((set, get) => ({
     // Log the removal on the surviving parent so it shows in its activity feed.
     if (n && parent) get().logActivity(parent.id, `Removed “${n.title}”`)
     schedulePersist(get)
+  },
+  duplicate(id) {
+    const roots = get().doc.roots
+    const node = findNode(roots, id)
+    if (!node) return null
+    const parent = findParent(roots, id)
+    const parentId = parent ? parent.id : null
+    const prefix = parentId === null ? projectPrefix(node.title) : rootPrefixFor(roots, id)
+    // Allocate sequential shortIds starting just past the current max for this prefix.
+    let seq = Number(nextShortId(roots, prefix).split('-').pop()) - 1
+    const now = new Date().toISOString()
+    const clone = (src: Node, top: boolean): Node => ({
+      ...src,
+      id: nanoid(),
+      shortId: `${prefix}-${++seq}`,
+      title: top ? `${src.title} copy` : src.title,
+      createdAt: now,
+      updatedAt: now,
+      activities: [],
+      comments: [],
+      children: src.children.map(c => clone(c, false)),
+    })
+    const copy = clone(node, true)
+    if (parentId === null) copy.workspace = node.workspace ?? get().doc.activeWorkspace
+    set(s => {
+      let roots2 = addChild(s.doc.roots, parentId, copy)
+      const siblings = parentId ? findNode(roots2, parentId)?.children ?? [] : roots2
+      const origIdx = siblings.findIndex(c => c.id === id)
+      const copyIdx = siblings.findIndex(c => c.id === copy.id)
+      if (origIdx !== -1 && copyIdx !== -1 && copyIdx !== origIdx + 1) {
+        roots2 = reorderChildren(roots2, parentId, copyIdx, origIdx + 1)
+      }
+      return { doc: { ...s.doc, roots: roots2 } }
+    })
+    if (parent) get().logActivity(parent.id, `Duplicated “${node.title}”`)
+    schedulePersist(get)
+    return copy.id
   },
   move(id, newParentId, index) {
     set(s => ({ doc: { ...s.doc, roots: moveNode(s.doc.roots, id, newParentId, index) } }))

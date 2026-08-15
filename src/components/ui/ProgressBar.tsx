@@ -7,7 +7,7 @@ import { useStore } from '../../store/useStore'
 // project cards, the header, flow nodes, module cards, and the checklist so the
 // coloring logic is identical everywhere.
 export function ProgressBar({ node, className }: { node: Node; className: string }) {
-  const stages = mergedStages(useStore(s => s.doc.stages))
+  const stages = mergedStages(useStore(s => s.doc.stages), useStore(s => s.doc.stageLabels), useStore(s => s.doc.stageOrder))
   const ls = leaves(node)
   const total = ls.length
   const counts: Record<string, number> = {}

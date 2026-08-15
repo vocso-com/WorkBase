@@ -5,16 +5,22 @@ import { PRIORITY_META, hex } from '../theme'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { useStore } from '../store/useStore'
 import { useDetail } from '../hooks/useDetail'
+import { toText } from '../lib/text'
 import { Tag } from './ui/Tag'
 import { Icon } from './ui/Icon'
+import { Checkbox } from './ui/Checkbox'
 import { DueChip } from './DueChip'
+import { NodeMenu } from './NodeMenu'
 
-export function TaskCard({ node, color, label }: { node: Node; color: string; label?: string }) {
+export function TaskCard({ node, color }: { node: Node; color: string; label?: string }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: node.id })
   const tags = node.tags ?? []
+  const attachCount = node.attachments?.length ?? 0
+  const hasDesc = !!toText(node.description).trim()
   const done = node.status === 'done'
   const initial = node.title.trim().charAt(0).toUpperCase() || '?'
   const base = CSS.Translate.toString(transform)
+  const stop = (e: React.SyntheticEvent) => e.stopPropagation()
 
   const style: React.CSSProperties = {
     transform: isDragging ? `${base ?? ''} rotate(3deg) scale(1.03)` : base,
@@ -30,27 +36,16 @@ export function TaskCard({ node, color, label }: { node: Node; color: string; la
       {...listeners}
       {...attributes}
     >
-      <button
-        className={`tcheck${done ? ' done' : ''}`}
-        style={done ? { color: hex(color) } : undefined}
-        onPointerDown={e => e.stopPropagation()}
-        onClick={e => { e.stopPropagation(); useStore.getState().toggleDone(node.id) }}
-        aria-label={done ? 'Mark not done' : 'Mark done'}
-        title={done ? 'Mark not done' : 'Mark done'}
-      >
-        <Icon name={done ? 'ti-square-check' : 'ti-square'} />
-      </button>
-      {label ? (
-        <span className="tlabel" style={{ background: tagBg(color), color: tagFg(color) }}>
-          {label}
+      <NodeMenu id={node.id} className="tcard-menu" />
+      <div className="tt-row">
+        <span className={`tcheck${done ? ' done' : ''}`} onPointerDown={stop} onClick={stop}>
+          <Checkbox status={node.status} onToggle={() => useStore.getState().toggleDone(node.id)} />
         </span>
-      ) : null}
-      <div className="tt" onClick={e => { e.stopPropagation(); useDetail.getState().open(node.id) }}>
-        {node.title}
+        <div className="tt" onClick={e => { e.stopPropagation(); useDetail.getState().open(node.id) }}>
+          {node.title}
+        </div>
       </div>
       <div className="meta">
-        <span className="tid">{node.shortId}</span>
-        <DueChip dueDate={node.dueDate} />
         {node.priority ? (
           <span className="tprio" style={{ background: tagBg(PRIORITY_META[node.priority].color), color: tagFg(PRIORITY_META[node.priority].color) }}>
             {PRIORITY_META[node.priority].label}
@@ -59,6 +54,10 @@ export function TaskCard({ node, color, label }: { node: Node; color: string; la
         {tags.map(t => (
           <Tag key={t.name} tag={t} />
         ))}
+        <DueChip dueDate={node.dueDate} />
+        {hasDesc ? <span className="tmini" title="Has description"><Icon name="ti-align-left" /></span> : null}
+        {attachCount > 0 ? <span className="tmini" title={`${attachCount} attachment${attachCount > 1 ? 's' : ''}`}><Icon name="ti-paperclip" /> {attachCount}</span> : null}
+        <span className="tid">{node.shortId}</span>
         <span className="who" style={{ background: hex(color) }}>
           {initial}
         </span>

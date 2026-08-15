@@ -47,6 +47,8 @@ export function deserialize(text: string): StoreDoc {
     tagPalette: Array.isArray(parsed.tagPalette) ? parsed.tagPalette : [...DEFAULT_TAGS],
     templates: Array.isArray(parsed.templates) ? (parsed.templates as Template[]) : [],
     stages: Array.isArray(parsed.stages) ? (parsed.stages as Stage[]) : [],
+    stageLabels: parsed.stageLabels && typeof parsed.stageLabels === 'object' ? (parsed.stageLabels as Record<string, string>) : undefined,
+    stageOrder: Array.isArray(parsed.stageOrder) ? (parsed.stageOrder as string[]) : undefined,
     profile: parsed.profile && typeof parsed.profile === 'object' ? parsed.profile : undefined,
   }
 }

@@ -8,7 +8,10 @@ import ProjectPage from './components/ProjectPage'
 import { CardModal } from './components/CardModal'
 import { NewProjectModal } from './components/NewProjectModal'
 import { SettingsModal } from './components/SettingsModal'
+import { OnboardingModal } from './components/OnboardingModal'
+import { VerifyNudge } from './components/VerifyNudge'
 import { ConfirmDialog } from './components/ConfirmDialog'
+import { useOnboarding } from './hooks/useOnboarding'
 import { exportDoc, importDoc } from './lib/transfer'
 import { initRouter } from './lib/router'
 import { initTabs, useTabs } from './hooks/useTabs'
@@ -21,13 +24,17 @@ export default function App() {
   // Subscribe so a Light/Dark/System change re-renders the tree and refreshes
   // JS-computed tint colors (tags, avatars) alongside the CSS variables.
   useTheme(s => s.dark)
+  const hasEmail = useStore(s => !!s.doc.profile?.userEmail)
   useEffect(() => { initTheme(); void useStore.getState().init().then(() => { initRouter(); initTabs() }) }, [])
+  // First launch (no email captured yet) → open onboarding.
+  useEffect(() => { if (ready && !hasEmail) useOnboarding.getState().show() }, [ready, hasEmail])
 
   if (!ready) return <div style={{ padding: 40, color: 'var(--muted)' }}>Loading…</div>
 
   return (
     <div style={{ display: 'flex', alignItems: 'stretch', minHeight: '100vh' }}>
       <div style={{ flex: 1, minWidth: 0 }}>
+        <VerifyNudge />
         <AppHeader
           roots={roots}
           path={path}
@@ -60,6 +67,7 @@ export default function App() {
       <CardModal />
       <NewProjectModal />
       <SettingsModal />
+      <OnboardingModal />
       <ConfirmDialog />
     </div>
   )
