@@ -43,11 +43,9 @@ export function AppHeader({
   const current = crumbs[crumbs.length - 1] ?? null
   const parents = crumbs.slice(0, -1)
   const profile = useStore(s => s.doc.profile)
+  // My Work lives as a pinned tab near Home (see TabBar), so it's active
+  // whenever the current tab is the My Work surface.
   const myWorkOpen = useTabs(s => s.tabs.find(t => t.id === s.activeId)?.kind === 'mywork')
-  const activeWs = useStore(s => s.doc.activeWorkspace)
-  // Once My Work is open it lives as a tab near Home, so the header shortcut
-  // hides to avoid duplicating the entry point.
-  const hasMyWorkTab = useTabs(s => s.tabs.some(t => t.kind === 'mywork' && t.workspace === activeWs))
 
   return (
     <header className="phead">
@@ -64,12 +62,6 @@ export function AppHeader({
         <TabBar />
         <div className="phead-fill" />
 
-        {!hasMyWorkTab ? (
-          <button className="myworkbtn" onClick={() => useTabs.getState().openMyWork()} title="My Work — what to do next">
-            <Icon name="ti-target-arrow" />
-            <span className="myworkbtn-txt">My Work</span>
-          </button>
-        ) : null}
         <button className="searchbtn" onClick={() => useSearch.getState().show()} title="Search (⌘K)">
           <Icon name="ti-search" />
           <span className="searchbtn-txt">Search</span>
@@ -82,7 +74,7 @@ export function AppHeader({
       </div>
 
       {myWorkOpen ? (
-        <div className="phead-sub" style={{ ['--pj' as string]: 'var(--dot)' }}>
+        <div className="phead-sub" style={{ ['--pj' as string]: hex('violet') }}>
           <nav className="phead-crumb"><span className="cl cl-static"><Icon name="ti-target-arrow" /> My Work</span></nav>
           <div className="phead-fill" />
         </div>

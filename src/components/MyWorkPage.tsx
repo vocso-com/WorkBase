@@ -17,7 +17,8 @@ function WorkRow({ item, done }: { item: WorkItem; done?: boolean }) {
   const open = () => goToNode(n.id)
   const accent = hex(item.rootColor)
   return (
-    <div className={`mw-row${done ? ' mw-row-done' : ''}`} style={{ borderLeft: `3px solid ${accent}` }}>
+    <div className={`mw-row${done ? ' mw-row-done' : ''}`}>
+      <span className="mw-projdot" style={{ background: accent }} title={item.rootTitle} />
       <span className="mw-check" onPointerDown={e => e.stopPropagation()}>
         <Checkbox status={n.status} onToggle={() => useStore.getState().toggleDone(n.id)} />
       </span>

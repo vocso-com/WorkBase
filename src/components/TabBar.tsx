@@ -6,9 +6,8 @@ import { hex } from '../theme'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { Icon } from './ui/Icon'
 
-// Desktop-style tabs: keep several projects/locations open and switch between
-// them. Each tab remembers its own drill path + view, is colored by its
-// project accent, can be dragged to reorder, and answers ⌘T/⌘W/⌘1–9.
+// Home and My Work are always pinned at the left; open projects scroll in the
+// middle (with edge fades hinting at more); the New-tab button is pinned right.
 export function TabBar() {
   const tabs = useTabs(s => s.tabs)
   const activeId = useTabs(s => s.activeId)
@@ -16,11 +15,10 @@ export function TabBar() {
   const roots = useStore(s => s.doc.roots)
   const [drag, setDrag] = useState<number | null>(null)
   const [over, setOver] = useState<number | null>(null)
+  const [edges, setEdges] = useState({ l: false, r: false })
   const barRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
-  // Measure the active tab so the sub-bar can draw its border everywhere except
-  // directly under the tab — the tab opens into the panel (CSS can't do this
-  // alone, and the tabbar's scroll clips any overlap).
   useLayoutEffect(() => {
     const root = document.documentElement
     const measure = () => {
@@ -33,58 +31,87 @@ export function TabBar() {
         root.style.setProperty('--tabgap-l', '0px')
         root.style.setProperty('--tabgap-r', '0px')
       }
+      const sc = scrollRef.current
+      if (sc) {
+        const l = sc.scrollLeft > 4
+        const r = sc.scrollLeft + sc.clientWidth < sc.scrollWidth - 4
+        setEdges(prev => (prev.l === l && prev.r === r ? prev : { l, r }))
+      }
     }
     measure()
-    const bar = barRef.current
+    const sc = scrollRef.current
     window.addEventListener('resize', measure)
-    bar?.addEventListener('scroll', measure)
-    return () => { window.removeEventListener('resize', measure); bar?.removeEventListener('scroll', measure) }
-  })
+    sc?.addEventListener('scroll', measure)
+    return () => { window.removeEventListener('resize', measure); sc?.removeEventListener('scroll', measure) }
+    // Re-measure when the set of tabs or the active tab changes (not every
+    // render — measuring writes state and would otherwise loop).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabs, activeId, activeWorkspace])
 
-  // Tabs are scoped to the active WorkBase; only surface them once you're
-  // juggling more than one thing in this WorkBase.
   const visible = tabs.filter(t => t.workspace === activeWorkspace)
-  if (visible.length < 2) return null
+  const active = visible.find(t => t.id === activeId)
+  const projectTabs = visible.filter(t => t.path.length > 0 && !t.kind)
+  const homeActive = !!active && active.path.length === 0 && !active.kind
+  const myworkActive = active?.kind === 'mywork'
+  const iconOnly = projectTabs.length >= 3
+  const violet = hex('violet')
 
   return (
     <div className="tabbar" ref={barRef}>
-      {visible.map(t => {
-        const i = tabs.indexOf(t)
-        const mywork = t.kind === 'mywork'
-        const root = !mywork && t.path[0] ? findNode(roots, t.path[0]) : null
-        const active = t.id === activeId
-        const label = mywork ? 'My Work' : root?.title ?? 'Home'
-        const accent = mywork ? hex('violet') : root ? hex(root.color ?? 'gray') : 'var(--dot)'
-        // When juggling several tabs, the pinned My Work tab collapses to an icon.
-        const iconOnly = mywork && visible.length >= 4
-        return (
-          <div
-            key={t.id}
-            className={`tab${active ? ' on' : ''}${root ? ' tab-proj' : ''}${mywork ? ' tab-mywork' : ''}${iconOnly ? ' tab-icononly' : ''}${drag === i ? ' dragging' : ''}${over === i && drag !== i ? ' dropbefore' : ''}`}
-            style={active ? { background: `color-mix(in srgb, ${accent} 10%, var(--card))`, borderColor: `color-mix(in srgb, ${accent} 30%, var(--line))` } : undefined}
-            onClick={() => useTabs.getState().activate(t.id)}
-            title={label}
-            draggable
-            onDragStart={() => setDrag(i)}
-            onDragOver={e => { e.preventDefault(); setOver(i) }}
-            onDrop={() => { if (drag !== null) useTabs.getState().reorder(drag, i); setDrag(null); setOver(null) }}
-            onDragEnd={() => { setDrag(null); setOver(null) }}
-          >
-            <span
-              className="tab-ic"
-              style={mywork ? { background: tagBg('violet'), color: tagFg('violet') } : root ? { background: tagBg(root.color ?? 'gray'), color: tagFg(root.color ?? 'gray') } : undefined}
+      <button
+        className={`tab tab-pinned${homeActive ? ' on' : ''}${iconOnly ? ' tab-icononly' : ''}`}
+        style={homeActive ? { background: 'color-mix(in srgb, var(--dot) 16%, var(--card))', borderColor: 'color-mix(in srgb, var(--dot) 32%, var(--line))' } : undefined}
+        onClick={() => useTabs.getState().goHome()}
+        title="Home"
+      >
+        <span className="tab-ic"><Icon name="ti-home" /></span>
+        {iconOnly ? null : <span className="tab-label">Home</span>}
+      </button>
+
+      <button
+        className={`tab tab-pinned tab-mywork${myworkActive ? ' on' : ''}${iconOnly ? ' tab-icononly' : ''}`}
+        style={myworkActive ? { background: `color-mix(in srgb, ${violet} 10%, var(--card))`, borderColor: `color-mix(in srgb, ${violet} 32%, var(--line))` } : undefined}
+        onClick={() => useTabs.getState().openMyWork()}
+        title="My Work — what to do next"
+      >
+        <span className="tab-ic" style={{ background: tagBg('violet'), color: tagFg('violet') }}><Icon name="ti-target-arrow" /></span>
+        {iconOnly ? null : <span className="tab-label">My Work</span>}
+      </button>
+
+      <div className={`tab-scroll${edges.l ? ' fade-l' : ''}${edges.r ? ' fade-r' : ''}`} ref={scrollRef}>
+        {projectTabs.map(t => {
+          const i = tabs.indexOf(t)
+          const root = findNode(roots, t.path[0])
+          const on = t.id === activeId
+          const label = root?.title ?? 'Project'
+          const accent = root ? hex(root.color ?? 'gray') : 'var(--dot)'
+          return (
+            <div
+              key={t.id}
+              className={`tab tab-proj${on ? ' on' : ''}${drag === i ? ' dragging' : ''}${over === i && drag !== i ? ' dropbefore' : ''}`}
+              style={on ? { background: `color-mix(in srgb, ${accent} 10%, var(--card))`, borderColor: `color-mix(in srgb, ${accent} 32%, var(--line))` } : undefined}
+              onClick={() => useTabs.getState().activate(t.id)}
+              title={label}
+              draggable
+              onDragStart={() => setDrag(i)}
+              onDragOver={e => { e.preventDefault(); setOver(i) }}
+              onDrop={() => { if (drag !== null) useTabs.getState().reorder(drag, i); setDrag(null); setOver(null) }}
+              onDragEnd={() => { setDrag(null); setOver(null) }}
             >
-              <Icon name={mywork ? 'ti-target-arrow' : root ? (root.icon ?? 'ti-folder') : 'ti-home'} />
-            </span>
-            {iconOnly ? null : <span className="tab-label">{label}</span>}
-            <button
-              className="tab-close"
-              onClick={e => { e.stopPropagation(); useTabs.getState().close(t.id) }}
-              aria-label="Close tab"
-            ><Icon name="ti-x" /></button>
-          </div>
-        )
-      })}
+              <span className="tab-ic" style={{ background: tagBg(root?.color ?? 'gray'), color: tagFg(root?.color ?? 'gray') }}>
+                <Icon name={root?.icon ?? 'ti-folder'} />
+              </span>
+              <span className="tab-label">{label}</span>
+              <button
+                className="tab-close"
+                onClick={e => { e.stopPropagation(); useTabs.getState().close(t.id) }}
+                aria-label="Close tab"
+              ><Icon name="ti-x" /></button>
+            </div>
+          )
+        })}
+      </div>
+
       <button className="tab-new" onClick={() => useTabs.getState().newTab()} title="New tab (⌘T)" aria-label="New tab">
         <Icon name="ti-plus" />
       </button>
