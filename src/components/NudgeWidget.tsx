@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from 'react'
+import type { Node } from '../types'
 import { buildWork } from '../lib/execution'
 import { useStore } from '../store/useStore'
 import { useNudge } from '../hooks/useNudge'
@@ -11,24 +13,57 @@ import { hex } from '../theme'
 import { Checkbox } from './ui/Checkbox'
 import { Icon } from './ui/Icon'
 
-/**
- * A small, sticky reminder / My Work nudge. In the web build it floats in the
- * bottom-right of the app; in the desktop build the same component fills a
- * native always-on-top window (`standalone`) that sits above every app, so
- * its actions target the main window instead of navigating in place.
- */
 function headline(od: number, td: number): string {
   if (od > 0) return 'Let’s clear what’s slipping'
   if (td > 0) return 'A few due today — you’ve got this'
   return 'You’re all caught up ✨'
 }
 
+function localISO(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/** How many tasks were completed today (for the momentum streak). */
+function doneToday(roots: Node[]): number {
+  const t = new Date().toDateString()
+  let n = 0
+  const walk = (node: Node) => {
+    if (node.status === 'done' && (node.activities ?? []).some(a => a.text === 'Marked complete' && new Date(a.at).toDateString() === t)) n++
+    node.children.forEach(walk)
+  }
+  roots.forEach(walk)
+  return n
+}
+
+/**
+ * A small, sticky reminder / My Work nudge. In the web build it floats in the
+ * bottom-right of the app; in the desktop build the same component fills a
+ * native always-on-top window (`standalone`) that sits above every app, so
+ * its actions target the main window instead of navigating in place.
+ */
 export function NudgeWidget({ standalone }: { standalone?: boolean } = {}) {
   const roots = useStore(s => s.doc.roots)
   const activeWs = useStore(s => s.doc.activeWorkspace)
   const profile = useStore(s => s.doc.profile)
   const closed = useNudge(s => s.closed)
   const collapsed = useNudge(s => s.collapsed)
+
+  const wsRoots = roots.filter(r => (r.workspace ?? DEFAULT_WORKSPACE_ID) === activeWs)
+  const work = buildWork(wsRoots)
+  const done = doneToday(wsRoots)
+
+  // Momentum: celebrate the moment a task gets ticked off.
+  const prevDone = useRef(done)
+  const [celebrate, setCelebrate] = useState(false)
+  useEffect(() => {
+    if (done > prevDone.current) {
+      setCelebrate(true)
+      const t = setTimeout(() => setCelebrate(false), 1300)
+      prevDone.current = done
+      return () => clearTimeout(t)
+    }
+    prevDone.current = done
+  }, [done])
 
   const remindersOn = profile?.nudgeReminders !== false // default on
   const myWorkOn = !!profile?.nudgeMyWork
@@ -37,8 +72,6 @@ export function NudgeWidget({ standalone }: { standalone?: boolean } = {}) {
   const part = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
   const greeting = firstName ? `Good ${part}, ${firstName}` : `Good ${part}`
 
-  const wsRoots = roots.filter(r => (r.workspace ?? DEFAULT_WORKSPACE_ID) === activeWs)
-  const work = buildWork(wsRoots)
   const reminders = [...work.overdue, ...work.today]
   const shown = reminders.slice(0, 5)
   const ready = work.focus.length || work.anytime.length
@@ -56,13 +89,14 @@ export function NudgeWidget({ standalone }: { standalone?: boolean } = {}) {
   const quickAdd = () => { if (standalone) { void quickAddFromWidget() } else { useNewProject.getState().show() } }
 
   return (
-    <div className={`nudge${standalone ? ' nudge-standalone' : ''}${collapsed ? ' is-collapsed' : ''}`} role="status" aria-label="Reminders">
+    <div className={`nudge${standalone ? ' nudge-standalone' : ''}${collapsed ? ' is-collapsed' : ''}${celebrate ? ' is-celebrating' : ''}`} role="status" aria-label="Reminders">
       <div className="nudge-head" data-tauri-drag-region>
         <img className="nudge-logo" src="/workbase-logo.png" alt="" />
         <div className="nudge-head-txt">
           <span className="nudge-title">{greeting}</span>
           <span className="nudge-sub">{hasReminders ? headline(work.overdue.length, work.today.length) : 'Here’s what’s on your plate'}</span>
         </div>
+        {done > 0 ? <span className="nudge-fire" title={`${done} done today`}>🔥 {done}</span> : null}
         <button className="nudge-ic" onClick={quickAdd} aria-label="Add task" title="Add task"><Icon name="ti-plus" /></button>
         <button className="nudge-ic" onClick={toggle} aria-label={collapsed ? 'Expand' : 'Collapse'} title={collapsed ? 'Expand' : 'Collapse'}>
           <Icon name={collapsed ? 'ti-chevron-down' : 'ti-chevron-up'} />
@@ -92,6 +126,7 @@ export function NudgeWidget({ standalone }: { standalone?: boolean } = {}) {
                   <span className="nudge-card-sub">{i.rootTitle}</span>
                 </button>
                 {di ? <span className={`nudge-due nudge-due-${di.tone}`}>{di.label}</span> : null}
+                <SnoozeButton nodeId={i.node.id} />
               </div>
             )
           })}
@@ -101,5 +136,29 @@ export function NudgeWidget({ standalone }: { standalone?: boolean } = {}) {
         </div>
       ) : null}
     </div>
+  )
+}
+
+/**
+ * Push a reminder to tomorrow in one tap — no need to open the task. (Arbitrary
+ * dates still live in the task's due-date picker; a dropdown here would be
+ * clipped by the auto-sized widget window.)
+ */
+function SnoozeButton({ nodeId }: { nodeId: string }) {
+  const snooze = () => {
+    const d = new Date(); d.setDate(d.getDate() + 1)
+    useStore.getState().patch(nodeId, { dueDate: localISO(d) })
+    useStore.getState().logActivity(nodeId, 'Snoozed to tomorrow')
+  }
+  return (
+    <button
+      className="nudge-snooze"
+      title="Snooze to tomorrow"
+      aria-label="Snooze to tomorrow"
+      onClick={e => { e.stopPropagation(); snooze() }}
+      onPointerDown={e => e.stopPropagation()}
+    >
+      <Icon name="ti-clock" />
+    </button>
   )
 }

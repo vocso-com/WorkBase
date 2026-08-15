@@ -525,6 +525,18 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .nudge-check{display:inline-flex;flex-shrink:0;}
 .nudge-more{border:none;background:var(--chip);cursor:pointer;font:inherit;font-size:12px;font-weight:600;color:var(--muted);padding:8px;text-align:center;border-radius:8px;margin-top:1px;}
 .nudge-more:hover{color:var(--ink);background:var(--btn);}
+/* Momentum streak — a little dopamine when you tick things off. */
+.nudge-fire{display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:750;flex-shrink:0;font-variant-numeric:tabular-nums;
+  color:color-mix(in srgb,var(--amber) 80%,var(--ink));background:color-mix(in srgb,var(--amber) 15%,var(--card));padding:2px 9px;border-radius:20px;}
+.is-celebrating .nudge-fire{animation:fire-pop .7s cubic-bezier(.34,1.56,.64,1);}
+@keyframes fire-pop{0%{transform:scale(1)}35%{transform:scale(1.4) rotate(-6deg)}100%{transform:scale(1)}}
+.is-celebrating{animation:nudge-glow .9s ease;}
+@keyframes nudge-glow{0%,100%{box-shadow:var(--shadow-hover)}40%{box-shadow:0 0 0 3px color-mix(in srgb,var(--teal) 40%,transparent),var(--shadow-hover)}}
+/* One-tap snooze on each reminder (reveals on hover). */
+.nudge-snooze{border:none;background:none;cursor:pointer;color:var(--faint);display:inline-flex;padding:4px;border-radius:6px;font-size:15px;flex-shrink:0;
+  opacity:0;transition:opacity .12s,background .12s,color .12s;}
+.nudge-card:hover .nudge-snooze{opacity:1;}
+.nudge-snooze:hover{background:var(--btn);color:var(--ink);}
 /* Standalone (native always-on-top window): a floating rounded card. The
    window itself is transparent so only the card shows, with real rounded
    corners; a small margin gives room for the drop shadow. */

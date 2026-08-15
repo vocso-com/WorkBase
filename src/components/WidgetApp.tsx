@@ -4,6 +4,7 @@ import { buildWork } from '../lib/execution'
 import { DEFAULT_WORKSPACE_ID } from '../lib/serialize'
 import { fitWidget, setWidgetVisible } from '../lib/desktopWidget'
 import { isTauri } from '../lib/platform'
+import { useNudge } from '../hooks/useNudge'
 import { NudgeWidget } from './NudgeWidget'
 
 /**
@@ -58,6 +59,7 @@ export function WidgetApp() {
   const remindersOn = profile?.nudgeReminders !== false
   const myWorkOn = !!profile?.nudgeMyWork
   const hasContent = ready && ((remindersOn && work.overdue.length + work.today.length > 0) || (myWorkOn && work.total > 0))
+  const reminderKey = [...work.overdue, ...work.today].map(i => i.node.id).sort().join(',')
 
   // Reflect content into the native window: show when there's something, hide
   // when there isn't (sizing/positioning is handled by the observer above).
@@ -65,6 +67,24 @@ export function WidgetApp() {
     if (!ready) return
     void setWidgetVisible(hasContent)
   }, [ready, hasContent])
+
+  // Time-aware surfacing: when a NEW reminder appears (something just came due,
+  // or the day rolled over), pop the widget open above everything. Also expand
+  // once in the morning so the day's plan greets you.
+  const prevKey = useRef<string | null>(null)
+  useEffect(() => {
+    if (!ready) return
+    const first = prevKey.current === null
+    const ids = reminderKey ? reminderKey.split(',') : []
+    const prevIds = new Set(prevKey.current ? prevKey.current.split(',') : [])
+    const hasNew = ids.some(id => !prevIds.has(id))
+    prevKey.current = reminderKey
+    const morning = new Date().getHours() < 12
+    if (ids.length > 0 && (hasNew || (first && morning))) {
+      useNudge.getState().expand()
+      void setWidgetVisible(true)
+    }
+  }, [ready, reminderKey])
 
   return (
     <div className="widget-shell" ref={shellRef}>

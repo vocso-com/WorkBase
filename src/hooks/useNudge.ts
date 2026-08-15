@@ -9,6 +9,7 @@ interface NudgeState {
   close: () => void
   reopen: () => void
   toggleCollapsed: () => void
+  expand: () => void
 }
 
 // Session-only dismissal + a persisted collapsed/expanded preference for the
@@ -22,5 +23,9 @@ export const useNudge = create<NudgeState>(set => ({
     const collapsed = !s.collapsed
     try { localStorage.setItem(CKEY, collapsed ? '1' : '0') } catch { /* ignore */ }
     return { collapsed }
+  }),
+  expand: () => set(() => {
+    try { localStorage.setItem(CKEY, '0') } catch { /* ignore */ }
+    return { collapsed: false, closed: false }
   }),
 }))
