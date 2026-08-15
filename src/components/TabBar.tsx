@@ -50,14 +50,17 @@ export function TabBar() {
     <div className="tabbar" ref={barRef}>
       {visible.map(t => {
         const i = tabs.indexOf(t)
-        const root = t.path[0] ? findNode(roots, t.path[0]) : null
+        const mywork = t.kind === 'mywork'
+        const root = !mywork && t.path[0] ? findNode(roots, t.path[0]) : null
         const active = t.id === activeId
-        const label = root?.title ?? 'Home'
-        const accent = root ? hex(root.color ?? 'gray') : 'var(--dot)'
+        const label = mywork ? 'My Work' : root?.title ?? 'Home'
+        const accent = mywork ? hex('violet') : root ? hex(root.color ?? 'gray') : 'var(--dot)'
+        // When juggling several tabs, the pinned My Work tab collapses to an icon.
+        const iconOnly = mywork && visible.length >= 4
         return (
           <div
             key={t.id}
-            className={`tab${active ? ' on' : ''}${root ? ' tab-proj' : ''}${drag === i ? ' dragging' : ''}${over === i && drag !== i ? ' dropbefore' : ''}`}
+            className={`tab${active ? ' on' : ''}${root ? ' tab-proj' : ''}${mywork ? ' tab-mywork' : ''}${iconOnly ? ' tab-icononly' : ''}${drag === i ? ' dragging' : ''}${over === i && drag !== i ? ' dropbefore' : ''}`}
             style={active ? { background: `color-mix(in srgb, ${accent} 10%, var(--card))`, borderColor: `color-mix(in srgb, ${accent} 30%, var(--line))` } : undefined}
             onClick={() => useTabs.getState().activate(t.id)}
             title={label}
@@ -69,11 +72,11 @@ export function TabBar() {
           >
             <span
               className="tab-ic"
-              style={root ? { background: tagBg(root.color ?? 'gray'), color: tagFg(root.color ?? 'gray') } : undefined}
+              style={mywork ? { background: tagBg('violet'), color: tagFg('violet') } : root ? { background: tagBg(root.color ?? 'gray'), color: tagFg(root.color ?? 'gray') } : undefined}
             >
-              <Icon name={root ? (root.icon ?? 'ti-folder') : 'ti-home'} />
+              <Icon name={mywork ? 'ti-target-arrow' : root ? (root.icon ?? 'ti-folder') : 'ti-home'} />
             </span>
-            <span className="tab-label">{label}</span>
+            {iconOnly ? null : <span className="tab-label">{label}</span>}
             <button
               className="tab-close"
               onClick={e => { e.stopPropagation(); useTabs.getState().close(t.id) }}

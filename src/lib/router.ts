@@ -1,7 +1,15 @@
 import { useNav } from '../hooks/useNav'
 import { useView, type ViewKind } from '../hooks/useView'
+import { useTabs } from '../hooks/useTabs'
 import { useStore } from '../store/useStore'
 import { findNode } from './tree'
+
+const MYWORK_HASH = '#/~mywork'
+
+function activeTabIsMyWork(): boolean {
+  const s = useTabs.getState()
+  return s.tabs.find(t => t.id === s.activeId)?.kind === 'mywork'
+}
 
 const VIEWS: ViewKind[] = ['board', 'kanban', 'flow', 'columns']
 
@@ -18,8 +26,16 @@ export function buildHash(path: string[], view: ViewKind): string {
   return path.length === 0 ? '#/' : `#/${path.join('/')}?view=${view}`
 }
 
-/** Apply a hash to app state, keeping only node ids that still exist. */
-function applyHash(hash: string) {
+/**
+ * Apply a hash to app state, keeping only node ids that still exist.
+ * On the initial load a `#/~mywork` hash is left to the tab restore (which
+ * re-opens the persisted My Work tab); on later hashchange it opens My Work.
+ */
+function applyHash(hash: string, initial = false) {
+  if (hash.replace(/\/$/, '') === MYWORK_HASH) {
+    if (!initial) useTabs.getState().openMyWork()
+    return
+  }
   const { path, view } = parseHash(hash)
   const roots = useStore.getState().doc.roots
   const valid = path.length > 0 && path.every(id => findNode(roots, id))
@@ -34,14 +50,17 @@ function applyHash(hash: string) {
  */
 export function initRouter() {
   if (typeof window === 'undefined') return
-  applyHash(window.location.hash)
+  applyHash(window.location.hash, true)
 
   const write = () => {
-    const h = buildHash(useNav.getState().path, useView.getState().view)
+    const h = activeTabIsMyWork() ? MYWORK_HASH : buildHash(useNav.getState().path, useView.getState().view)
     if (window.location.hash !== h) window.location.hash = h
   }
   useNav.subscribe(write)
   useView.subscribe(write)
+  // Switching between same-path tabs (Home ↔ My Work) doesn't change nav, so
+  // track the active tab too.
+  useTabs.subscribe(write)
   window.addEventListener('hashchange', () => applyHash(window.location.hash))
   write()
 }

@@ -7,6 +7,7 @@ export interface WorkItem {
   node: Node
   rootId: string
   rootTitle: string
+  rootColor: string // project color key/hex, for a subtle accent
   /** Ancestor titles below the project, for display. */
   trail: string
   blocked: boolean
@@ -22,8 +23,11 @@ export interface WorkBuckets {
   week: WorkItem[]
   anytime: WorkItem[]
   blocked: WorkItem[]
+  done: WorkItem[] // recently completed, newest first
   total: number // total open (not-done) leaf items
 }
+
+const RECENT_DONE_MS = 14 * 86400000
 
 const PRI: Record<Priority, number> = { low: 1, med: 2, high: 3 }
 const BUCKET_RANK: Record<DueBucket, number> = { overdue: 0, today: 1, week: 2, later: 3, none: 4 }
@@ -68,26 +72,32 @@ function byFocus(a: WorkItem, b: WorkItem): number {
  */
 export function buildWork(roots: Node[], now: Date = new Date()): WorkBuckets {
   const items: WorkItem[] = []
-  const walk = (n: Node, rootId: string, rootTitle: string, trail: string[]) => {
+  const doneItems: WorkItem[] = []
+  const recentCutoff = now.getTime() - RECENT_DONE_MS
+  const walk = (n: Node, rootId: string, rootTitle: string, rootColor: string, trail: string[]) => {
     if (n.children.length === 0) {
-      if (n.status !== 'done') {
-        const dueDays = n.dueDate ? daysUntil(n.dueDate, now) : null
-        items.push({
-          node: n,
-          rootId,
-          rootTitle,
-          trail: trail.join(' › '),
-          blocked: isBlocked(roots, n),
-          priority: n.priority ? PRI[n.priority] : 0,
-          due: bucketFor(dueDays),
-          dueDays,
-        })
+      const dueDays = n.dueDate ? daysUntil(n.dueDate, now) : null
+      const item: WorkItem = {
+        node: n,
+        rootId,
+        rootTitle,
+        rootColor,
+        trail: trail.join(' › '),
+        blocked: n.status === 'done' ? false : isBlocked(roots, n),
+        priority: n.priority ? PRI[n.priority] : 0,
+        due: bucketFor(dueDays),
+        dueDays,
+      }
+      if (n.status === 'done') {
+        if (new Date(n.updatedAt).getTime() >= recentCutoff) doneItems.push(item)
+      } else {
+        items.push(item)
       }
     } else {
-      n.children.forEach(c => walk(c, rootId, rootTitle, [...trail, n.title]))
+      n.children.forEach(c => walk(c, rootId, rootTitle, rootColor, [...trail, n.title]))
     }
   }
-  roots.forEach(r => r.children.forEach(c => walk(c, r.id, r.title, [])))
+  roots.forEach(r => r.children.forEach(c => walk(c, r.id, r.title, r.color ?? 'gray', [])))
 
   const actionable = items.filter(i => !i.blocked)
   const inBucket = (b: DueBucket) => actionable.filter(i => i.due === b).sort(byUrgency)
@@ -99,6 +109,7 @@ export function buildWork(roots: Node[], now: Date = new Date()): WorkBuckets {
     week: inBucket('week'),
     anytime: actionable.filter(i => i.due === 'later' || i.due === 'none').sort(byUrgency),
     blocked: items.filter(i => i.blocked).sort(byUrgency),
+    done: doneItems.sort((a, b) => (a.node.updatedAt < b.node.updatedAt ? 1 : -1)).slice(0, 8),
     total: items.length,
   }
 }

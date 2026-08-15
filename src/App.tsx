@@ -6,7 +6,6 @@ import { AppHeader } from './components/AppHeader'
 import { ProjectsHome } from './components/ProjectsHome'
 import ProjectPage from './components/ProjectPage'
 import { MyWorkPage } from './components/MyWorkPage'
-import { useMyWork } from './hooks/useMyWork'
 import { CardModal } from './components/CardModal'
 import { NewProjectModal } from './components/NewProjectModal'
 import { SettingsModal } from './components/SettingsModal'
@@ -28,12 +27,10 @@ export default function App() {
   // JS-computed tint colors (tags, avatars) alongside the CSS variables.
   useTheme(s => s.dark)
   const hasEmail = useStore(s => !!s.doc.profile?.userEmail)
-  const myWork = useMyWork(s => s.open)
+  const myWork = useTabs(s => s.tabs.find(t => t.id === s.activeId)?.kind === 'mywork')
   useEffect(() => { initTheme(); void useStore.getState().init().then(() => { initRouter(); initTabs() }) }, [])
   // First launch (no email captured yet) → open onboarding.
   useEffect(() => { if (ready && !hasEmail) useOnboarding.getState().show() }, [ready, hasEmail])
-  // Any navigation (opening a project, switching tabs, going home) closes My Work.
-  useEffect(() => useNav.subscribe(() => useMyWork.getState().hide()), [])
 
   if (!ready) return <div style={{ padding: 40, color: 'var(--muted)' }}>Loading…</div>
 

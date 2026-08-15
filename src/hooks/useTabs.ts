@@ -12,6 +12,8 @@ export interface Tab {
   view: ViewKind
   // The WorkBase this tab belongs to; tabs are scoped per WorkBase.
   workspace: string
+  // Special non-project tabs. 'mywork' = the execution-engine surface.
+  kind?: 'mywork'
 }
 
 // True while we're pushing a tab's saved location into nav/view, so the
@@ -45,6 +47,8 @@ interface TabsState {
   // Open a project. From a Home tab it navigates in place (browser-like);
   // forceNew (⌘/Ctrl-click) always opens a new tab. Re-opening focuses.
   openProject: (rootId: string, forceNew?: boolean) => void
+  // Open the My Work surface as a tab (focus it if already open).
+  openMyWork: () => void
   // Go to the project list — focus a Home tab in the active WorkBase.
   goHome: () => void
   // Switch WorkBase: change the store's active WorkBase and focus one of its tabs.
@@ -73,7 +77,8 @@ export const useTabs = create<TabsState>((set, get) => ({
     const ws = root?.workspace ?? DEFAULT_WORKSPACE_ID
     const active = get().tabs.find(t => t.id === get().activeId)
     // From a blank Home tab in this WorkBase, navigate in place; else open a tab.
-    if (!forceNew && active && active.path.length === 0 && active.workspace === ws) {
+    // (A My Work tab is never navigated in place — it stays put.)
+    if (!forceNew && active && active.path.length === 0 && !active.kind && active.workspace === ws) {
       useNav.getState().set([rootId])
       useView.getState().setView(view)
       return
@@ -82,9 +87,23 @@ export const useTabs = create<TabsState>((set, get) => ({
     set(s => ({ tabs: [...s.tabs, tab], activeId: tab.id, activeByWs: { ...s.activeByWs, [ws]: tab.id } }))
     applyTab(tab)
   },
+  openMyWork: () => {
+    const ws = activeWs()
+    const existing = get().tabs.find(t => t.workspace === ws && t.kind === 'mywork')
+    if (existing) { get().activate(existing.id); return }
+    const tab: Tab = { id: nanoid(6), path: [], view: 'board', workspace: ws, kind: 'mywork' }
+    set(s => {
+      const tabs = [...s.tabs]
+      // Sit right after this WorkBase's Home tab so it reads as "near Home".
+      const homeIdx = tabs.findIndex(t => t.workspace === ws && t.path.length === 0 && !t.kind)
+      tabs.splice(homeIdx >= 0 ? homeIdx + 1 : tabs.length, 0, tab)
+      return { tabs, activeId: tab.id, activeByWs: { ...s.activeByWs, [ws]: tab.id } }
+    })
+    applyTab(tab)
+  },
   goHome: () => {
     const ws = activeWs()
-    const home = get().tabs.find(t => t.workspace === ws && t.path.length === 0)
+    const home = get().tabs.find(t => t.workspace === ws && t.path.length === 0 && !t.kind)
     if (home) { get().activate(home.id); return }
     // No Home tab in this WorkBase — send the current tab back to the project list.
     useNav.getState().set([])
@@ -163,7 +182,7 @@ export function initTabs() {
     // WorkBase (older saves predate the field).
     const valid = restored?.tabs
       ?.filter(t => Array.isArray(t.path) && t.path!.every(id => findNode(roots, id)))
-      .map(t => ({ id: t.id ?? nanoid(6), path: t.path ?? [], view: (t.view ?? 'board') as ViewKind, workspace: t.workspace ?? wsOf(t.path?.[0]) })) as Tab[] | undefined
+      .map(t => ({ id: t.id ?? nanoid(6), path: t.path ?? [], view: (t.view ?? 'board') as ViewKind, workspace: t.workspace ?? wsOf(t.path?.[0]), kind: t.kind })) as Tab[] | undefined
     if (valid && valid.length) {
       const activeById = valid.some(t => t.id === restored!.activeId) ? restored!.activeId : valid[0].id
       const activeByWs: Record<string, string> = {}

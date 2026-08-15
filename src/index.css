@@ -173,6 +173,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .tab.dropbefore{box-shadow:inset 2px 0 0 var(--ink);}
 .tab-ic{width:20px;height:20px;flex-shrink:0;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--muted);}
 .tab-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tab-icononly{padding-left:9px;padding-right:9px;gap:0;}
+.tab-icononly .tab-close{display:none;}
 .tab-close{border:none;background:none;color:var(--faint);cursor:pointer;width:18px;height:18px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;opacity:.65;transition:background .12s,color .12s,opacity .12s;}
 .tab-close:hover{background:color-mix(in srgb,var(--ink) 12%,transparent);color:var(--ink);opacity:1;}
 .tab-new{border:none;background:none;color:var(--muted);cursor:pointer;width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;margin-left:2px;transition:background .12s,color .12s;}
@@ -530,7 +532,13 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .mw-tone-today{color:var(--amber);} .mw-tone-today .ti{color:var(--amber);}
 .mw-tone-blocked{color:var(--muted);} .mw-tone-blocked .ti{color:var(--muted);}
 .mw-list{display:flex;flex-direction:column;gap:7px;}
-.mw-row{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 13px;box-shadow:var(--card-shadow);}
+.mw-row{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 13px;box-shadow:var(--card-shadow);}
+.mw-check{display:inline-flex;flex-shrink:0;opacity:0;transition:opacity .12s;}
+.mw-row:hover .mw-check{opacity:1;}
+.mw-row-done{opacity:.6;}
+.mw-row-done .mw-check{opacity:1;}
+.mw-row-done .mw-title{text-decoration:line-through;color:var(--muted);}
+.mw-sec-done{margin-top:26px;}
 .mw-pri{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .mw-title{border:none;background:none;cursor:pointer;font:inherit;font-size:14px;font-weight:550;color:var(--ink);text-align:left;padding:0;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;max-width:44%;}
