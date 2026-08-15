@@ -13,25 +13,16 @@ import { OnboardingModal } from './components/OnboardingModal'
 import { SearchPalette } from './components/SearchPalette'
 import { ActivityFeed } from './components/ActivityFeed'
 import { NudgeWidget } from './components/NudgeWidget'
-import { WidgetApp } from './components/WidgetApp'
 import { VerifyNudge } from './components/VerifyNudge'
 import { ConfirmDialog } from './components/ConfirmDialog'
 import { useOnboarding } from './hooks/useOnboarding'
 import { exportDoc, importDoc } from './lib/transfer'
-import { ensureWidgetWindow } from './lib/desktopWidget'
-import { isTauri, isWidgetView } from './lib/platform'
+import { isTauri } from './lib/platform'
 import { initRouter } from './lib/router'
 import { initTabs, useTabs } from './hooks/useTabs'
 import { initTheme, useTheme } from './hooks/useTheme'
 
 export default function App() {
-  // The always-on-top reminder window loads the same bundle at #/~widget and
-  // renders only the widget.
-  if (isWidgetView()) return <WidgetApp />
-  return <MainApp />
-}
-
-function MainApp() {
   const ready = useStore(s => s.ready)
   const roots = useStore(s => s.doc.roots)
   const path = useNav(s => s.path)
@@ -40,7 +31,7 @@ function MainApp() {
   useTheme(s => s.dark)
   const hasEmail = useStore(s => !!s.doc.profile?.userEmail)
   const myWork = useTabs(s => s.tabs.find(t => t.id === s.activeId)?.kind === 'mywork')
-  useEffect(() => { initTheme(); void useStore.getState().init().then(() => { initRouter(); initTabs(); void ensureWidgetWindow() }) }, [])
+  useEffect(() => { initTheme(); void useStore.getState().init().then(() => { initRouter(); initTabs() }) }, [])
   // First launch (no email captured yet) → open onboarding.
   useEffect(() => { if (ready && !hasEmail) useOnboarding.getState().show() }, [ready, hasEmail])
 

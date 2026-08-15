@@ -12,11 +12,24 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "WorkBase",
         "width": 1200,
         "height": 820,
         "minWidth": 720,
         "minHeight": 560
+      },
+      {
+        "label": "widget",
+        "url": "widget.html",
+        "title": "WorkBase Reminders",
+        "width": 360,
+        "height": 460,
+        "resizable": false,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "visible": true
       }
     ],
     "security": {
