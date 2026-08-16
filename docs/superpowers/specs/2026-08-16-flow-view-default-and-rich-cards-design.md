@@ -1,7 +1,7 @@
 # Flow view: default view + richer cards
 
 **Date:** 2026-08-16
-**Status:** Approved, ready to plan
+**Status:** Built. Shipped beyond the spec: description toggle, per-card expand, attachment/dependency/comment indicators, hover-to-complete tick, containers at any depth, and a soft warning when completing something with open sub-items.
 **Scope:** 1 of 3. Siblings: multi-format export, template directory. This spec is independent of both.
 
 ## Problem

@@ -1,7 +1,7 @@
 # Multi-format export + account backup
 
 **Date:** 2026-08-16
-**Status:** Scoped, not yet approved for build
+**Status:** Built, and extended: CSV was added as a fifth format, per-project export stayed a dropdown while account-level export/import became dialogs, imports resolve collisions per project (add / update / skip), and every export carries the product mark.
 **Scope:** 2 of 3. Build after the Flow work lands.
 
 ## Problem
