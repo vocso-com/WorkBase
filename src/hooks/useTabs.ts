@@ -73,7 +73,7 @@ export const useTabs = create<TabsState>((set, get) => ({
     const existing = get().tabs.find(t => t.path[0] === rootId)
     if (existing) { get().activate(existing.id); return }
     const root = findNode(useStore.getState().doc.roots, rootId)
-    const view = (root?.view as ViewKind) ?? (useStore.getState().doc.profile?.defaultView as ViewKind) ?? 'board'
+    const view = (root?.view as ViewKind) ?? (useStore.getState().doc.profile?.defaultView as ViewKind) ?? 'flow'
     const ws = root?.workspace ?? DEFAULT_WORKSPACE_ID
     const active = get().tabs.find(t => t.id === get().activeId)
     // From a blank Home tab in this WorkBase, navigate in place; else open a tab.

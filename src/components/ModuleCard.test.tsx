@@ -4,13 +4,15 @@ import ProjectPage from './ProjectPage'
 import { useStore } from '../store/useStore'
 import { useNav } from '../hooks/useNav'
 import { useDetail } from '../hooks/useDetail'
+import { useView } from '../hooks/useView'
 import { emptyDocument } from '../lib/serialize'
 
 beforeEach(async () => {
   await act(async () => {
     await useStore.getState().init({ load: async () => emptyDocument(), save: async () => {} })
   })
-  act(() => { useNav.getState().home() })
+  // ModuleCard is a Board component, and Flow is now the default view.
+  act(() => { useNav.getState().home(); useView.getState().setView('board') })
 })
 
 function buildFixture() {

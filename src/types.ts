@@ -72,6 +72,9 @@ export interface Node {
   collapsed?: boolean
   view?: 'board' | 'kanban' | 'flow' | 'columns'
   flowOrientation?: 'h' | 'v'
+  // Show `dependsOn` links as dashed edges in Flow. Absent means on, so no
+  // existing document needs migrating.
+  flowDeps?: boolean
   createdAt: string
   updatedAt: string
 }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { Node, Stage } from '../types'
-import { hex, stageMeta } from '../theme'
+import { hex, stageMeta, PRIORITY_META } from '../theme'
 import { layoutTree, type FlowNode, type ExpandPredicate } from '../lib/layout'
 import { progressOf, statusCounts } from '../lib/progress'
 import { leaves } from '../lib/tree'
@@ -35,6 +35,7 @@ export function FlowView({ node }: { node: Node }) {
   const stages = useStore(s => s.doc.stages)
   const stageLabels = useStore(s => s.doc.stageLabels)
   const [orient, setOrient] = useState<'h' | 'v'>(node.flowOrientation ?? 'h')
+  const showDeps = node.flowDeps !== false
   // Restore the remembered orientation when switching to a different project.
   useEffect(() => { setOrient(node.flowOrientation ?? 'h') }, [node.id, node.flowOrientation])
   const layout = useMemo(() => layoutTree(node, expandPred, orient), [node, orient])
@@ -234,7 +235,28 @@ export function FlowView({ node }: { node: Node }) {
       <div ref={vpRef} className="flow-vp" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerLeave={onUp} onDoubleClick={onDoubleClick}>
         <div className="fcanvas" style={{ transform: `translate(${tf.x}px, ${tf.y}px) scale(${tf.k})`, width: layout.width, height: layout.height }}>
           <svg className="fedges" width={layout.width} height={layout.height}>
-            {layout.edges.map(e => {
+            <defs>
+              <marker id="fdep-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M0,0 L8,4 L0,8 z" fill="var(--amber)" />
+              </marker>
+            </defs>
+            {/* Dependency edges sit under the hierarchy so the tree stays the
+                dominant read. They can point any direction, so they route
+                between the facing sides of the two boxes. */}
+            {showDeps ? layout.edges.filter(e => e.kind === 'dep').map(e => {
+              const a = byId.get(e.from)
+              const b = byId.get(e.to)
+              if (!a || !b) return null
+              return (
+                <path
+                  key={e.id}
+                  className="fedge-dep"
+                  d={depPath(posOf(a), a, posOf(b), b)}
+                  markerEnd="url(#fdep-arrow)"
+                />
+              )
+            }) : null}
+            {layout.edges.filter(e => e.kind === 'child').map(e => {
               const a = byId.get(e.from)
               const b = byId.get(e.to)
               if (!a || !b) return null
@@ -282,6 +304,15 @@ export function FlowView({ node }: { node: Node }) {
         >
           <Icon name={orient === 'h' ? 'ti-layout-distribute-vertical' : 'ti-layout-distribute-horizontal'} />
         </button>
+        <button
+          className={showDeps ? 'on' : undefined}
+          onClick={() => useStore.getState().patch(node.id, { flowDeps: !showDeps })}
+          aria-label="Toggle dependency links"
+          aria-pressed={showDeps}
+          title={showDeps ? 'Hide dependency links' : 'Show dependency links'}
+        >
+          <Icon name="ti-arrows-split-2" />
+        </button>
         <span className="flow-sep" />
         <button onClick={collapseAll} aria-label="Collapse all" title="Collapse all"><Icon name="ti-fold" /></button>
         <button onClick={expandAll} aria-label="Expand all" title="Expand all"><Icon name="ti-list-tree" /></button>
@@ -297,6 +328,32 @@ export function FlowView({ node }: { node: Node }) {
       <div className="flow-hint"><Icon name="ti-click" /> Click to focus · double-click to open · drag to arrange</div>
     </div>
   )
+}
+
+type Box = { w: number; h: number }
+type Pt = { x: number; y: number }
+
+/**
+ * A cubic between the facing sides of two boxes. Unlike child edges — which
+ * always run along the layout's depth axis — a dependency can point in any
+ * direction, so the exit side is chosen from whichever axis separates the two
+ * boxes more.
+ */
+function depPath(pa: Pt, a: Box, pb: Pt, b: Box): string {
+  const ca = { x: pa.x + a.w / 2, y: pa.y + a.h / 2 }
+  const cb = { x: pb.x + b.w / 2, y: pb.y + b.h / 2 }
+  const dx = cb.x - ca.x
+  const dy = cb.y - ca.y
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    const x1 = dx >= 0 ? pa.x + a.w : pa.x
+    const x2 = dx >= 0 ? pb.x : pb.x + b.w
+    const mx = (x1 + x2) / 2
+    return `M${x1},${ca.y} C${mx},${ca.y} ${mx},${cb.y} ${x2},${cb.y}`
+  }
+  const y1 = dy >= 0 ? pa.y + a.h : pa.y
+  const y2 = dy >= 0 ? pb.y : pb.y + b.h
+  const my = (y1 + y2) / 2
+  return `M${ca.x},${y1} C${ca.x},${my} ${cb.x},${my} ${cb.x},${y2}`
 }
 
 function zoomAt(t: Transform, vp: HTMLDivElement | null, dir: number): Transform {
@@ -383,7 +440,11 @@ function FlowNodeCard({ fn, stages, stageLabels, pos, dragging, isDropTarget, on
         <div className="fn-mod-head">
           <div className="fn-mod-ic" style={{ background: tagBg(color), color: tagFg(color) }}><Icon name={node.icon ?? 'ti-folder'} /></div>
           <div className="fn-title">{node.title}</div>
-          <span className="fn-count">{done}/{total}</span>
+        </div>
+        {node.description ? <div className="fn-desc">{node.description}</div> : null}
+        <div className="fn-mod-rollup">
+          <span className="fn-count">{done}/{total} done</span>
+          <DueChip dueDate={earliestDue(node)} />
         </div>
         <ProgressBar node={node} className="fn-bar" />
         {actions}
@@ -393,15 +454,18 @@ function FlowNodeCard({ fn, stages, stageLabels, pos, dragging, isDropTarget, on
   }
 
   const tags = node.tags ?? []
+  const prio = node.priority ? PRIORITY_META[node.priority] : null
   return (
     <div
       className={`fn fn-task${dragging ? ' fn-drag' : ''}${drop}`}
       style={{ ...style, borderLeftColor: hex(color), background: `color-mix(in srgb, ${hex(color)} 9%, var(--card))` }}
       {...handlers}
     >
-      <div className="fn-task-top">
-        <span className="fn-dot" style={{ background: sm.dot }} title={sm.label} />
-        <div className="fn-title fn-task-title">{node.title}</div>
+      <div className="fn-title fn-task-title">{node.title}</div>
+      {node.description ? <div className="fn-desc">{node.description}</div> : null}
+      <div className="fn-task-foot">
+        <span className="fn-stage" style={{ background: tagBg(sm.color), color: tagFg(sm.color) }}>{sm.label}</span>
+        {prio ? <span className="fn-prio" style={{ background: tagBg(prio.color), color: tagFg(prio.color) }}>{prio.label}</span> : null}
         <DueChip dueDate={node.dueDate} />
       </div>
       {tags.length > 0 ? (
@@ -413,4 +477,18 @@ function FlowNodeCard({ fn, stages, stageLabels, pos, dragging, isDropTarget, on
       {toggle}
     </div>
   )
+}
+
+/**
+ * The soonest due date on a node or anywhere under it, for the module rollup.
+ * The node's own date counts: a module card has no other place to show it.
+ */
+function earliestDue(n: Node): string | undefined {
+  let best: string | undefined
+  const walk = (m: Node) => {
+    if (m.dueDate && (!best || m.dueDate < best)) best = m.dueDate
+    m.children.forEach(walk)
+  }
+  walk(n)
+  return best
 }

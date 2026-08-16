@@ -6,9 +6,9 @@ import { VOCAB, VOCAB_KEYS } from '../lib/vocab'
 import { Icon } from './ui/Icon'
 
 const DEFAULT_VIEW_OPTS: { key: NonNullable<import('../types').Profile['defaultView']>; label: string; icon: string }[] = [
+  { key: 'flow', label: 'Flow', icon: 'ti-sitemap' },
   { key: 'board', label: 'Board', icon: 'ti-layout-grid' },
   { key: 'kanban', label: 'Kanban', icon: 'ti-layout-kanban' },
-  { key: 'flow', label: 'Flow', icon: 'ti-sitemap' },
   { key: 'columns', label: 'Outline', icon: 'ti-layout-sidebar' },
 ]
 
@@ -92,7 +92,7 @@ export function SettingsModal() {
             <div className="set-hint">The view a project opens in when it has no view of its own.</div>
             <div className="set-views">
               {DEFAULT_VIEW_OPTS.map(o => {
-                const on = (profile?.defaultView ?? 'board') === o.key
+                const on = (profile?.defaultView ?? 'flow') === o.key
                 return (
                   <button key={o.key} className={`set-view-opt${on ? ' on' : ''}`} onClick={() => useStore.getState().setProfile({ defaultView: o.key })}>
                     <Icon name={o.icon} />

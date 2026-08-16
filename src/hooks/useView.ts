@@ -8,6 +8,6 @@ interface ViewState {
 }
 
 export const useView = create<ViewState>(set => ({
-  view: 'board',
+  view: 'flow',
   setView: view => set({ view }),
 }))

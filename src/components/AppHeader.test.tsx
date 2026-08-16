@@ -28,6 +28,6 @@ test('shows the project chip and view menu when inside a project', () => {
   expect(screen.getByText('Projects')).toBeInTheDocument()
   // Project title appears in the merged identity chip
   expect(screen.getByText('SampleRoom')).toBeInTheDocument()
-  // The view dropdown lives in the header now
-  expect(screen.getByText('Board')).toBeInTheDocument()
+  // The view dropdown lives in the header now, showing the default view.
+  expect(screen.getByText('Flow')).toBeInTheDocument()
 })

@@ -23,6 +23,9 @@ export interface FlowEdge {
   from: string
   to: string
   color: string
+  // 'child' is the tree structure; 'dep' is a `dependsOn` link, which can point
+  // in any direction and is drawn dashed.
+  kind: 'child' | 'dep'
 }
 
 export interface FlowLayout {
@@ -32,15 +35,79 @@ export interface FlowLayout {
   height: number
 }
 
-const NODE_W = 224
+const NODE_W = 260
 const COL_GAP = 96
 const ROW_GAP = 16
 
-/** Height of a node card at a given depth. */
-function nodeH(depth: number): number {
-  if (depth === 0) return 94
-  if (depth === 1) return 72
-  return 58
+// ── Card measurement ─────────────────────────────────────────────────────────
+//
+// Card heights are computed from content rather than measured in the DOM, so
+// `layoutTree` stays pure and synchronous and the canvas can never reflow after
+// paint. Line counts come from a character-width estimate against the fixed
+// card width; `index.css` clamps title and description to the same two-line
+// maximum, so a render can never exceed the height reserved here.
+//
+// The estimate deliberately runs slightly narrow (fewer chars per line than the
+// font really fits): over-reserving leaves a few px of slack, while
+// under-reserving would clip text.
+
+export const ROOT_H = 94
+export const MIN_TASK_H = 58
+export const MIN_MOD_H = 72
+
+const CARD_PAD_Y = 22 // 11 top + 11 bottom
+const CARD_ROW_GAP = 6
+const TITLE_LINE_H = 18
+const DESC_LINE_H = 16
+const FOOTER_H = 24 // stage pill / due chip / priority
+const TAGS_H = 22
+const MOD_HEAD_H = 28 // icon + title
+const MOD_ROLLUP_H = 20 // done/total + earliest due
+const MOD_BAR_H = 6 // ProgressBar
+
+const TITLE_CPL = 32 // characters per line at the title's size
+const DESC_CPL = 38
+const MAX_LINES = 2
+
+const lines = (text: string | undefined, cpl: number): number =>
+  text ? Math.min(MAX_LINES, Math.max(1, Math.ceil(text.trim().length / cpl))) : 0
+
+/** Sum a card's present rows, with a gap between each, plus vertical padding. */
+const stack = (rows: number[], min: number): number => {
+  const present = rows.filter(r => r > 0)
+  const h = CARD_PAD_Y + present.reduce((a, r) => a + r, 0) + CARD_ROW_GAP * Math.max(0, present.length - 1)
+  return Math.max(min, h)
+}
+
+function taskH(n: Node): number {
+  const hasFooter = !!(n.status || n.dueDate || n.priority)
+  return stack(
+    [
+      lines(n.title, TITLE_CPL) * TITLE_LINE_H,
+      lines(n.description, DESC_CPL) * DESC_LINE_H,
+      hasFooter ? FOOTER_H : 0,
+      n.tags && n.tags.length > 0 ? TAGS_H : 0,
+    ],
+    MIN_TASK_H,
+  )
+}
+
+function moduleH(n: Node): number {
+  return stack(
+    [MOD_HEAD_H, lines(n.description, DESC_CPL) * DESC_LINE_H, MOD_ROLLUP_H, MOD_BAR_H],
+    MIN_MOD_H,
+  )
+}
+
+/**
+ * Height of a node's card. Mirrors FlowView's card selection exactly: the root
+ * gets the band card, a depth-1 node *with children* gets the module card, and
+ * everything else gets the task card.
+ */
+export function nodeH(n: Node, depth: number): number {
+  if (depth === 0) return ROOT_H
+  if (depth === 1 && n.children.length > 0) return moduleH(n)
+  return taskH(n)
 }
 
 /**
@@ -54,19 +121,28 @@ export function layoutTree(root: Node, isExpanded: ExpandPredicate = DEFAULT_EXP
   const sub = new Map<string, number>()
 
   const isExpandable = (n: Node, depth: number) => n.children.length > 0 && isExpanded(n, depth)
+
+  // Cards vary in height, so a vertical layout's rows are spaced by the tallest
+  // card at each depth. Collect those maxima up front, over the visible nodes.
+  const rowH: number[] = []
+  ;(function scan(n: Node, depth: number) {
+    rowH[depth] = Math.max(rowH[depth] ?? 0, nodeH(n, depth))
+    if (isExpandable(n, depth)) n.children.forEach(c => scan(c, depth + 1))
+  })(root, 0)
+
   // Extent along the secondary (sibling-stacking) axis: height when horizontal,
   // width when vertical.
-  const selfExtent = (depth: number) => (orientation === 'h' ? nodeH(depth) : NODE_W)
+  const selfExtent = (n: Node, depth: number) => (orientation === 'h' ? nodeH(n, depth) : NODE_W)
   // Position along the primary (depth) axis.
   const primary = (depth: number) => {
     if (orientation === 'h') return depth * (NODE_W + COL_GAP)
     let y = 0
-    for (let k = 0; k < depth; k++) y += nodeH(k) + COL_GAP
+    for (let k = 0; k < depth; k++) y += (rowH[k] ?? 0) + COL_GAP
     return y
   }
 
   function measure(n: Node, depth: number): number {
-    const own = selfExtent(depth)
+    const own = selfExtent(n, depth)
     if (!isExpandable(n, depth)) {
       sub.set(n.id, own)
       return own
@@ -83,7 +159,7 @@ export function layoutTree(root: Node, isExpanded: ExpandPredicate = DEFAULT_EXP
   measure(root, 0)
 
   function place(n: Node, depth: number, start: number): number {
-    const own = selfExtent(depth)
+    const own = selfExtent(n, depth)
     let center: number
 
     if (!isExpandable(n, depth)) {
@@ -99,6 +175,7 @@ export function layoutTree(root: Node, isExpanded: ExpandPredicate = DEFAULT_EXP
           from: n.id,
           to: c.id,
           color: COLORS[(c.color ?? n.color ?? 'gray') as ColorKey],
+          kind: 'child',
         })
         cursor += sub.get(c.id)! + ROW_GAP
       }
@@ -106,7 +183,7 @@ export function layoutTree(root: Node, isExpanded: ExpandPredicate = DEFAULT_EXP
     }
 
     const w = NODE_W
-    const h = nodeH(depth)
+    const h = nodeH(n, depth)
     const x = orientation === 'h' ? primary(depth) : center - w / 2
     const y = orientation === 'h' ? center - h / 2 : primary(depth)
     nodes.push({
@@ -116,6 +193,22 @@ export function layoutTree(root: Node, isExpanded: ExpandPredicate = DEFAULT_EXP
     return center
   }
   place(root, 0, 0)
+
+  // Dependency edges, drawn from blocker → blocked. Only pairs where BOTH ends
+  // reached the canvas are emitted, so a link into a collapsed subtree simply
+  // disappears rather than dangling. Emitted unconditionally — FlowView's
+  // toggle filters at render time, so flipping it never re-runs the layout.
+  const visible = new Set(nodes.map(n => n.id))
+  const seen = new Set<string>()
+  for (const fn of nodes) {
+    for (const from of fn.node.dependsOn ?? []) {
+      if (from === fn.id || !visible.has(from)) continue
+      const id = `dep:${from}->${fn.id}`
+      if (seen.has(id)) continue
+      seen.add(id)
+      edges.push({ id, from, to: fn.id, color: COLORS.amber, kind: 'dep' })
+    }
+  }
 
   // Normalize the secondary axis to start at 0.
   if (orientation === 'h') {
