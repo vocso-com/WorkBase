@@ -17,6 +17,7 @@ import { RichText } from './RichText'
 import { ChecklistTree } from './ChecklistTree'
 import { ProgressBar } from './ui/ProgressBar'
 import { Dependencies } from './Dependencies'
+import { DatePicker } from './DatePicker'
 import { Icon } from './ui/Icon'
 import { Tag } from './ui/Tag'
 import { Checkbox } from './ui/Checkbox'
@@ -42,7 +43,7 @@ export function CardModal({ inlineNode }: { inlineNode?: Node } = {}) {
 
   const [item, setItem] = useState('')
   const [comment, setComment] = useState('')
-  const [pick, setPick] = useState<'status' | 'priority' | 'color' | 'icon' | 'tags' | null>(null)
+  const [pick, setPick] = useState<'status' | 'priority' | 'color' | 'icon' | 'tags' | 'due' | null>(null)
   const [newTag, setNewTag] = useState('')
   const [newTagColor, setNewTagColor] = useState<ColorKey>('blue')
   const [menu, setMenu] = useState(false)
@@ -451,17 +452,24 @@ export function CardModal({ inlineNode }: { inlineNode?: Node } = {}) {
                 ) : null}
               </div>
 
-              <label className={`cm-qp cm-qp-due${node.dueDate ? ' set' : ''}`}>
-                <Icon name="ti-clock" className="cm-qp-lead" />
-                <span>{node.dueDate || 'Due date'}</span>
-                <input
-                  type="date"
+              <div className="cm-qp-wrap">
+                <button
+                  className={`cm-qp cm-qp-due${node.dueDate ? ' set' : ''}`}
+                  onClick={() => setPick(p => (p === 'due' ? null : 'due'))}
                   aria-label="Due date"
-                  value={node.dueDate ?? ''}
-                  onClick={e => { try { (e.currentTarget as HTMLInputElement & { showPicker?: () => void }).showPicker?.() } catch { /* unsupported */ } }}
-                  onChange={e => useStore.getState().patch(node.id, { dueDate: e.target.value })}
-                />
-              </label>
+                >
+                  <Icon name="ti-clock" className="cm-qp-lead" />
+                  <span>{node.dueDate || 'Due date'}</span>
+                  <Icon name="ti-chevron-down" className="cm-qp-caret" />
+                </button>
+                {pick === 'due' ? (
+                  <DatePicker
+                    value={node.dueDate}
+                    onChange={due => useStore.getState().patch(node.id, { dueDate: due })}
+                    onClose={() => setPick(null)}
+                  />
+                ) : null}
+              </div>
 
               <div className="cm-qp-wrap">
                 <button className="cm-qp" onClick={() => setPick(p => (p === 'color' ? null : 'color'))}>

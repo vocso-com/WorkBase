@@ -1423,3 +1423,50 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .xfer-res-opt.on{border-color:var(--blue);background:color-mix(in srgb,var(--blue) 9%,var(--card));}
 .xfer-res-opt.on.danger{border-color:var(--red);background:color-mix(in srgb,var(--red) 9%,var(--card));}
 .xfer-actions{display:flex;justify-content:flex-end;gap:10px;}
+
+/* ── Due-date picker ─────────────────────────────────────────────────────── */
+.dp{position:absolute;top:calc(100% + 6px);left:0;z-index:12;width:268px;background:var(--card);
+  border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-flat-hover);padding:10px;
+  display:flex;flex-direction:column;gap:9px;cursor:default;}
+.dp-quick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;}
+.dp-chip{display:flex;flex-direction:column;gap:1px;align-items:flex-start;font:inherit;cursor:pointer;
+  background:var(--chip);border:1px solid transparent;border-radius:9px;padding:6px 8px;transition:border-color .12s,background .12s;}
+.dp-chip>:first-child,.dp-chip{font-size:11.5px;font-weight:650;color:var(--ink);}
+.dp-chip-d{font-size:10.5px;font-weight:600;color:var(--faint);}
+.dp-chip:hover{border-color:color-mix(in srgb,var(--ink) 14%,var(--line));}
+.dp-chip.on{background:color-mix(in srgb,var(--blue) 12%,var(--card));border-color:var(--blue);}
+/* Typed entry runs through the same natural-language parser as quick add. */
+.dp-typed{display:flex;align-items:center;gap:6px;background:var(--chip);border-radius:9px;padding:0 8px;height:32px;}
+.dp-typed i{font-size:15px;color:var(--faint);flex-shrink:0;}
+.dp-typed input{flex:1;min-width:0;border:none;background:transparent;font:inherit;font-size:12px;color:var(--ink);outline:none;}
+.dp-typed input::placeholder{color:var(--faint);}
+.dp-typed-go{font:inherit;font-size:11px;font-weight:700;color:#fff;background:var(--blue);border:none;
+  border-radius:6px;padding:3px 7px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.dp-typed-no{font-size:10.5px;color:var(--faint);white-space:nowrap;flex-shrink:0;}
+.dp-head{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 2px;}
+.dp-month{font-size:13px;font-weight:700;letter-spacing:-.01em;}
+.dp-nav{width:26px;height:26px;border-radius:8px;border:none;background:transparent;color:var(--muted);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:background .12s,color .12s;}
+.dp-nav:hover{background:var(--chip);color:var(--ink);}
+.dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.dp-dow{margin-bottom:-2px;}
+.dp-dow span{text-align:center;font-size:10px;font-weight:700;letter-spacing:.04em;color:var(--faint);
+  text-transform:uppercase;padding-bottom:3px;}
+.dp-day{height:32px;border:none;background:transparent;border-radius:9px;font:inherit;font-size:12.5px;
+  font-weight:550;color:var(--ink);cursor:pointer;font-variant-numeric:tabular-nums;
+  transition:background .1s,color .1s,box-shadow .1s;}
+.dp-day:hover{background:var(--chip);}
+.dp-day.out{color:var(--faint);font-weight:450;}
+/* Today is a ring so it stays readable when another day is selected. */
+.dp-day.today{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--blue) 55%,transparent);color:var(--blue);font-weight:700;}
+.dp-day.guess{background:color-mix(in srgb,var(--blue) 14%,transparent);color:var(--blue);font-weight:700;}
+.dp-day.sel{background:var(--blue);color:#fff;font-weight:700;box-shadow:none;}
+.dp-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--line);padding-top:8px;}
+.dp-state{font-size:11.5px;font-weight:650;}
+.dp-state-none{color:var(--faint);font-weight:600;}
+.dp-state-overdue{color:var(--red);}
+.dp-state-today,.dp-state-soon{color:var(--amber);}
+.dp-state-upcoming{color:var(--muted);}
+.dp-clear{display:flex;align-items:center;gap:3px;font:inherit;font-size:11.5px;font-weight:650;color:var(--muted);
+  background:transparent;border:none;cursor:pointer;padding:2px 4px;border-radius:6px;}
+.dp-clear:hover{color:var(--red);}
