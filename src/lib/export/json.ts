@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid'
 import type { Node, Stage, StoreDoc, Tag } from '../../types'
 import { projectPrefix, nextShortId } from '../shortid'
+import { BRAND } from './save'
 
 /**
  * A single project, portable between installs. Deliberately distinct from the
@@ -12,6 +13,8 @@ import { projectPrefix, nextShortId } from '../shortid'
 export interface ProjectExport {
   version: 1
   kind: 'project'
+  /** Which product wrote the file — helps whoever finds it out of context. */
+  app: typeof BRAND
   exportedAt: string
   node: Node
   stages: Stage[]
@@ -36,6 +39,7 @@ export function toProjectExport(node: Node, doc: StoreDoc, exportedAt: string): 
   return {
     version: 1,
     kind: 'project',
+    app: BRAND,
     exportedAt,
     node,
     stages: doc.stages.filter(s => statuses.has(s.id)),
@@ -59,6 +63,7 @@ export function parseProjectExport(text: string): ProjectExport {
   return {
     version: 1,
     kind: 'project',
+    app: BRAND,
     exportedAt: typeof p.exportedAt === 'string' ? p.exportedAt : '',
     node: p.node,
     stages: Array.isArray(p.stages) ? p.stages : [],

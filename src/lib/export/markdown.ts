@@ -1,5 +1,6 @@
 import type { Node, Stage } from '../../types'
 import { stageMeta } from '../../theme'
+import { BRAND } from './save'
 
 /**
  * A project rendered as Markdown. Pure and deterministic — no DOM, no clock —
@@ -10,7 +11,12 @@ import { stageMeta } from '../../theme'
  * tags) rides on the task line as a bracketed suffix; descriptions become
  * indented blockquotes so they never get mistaken for structure.
  */
-export function projectToMarkdown(node: Node, stages: Stage[] = [], stageLabels?: Record<string, string>): string {
+export function projectToMarkdown(
+  node: Node,
+  stages: Stage[] = [],
+  stageLabels?: Record<string, string>,
+  exportedAt?: string,
+): string {
   const out: string[] = []
 
   const meta = (n: Node): string => {
@@ -52,6 +58,12 @@ export function projectToMarkdown(node: Node, stages: Stage[] = [], stageLabels?
       task(child, 0)
     }
   }
+
+  // Signature line: an exported file should still say where it came from once
+  // it is living in someone else's repo or wiki.
+  out.push('')
+  out.push('---')
+  out.push(exportedAt ? `*Exported from ${BRAND} · ${exportedAt}*` : `*Exported from ${BRAND}*`)
 
   return `${out.join('\n').replace(/\n{3,}/g, '\n\n').trimEnd()}\n`
 }

@@ -70,5 +70,11 @@ test('output is deterministic and ends with exactly one newline', () => {
 })
 
 test('an empty project still produces a valid heading', () => {
-  expect(projectToMarkdown(project()).trim()).toBe('# Website Rebuild\n`WB-1`')
+  expect(projectToMarkdown(project())).toContain('# Website Rebuild\n`WB-1`')
+})
+
+test('every export is signed with the product and, when given, the date', () => {
+  expect(projectToMarkdown(project())).toContain('*Exported from WorkBase*')
+  expect(projectToMarkdown(project(), [], undefined, '2026-08-16'))
+    .toContain('*Exported from WorkBase · 2026-08-16*')
 })

@@ -62,9 +62,43 @@ export function slugify(title: string): string {
   return slug || 'project'
 }
 
-/** `<slug>-YYYY-MM-DD`, the naming every export uses. */
-export function exportName(title: string, at: Date): string {
+/** Read a file the user picks. Resolves to null if they cancel. */
+export async function openTextFile(ext: 'json'): Promise<string | null> {
+  if (isTauri()) {
+    const { open } = await import('@tauri-apps/plugin-dialog')
+    const { readTextFile } = await import('@tauri-apps/plugin-fs')
+    const path = await open({ multiple: false, directory: false, filters: [{ name: FILTER[ext], extensions: [ext] }] })
+    if (!path || Array.isArray(path)) return null
+    return readTextFile(path)
+  }
+
+  return new Promise((resolve, reject) => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = `.${ext}`
+    // A cancelled picker fires no event at all in most browsers, so the promise
+    // simply never settles — the caller shows no spinner, so nothing hangs.
+    input.onchange = () => {
+      const file = input.files?.[0]
+      if (!file) { resolve(null); return }
+      file.text().then(resolve, reject)
+    }
+    input.click()
+  })
+}
+
+export const BRAND = 'WorkBase'
+
+/** yyyy-mm-dd in the user's own timezone, not UTC. */
+export function isoDate(at: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0')
-  const date = `${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())}`
-  return `${slugify(title)}-${date}`
+  return `${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())}`
+}
+
+/**
+ * `workbase-<slug>-YYYY-MM-DD`, the naming every export uses. The brand leads
+ * so that a folder of exports from several tools still sorts and reads clearly.
+ */
+export function exportName(title: string, at: Date): string {
+  return `${BRAND.toLowerCase()}-${slugify(title)}-${isoDate(at)}`
 }

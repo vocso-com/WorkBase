@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid'
 import type { StoreDoc, Node, Status, ColorKey, Template } from '../types'
 import { pickAdapter, type StorageAdapter } from '../lib/storage'
 import { emptyDocument, DEFAULT_WORKSPACE_ID } from '../lib/serialize'
+import { mergeProjectExport, type ProjectExport } from '../lib/export/json'
 import { newNode } from '../lib/factory'
 import { projectPrefix, nextShortId } from '../lib/shortid'
 import { addChild, updateNode, deleteNode, moveNode, reorderChildren, findNode, findParent } from '../lib/tree'
@@ -26,6 +27,7 @@ interface State {
   init: (adapter?: StorageAdapter) => Promise<void>
   addProject: (name: string) => string
   addProjectFromTemplate: (tpl: Template, name?: string) => string
+  importProject: (exp: ProjectExport) => string
   addWorkspace: (name: string) => string
   renameWorkspace: (id: string, name: string) => void
   deleteWorkspace: (id: string) => void
@@ -243,6 +245,14 @@ export const useStore = create<State>((set, get) => ({
    * a large subtree is one render and one persist — and because toggleDone
    * would *un*-complete descendants that were already done.
    */
+  /** Add an exported project to this document and return its new root id. */
+  importProject(exp) {
+    const next = mergeProjectExport(get().doc, exp)
+    const root = next.roots[next.roots.length - 1]
+    set({ doc: next })
+    schedulePersist(get)
+    return root.id
+  },
   completeSubtree(id) {
     const root = findNode(get().doc.roots, id)
     if (!root) return
