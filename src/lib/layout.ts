@@ -79,7 +79,9 @@ const MOD_ROLLUP_H = 20 // counts + due + the meta strip
 const MOD_BAR_H = 6 // ProgressBar
 
 const TITLE_CPL = 30 // characters per line at the title's size
-const DESC_CPL = 34
+// Text sits inset by the mark's gutter, so a line fits fewer characters than
+// the card's full width suggests.
+const DESC_CPL = 30
 const MAX_TITLE_LINES = 2
 /** Collapsed cards get a one-line teaser; expanding one reveals up to four. */
 const TEASER_LINES = 1
