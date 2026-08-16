@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import type { Node } from '../types'
 import { findNode } from '../lib/tree'
+import { useStore } from '../store/useStore'
+import { DepBadges } from './DepBadges'
 import { Icon } from './ui/Icon'
 import { CardModal } from './CardModal'
 
@@ -16,6 +18,7 @@ function flatten(items: Node[], depth: number, expanded: Set<string>, acc: Row[]
 // Obsidian-style: a collapsible tree of the whole project on the left, and the
 // selected item's full detail (the card modal, reused inline) on the right.
 export function ColumnsView({ node }: { node: Node }) {
+  const roots = useStore(s => s.doc.roots)
   const [sel, setSel] = useState<string | null>(null)
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
@@ -54,6 +57,7 @@ export function ColumnsView({ node }: { node: Node }) {
                 )}
                 <span className="ol-row-ic"><Icon name={isParent ? (c.icon ?? 'ti-list-tree') : (c.status === 'done' ? 'ti-circle-check' : 'ti-circle')} /></span>
                 <span className="ol-row-title">{c.title}</span>
+                <DepBadges node={c} roots={roots} compact />
               </div>
             )
           })}

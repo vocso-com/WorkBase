@@ -4,7 +4,6 @@ import type { Node } from '../types'
 import { leaves, pathTo } from '../lib/tree'
 import { statusCounts } from '../lib/progress'
 import { dueInfo } from '../lib/due'
-import { isBlocked } from '../lib/deps'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { useStore } from '../store/useStore'
 import { useNav } from '../hooks/useNav'
@@ -13,6 +12,7 @@ import { Icon } from './ui/Icon'
 import { Checkbox } from './ui/Checkbox'
 import { Tag } from './ui/Tag'
 import { DueChip } from './DueChip'
+import { DepBadges } from './DepBadges'
 
 // A single board checklist row (leaf task or a sub-module) that can be dragged
 // to reorder within its card, moved to another card, or dropped onto a card
@@ -52,6 +52,7 @@ export function BoardItemRow({ child, color, parentId }: { child: Node; color: s
         <span className="check-parent-title">{child.title}</span>
         <div className="check-parent-meta">
           <DueChip dueDate={child.dueDate} />
+          <DepBadges node={child} roots={roots} compact />
           {(child.tags ?? []).slice(0, 1).map(t => <Tag key={t.name} tag={t} />)}
           <span className="check-sub-count">{subDone}/{subs.length}</span>
           <button
@@ -66,7 +67,6 @@ export function BoardItemRow({ child, color, parentId }: { child: Node; color: s
   }
 
   const overdue = child.status !== 'done' && dueInfo(child.dueDate)?.tone === 'overdue'
-  const blocked = child.dependsOn?.length ? isBlocked(roots, child) : false
   const state = child.status === 'done' ? 'done' : overdue ? 'overdue' : ''
   return (
     <div
@@ -83,7 +83,7 @@ export function BoardItemRow({ child, color, parentId }: { child: Node; color: s
       </span>
       <DueChip dueDate={child.dueDate} />
       {(child.tags ?? []).map(t => <Tag key={t.name} tag={t} />)}
-      {blocked ? <span className="row-blocked" title="Blocked by an unfinished dependency"><Icon name="ti-lock" /> Blocked</span> : null}
+      <DepBadges node={child} roots={roots} />
       {child.status === 'blocked' ? (
         <span className="mini" style={{ background: tagBg('red'), color: tagFg('red') }}>Blocked</span>
       ) : null}

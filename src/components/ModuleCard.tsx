@@ -10,6 +10,7 @@ import { useStore } from '../store/useStore'
 import { useDetail } from '../hooks/useDetail'
 import { Icon } from './ui/Icon'
 import { ProgressBar } from './ui/ProgressBar'
+import { DepBadges } from './DepBadges'
 import { BoardItemRow } from './BoardItemRow'
 import { NodeMenu } from './NodeMenu'
 
@@ -49,6 +50,7 @@ function AddItemRow({ node }: { node: Node }) {
 }
 
 export function ModuleCard({ node, onOpen }: { node: Node; onOpen: () => void }) {
+  const roots = useStore(s => s.doc.roots)
   const color = node.color ?? 'gray'
   const total = node.children.length
   const done = node.children.filter(isChildDone).length
@@ -83,6 +85,7 @@ export function ModuleCard({ node, onOpen }: { node: Node; onOpen: () => void })
             </div>
           </div>
           <div className="mc-head-right">
+            <DepBadges node={node} roots={roots} compact />
             <span style={{ fontSize: 11.5, color: 'var(--faint)' }}>{done}/{total}</span>
             <NodeMenu id={node.id} className="mcard-menu" />
           </div>

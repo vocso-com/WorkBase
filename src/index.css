@@ -1498,3 +1498,13 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .set-xfer-btn>span{display:flex;flex-direction:column;gap:2px;min-width:0;}
 .set-xfer-btn b{font-size:13px;font-weight:650;color:var(--ink);}
 .set-xfer-btn>span>span{font-size:11.5px;color:var(--muted);line-height:1.4;}
+
+/* Dependency chips — the dashed Flow edges, for views with no canvas. */
+.depchip{display:inline-flex;align-items:center;gap:3px;font:inherit;font-size:10px;font-weight:700;
+  letter-spacing:.01em;padding:2px 7px;border-radius:6px;border:none;cursor:pointer;white-space:nowrap;
+  flex-shrink:0;transition:filter .12s;}
+.depchip:hover{filter:brightness(.94);}
+.depchip i{font-size:12px;}
+.depchip-blocked{background:color-mix(in srgb,var(--red) 13%,transparent);color:var(--red);}
+.depchip-blocking{background:color-mix(in srgb,var(--amber) 16%,transparent);color:var(--amber);}
+.ol-row .depchip{margin-left:auto;}
