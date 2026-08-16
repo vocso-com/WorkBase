@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { Node, Stage } from '../types'
 import { hex, stageMeta, PRIORITY_META } from '../theme'
-import { layoutTree, type FlowNode, type ExpandPredicate } from '../lib/layout'
+import { layoutTree, cardHasMeta, cardHasFooter, type FlowNode, type ExpandPredicate } from '../lib/layout'
 import { progressOf, statusCounts } from '../lib/progress'
 import { leaves } from '../lib/tree'
 import { tagBg, tagFg } from '../lib/colorMode'
+import { toText } from '../lib/text'
 import { useStore } from '../store/useStore'
 import { useDetail } from '../hooks/useDetail'
 import { useVocab } from '../hooks/useVocab'
@@ -39,9 +40,10 @@ export function FlowView({ node }: { node: Node }) {
   const vocab = useVocab()
   const [orient, setOrient] = useState<'h' | 'v'>(node.flowOrientation ?? 'h')
   const showDeps = node.flowDeps !== false
+  const showDesc = node.flowDesc !== false
   // Restore the remembered orientation when switching to a different project.
   useEffect(() => { setOrient(node.flowOrientation ?? 'h') }, [node.id, node.flowOrientation])
-  const layout = useMemo(() => layoutTree(node, expandPred, orient), [node, orient])
+  const layout = useMemo(() => layoutTree(node, expandPred, orient, { showDesc }), [node, orient, showDesc])
   const byId = useMemo(() => new Map(layout.nodes.map(n => [n.id, n])), [layout])
   const accent = hex(node.color)
 
@@ -285,6 +287,7 @@ export function FlowView({ node }: { node: Node }) {
               stages={stages}
               stageLabels={stageLabels}
               kicker={kickerFor(fn, byId, vocab)}
+              showDesc={showDesc}
               pos={posOf(fn)}
               dragging={live?.id === fn.id}
               isDropTarget={dropTarget === fn.id}
@@ -307,6 +310,15 @@ export function FlowView({ node }: { node: Node }) {
           title={orient === 'h' ? 'Switch to vertical' : 'Switch to horizontal'}
         >
           <Icon name={orient === 'h' ? 'ti-layout-distribute-vertical' : 'ti-layout-distribute-horizontal'} />
+        </button>
+        <button
+          className={showDesc ? 'on' : undefined}
+          onClick={() => { refit.current = true; useStore.getState().patch(node.id, { flowDesc: !showDesc }) }}
+          aria-label="Toggle descriptions"
+          aria-pressed={showDesc}
+          title={showDesc ? 'Hide descriptions' : 'Show descriptions'}
+        >
+          <Icon name="ti-align-left" />
         </button>
         <button
           className={showDeps ? 'on' : undefined}
@@ -373,6 +385,7 @@ interface CardProps {
   stages: Stage[]
   stageLabels?: Record<string, string>
   kicker: string
+  showDesc: boolean
   pos: { x: number; y: number }
   dragging: boolean
   isDropTarget: boolean
@@ -385,19 +398,21 @@ interface CardProps {
   onDelete: () => void
 }
 
-function FlowNodeCard({ fn, stages, stageLabels, kicker, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onOpen, onToggle, onAdd, onDelete }: CardProps) {
+function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onOpen, onToggle, onAdd, onDelete }: CardProps) {
   const { node, depth } = fn
   const drop = isDropTarget ? ' fn-droptarget' : ''
   const sm = stageMeta(stages, node.status, stageLabels)
-  // Which card renders is decided by kind, not depth: a childless node at depth
-  // 1 is a task, not a module. Color follows the same rule — tasks take the
-  // status color, containers keep their identity color, `labelColor` overrides
-  // either.
-  const isModuleCard = depth === 1 && node.children.length > 0
-  const isContainer = depth === 0 || isModuleCard
+  // Which card renders is decided by kind, not depth — depth is unbounded, so a
+  // task that grew sub-tasks becomes a container like any other. Color follows
+  // the same rule: tasks take the status color, containers keep their identity
+  // color, `labelColor` overrides either.
+  const isContainerCard = depth > 0 && node.children.length > 0
+  const isContainer = depth === 0 || isContainerCard
   const color: string = node.labelColor ?? (isContainer ? (node.color ?? 'gray') : sm.color)
   const style: React.CSSProperties = { left: pos.x, top: pos.y, width: fn.w, height: fn.h, zIndex: dragging ? 20 : undefined }
   const stop = (e: React.PointerEvent) => e.stopPropagation()
+  const prio = node.priority ? PRIORITY_META[node.priority] : null
+  const desc = toText(node.description)
 
   const actions = (
     <div className="fn-act">
@@ -407,13 +422,73 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, pos, dragging, isDropTa
     </div>
   )
 
-  // The reference header: a small uppercase label for what this card is, and
-  // its shortId on the right, separated from the body by a hairline.
+  // Header: status as a dot and priority as a flag, so neither costs a whole
+  // row the way a pair of pills did. The kicker says what the card is, the
+  // shortId identifies it.
   const head = (
     <div className="fn-head">
+      {/* The status dot doubles as the completion control: hovering the card
+          swaps it for a tick, so a task can be finished without opening it. */}
+      <span className="fn-mark">
+        <span className="fn-status" style={{ background: sm.dot }} title={sm.label} />
+        <button
+          className="fn-tick"
+          onPointerDown={stop}
+          onClick={() => useStore.getState().toggleDone(node.id)}
+          aria-label={node.status === 'done' ? 'Mark not done' : 'Mark done'}
+          title={node.status === 'done' ? 'Mark not done' : 'Mark done'}
+        >
+          <Icon name={node.status === 'done' ? 'ti-square-check' : 'ti-square'} />
+        </button>
+      </span>
       <span className="fn-kicker">{kicker}</span>
+      {prio ? (
+        <span className="fn-flag" style={{ color: hex(prio.color) }} title={`${prio.label} priority`}>
+          <Icon name="ti-flag-filled" />
+        </span>
+      ) : null}
       <span className="fn-sid">{node.shortId}</span>
     </div>
+  )
+
+  // Descriptions are stored as rich-text HTML; the card shows the flattened
+  // text, one line when collapsed and up to four when this card is expanded.
+  const description = desc && showDesc ? (
+    <div className={`fn-desc${node.cardOpen ? ' fn-desc-open' : ''}`}>{desc}</div>
+  ) : null
+
+  // Compact indicators for what a card carries but has no room to show, plus
+  // the per-card expand control. Rendered in the footer of both card kinds, and
+  // hidden wholesale by the canvas-wide content switch.
+  const meta = !cardHasMeta(node, showDesc) ? null : (
+    <span className="fn-meta">
+      {node.attachments?.length ? (
+        <span className="fn-chip" title={`${node.attachments.length} attachment${node.attachments.length === 1 ? '' : 's'}`}>
+          <Icon name="ti-paperclip" />{node.attachments.length}
+        </span>
+      ) : null}
+      {node.dependsOn?.length ? (
+        <span className="fn-chip" title={`Blocked by ${node.dependsOn.length}`}>
+          <Icon name="ti-arrows-split-2" />{node.dependsOn.length}
+        </span>
+      ) : null}
+      {node.comments?.length ? (
+        <span className="fn-chip" title={`${node.comments.length} comment${node.comments.length === 1 ? '' : 's'}`}>
+          <Icon name="ti-message-circle" />{node.comments.length}
+        </span>
+      ) : null}
+      {desc ? (
+        <button
+          className="fn-more"
+          onPointerDown={stop}
+          onClick={() => useStore.getState().patch(node.id, { cardOpen: !node.cardOpen })}
+          aria-expanded={!!node.cardOpen}
+          title={node.cardOpen ? 'Show less' : 'Show more'}
+        >
+          {node.cardOpen ? 'Less' : 'More'}<Icon name={node.cardOpen ? 'ti-chevron-up' : 'ti-chevron-down'} />
+        </button>
+      ) : null}
+    </span>
   )
 
   const toggle = fn.hasChildren ? (
@@ -456,9 +531,10 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, pos, dragging, isDropTa
     )
   }
 
-  if (isModuleCard) {
+  if (isContainerCard) {
     const total = leaves(node).filter(l => l.id !== node.id).length
     const done = statusCounts(node).done
+    const kids = node.children.length
     return (
       <div className={`fn fn-mod${dragging ? ' fn-drag' : ''}${drop}`} style={{ ...style, ...outline }} {...handlers}>
         {head}
@@ -466,10 +542,13 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, pos, dragging, isDropTa
           <span className="fn-mod-ic" style={{ background: tagBg(color), color: tagFg(color) }}><Icon name={node.icon ?? 'ti-folder'} /></span>
           <span className="fn-title">{node.title}</span>
         </div>
-        {node.description ? <div className="fn-desc">{node.description}</div> : null}
+        {description}
         <div className="fn-mod-rollup">
-          <span className="fn-count">{done}/{total} done</span>
+          <span className="fn-count" title={`${kids} direct sub-item${kids === 1 ? '' : 's'}`}>
+            <Icon name="ti-subtask" />{kids} · {done}/{total}
+          </span>
           <DueChip dueDate={earliestDue(node)} />
+          {meta}
         </div>
         <ProgressBar node={node} className="fn-bar" />
         {actions}
@@ -479,17 +558,19 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, pos, dragging, isDropTa
   }
 
   const tags = node.tags ?? []
-  const prio = node.priority ? PRIORITY_META[node.priority] : null
   return (
     <div className={`fn fn-task${dragging ? ' fn-drag' : ''}${drop}`} style={{ ...style, ...outline }} {...handlers}>
       {head}
       <div className="fn-title fn-task-title">{node.title}</div>
-      {node.description ? <div className="fn-desc">{node.description}</div> : null}
-      <div className="fn-task-foot">
-        <span className="fn-stage" style={{ background: tagBg(sm.color), color: tagFg(sm.color) }}>{sm.label}</span>
-        {prio ? <span className="fn-prio" style={{ background: tagBg(prio.color), color: tagFg(prio.color) }}>{prio.label}</span> : null}
-        <DueChip dueDate={node.dueDate} />
-      </div>
+      {description}
+      {/* Rendered only when measured: an empty footer div still occupies its
+          CSS height and would spill out of the card. */}
+      {cardHasFooter(node, showDesc) ? (
+        <div className="fn-task-foot">
+          <DueChip dueDate={node.dueDate} />
+          {meta}
+        </div>
+      ) : null}
       {tags.length > 0 ? (
         <div className="fn-task-tags">
           {tags.slice(0, 2).map(t => <span key={t.name} className="fn-tag" style={{ background: tagBg(t.color), color: tagFg(t.color) }}>{t.name}</span>)}
@@ -502,16 +583,15 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, pos, dragging, isDropTa
 }
 
 /**
- * The uppercase label in a card's header row: what this card *is*. The root and
- * modules name their own kind; a task names the module it belongs to, falling
- * back to the kind when it hangs directly off the project.
+ * The uppercase label in a card's header row: what this card *is*. Nesting is
+ * unbounded, so the most useful label is the name of whatever contains it; only
+ * cards hanging directly off the project fall back to naming their own kind.
  */
 function kickerFor(fn: FlowNode, byId: Map<string, FlowNode>, vocab: Vocab): string {
   if (fn.depth === 0) return vocab.project
-  if (fn.depth === 1 && fn.node.children.length > 0) return vocab.module
   const parent = fn.parentId ? byId.get(fn.parentId) : undefined
   if (parent && parent.depth > 0) return parent.node.title
-  return vocab.task
+  return fn.node.children.length > 0 ? vocab.module : vocab.task
 }
 
 /**

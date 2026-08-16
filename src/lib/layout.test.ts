@@ -51,16 +51,34 @@ test('a childless root yields a single node and no edges', () => {
 
 // ── Content-measured card heights ────────────────────────────────────────────
 
-// Every card carries the header row (kicker + shortId), and every task has a
-// status, so the compact task is header + one title line + the stage pill row.
-// Asserted exactly so a change to the height constants cannot shift the canvas
-// silently — if this number moves, the CSS row heights must move with it.
-const COMPACT_TASK_H = 22 /* pad */ + 22 /* head */ + 6 + 19 /* title */ + 6 + 22 /* footer */
+// Status and priority live in the header row, so a task with nothing else to
+// say is just the header and its title. Asserted exactly — including the card's
+// padding and its 2px border, which is part of the box — so a change to the
+// height constants cannot shift the canvas silently. If these numbers move, the
+// CSS row heights must move with them.
+const BARE_TASK_H = 22 /* pad */ + 4 /* border */ + 22 /* head */ + 6 + 19 /* title */
+const FOOTER_ROW = 6 + 22
 
-test('a bare task is the header, one title line and the stage pill row', () => {
+test('a bare task is just the header and its title', () => {
   const t = newNode('Ship it')
-  expect(hOf(tree(t), t.id)).toBe(COMPACT_TASK_H)
-  expect(COMPACT_TASK_H).toBeGreaterThanOrEqual(MIN_TASK_H)
+  expect(hOf(tree(t), t.id)).toBe(BARE_TASK_H)
+  expect(BARE_TASK_H).toBeGreaterThanOrEqual(MIN_TASK_H)
+})
+
+test('a due date earns the footer row', () => {
+  const t = newNode('Ship it', { dueDate: '2026-09-01' })
+  expect(hOf(tree(t), t.id)).toBe(BARE_TASK_H + FOOTER_ROW)
+})
+
+test('priority costs no height — it rides in the header', () => {
+  const plain = newNode('Ship it', { dueDate: '2026-09-01' })
+  const urgent = newNode('Ship it', { dueDate: '2026-09-01', priority: 'high' })
+  expect(hOf(tree(urgent), urgent.id)).toBe(hOf(tree(plain), plain.id))
+})
+
+test('attachments earn the footer row without a description', () => {
+  const t = newNode('Ship it', { attachments: [{ id: 'a', name: 'brief.pdf', type: 'application/pdf', dataUrl: '', at: '' }] })
+  expect(hOf(tree(t), t.id)).toBe(BARE_TASK_H + FOOTER_ROW)
 })
 
 test('a description makes a task card taller', () => {
@@ -69,16 +87,46 @@ test('a description makes a task card taller', () => {
   expect(hOf(tree(described), described.id)).toBeGreaterThan(hOf(tree(bare), bare.id))
 })
 
-test('a two-line description is taller than a one-line description', () => {
+test('a collapsed card reserves one description line however long the text is', () => {
   const one = newNode('T', { description: 'Short.' })
-  const two = newNode('T', { description: 'A considerably longer note that cannot fit on a single line of this card.' })
-  expect(hOf(tree(two), two.id)).toBeGreaterThan(hOf(tree(one), one.id))
+  const huge = newNode('T', { description: 'x'.repeat(4000) })
+  expect(hOf(tree(huge), huge.id)).toBe(hOf(tree(one), one.id))
 })
 
-test('descriptions clamp at two lines — a very long one is no taller', () => {
-  const two = newNode('T', { description: 'A considerably longer note that cannot fit on a single line of this card.' })
-  const huge = newNode('T', { description: 'x'.repeat(4000) })
-  expect(hOf(tree(huge), huge.id)).toBe(hOf(tree(two), two.id))
+test('expanding a card grows it to fit more of the description', () => {
+  const shut = newNode('T', { description: 'A considerably longer note that will not fit on one line of this card.' })
+  const open = newNode('T', { description: 'A considerably longer note that will not fit on one line of this card.', cardOpen: true })
+  expect(hOf(tree(open), open.id)).toBeGreaterThan(hOf(tree(shut), shut.id))
+})
+
+test('an expanded description clamps at four lines', () => {
+  const four = newNode('T', { description: 'y'.repeat(4 * 38), cardOpen: true })
+  const huge = newNode('T', { description: 'y'.repeat(4000), cardOpen: true })
+  expect(hOf(tree(huge), huge.id)).toBe(hOf(tree(four), four.id))
+})
+
+test('switching descriptions off reclaims the row entirely', () => {
+  const t = newNode('T', { description: 'Some note.' })
+  const root = tree(t)
+  const on = layoutTree(root, undefined, 'h', { showDesc: true }).nodes.find(n => n.id === t.id)!.h
+  const off = layoutTree(root, undefined, 'h', { showDesc: false }).nodes.find(n => n.id === t.id)!.h
+  expect(off).toBeLessThan(on)
+  expect(off).toBe(BARE_TASK_H)
+})
+
+test('the canvas-wide switch collapses even a card left expanded', () => {
+  // With content off there is no expand control on the card, so an expanded one
+  // would otherwise be stuck open.
+  const t = newNode('T', { description: 'Some note.', cardOpen: true })
+  const root = tree(t)
+  const off = layoutTree(root, undefined, 'h', { showDesc: false }).nodes.find(n => n.id === t.id)!.h
+  expect(off).toBe(BARE_TASK_H)
+})
+
+test('description height is measured on the text, not the HTML markup', () => {
+  const plain = newNode('T', { description: 'Positioning and pricing', cardOpen: true })
+  const wrapped = newNode('T', { description: '<p data-start="3641" class="PDq2pG_selectionAnchorContainer">Positioning and pricing</p>', cardOpen: true })
+  expect(hOf(tree(wrapped), wrapped.id)).toBe(hOf(tree(plain), plain.id))
 })
 
 test('titles clamp at two lines', () => {
@@ -87,24 +135,18 @@ test('titles clamp at two lines', () => {
   expect(hOf(tree(huge), huge.id)).toBe(hOf(tree(two), two.id))
 })
 
-test('due and priority share the stage pill row and add no height', () => {
-  const bare = newNode('T')
-  const loaded = newNode('T', { dueDate: '2026-09-01', priority: 'high' })
-  expect(hOf(tree(loaded), loaded.id)).toBe(hOf(tree(bare), bare.id))
-})
-
 test('tags add a row of their own', () => {
   const bare = newNode('T')
   const tagged = newNode('T', { tags: [{ name: 'Design', color: 'violet' }] })
   expect(hOf(tree(tagged), tagged.id)).toBeGreaterThan(hOf(tree(bare), bare.id))
 })
 
-test('a module with children is taller than a compact task', () => {
+test('a container with children is taller than a bare task', () => {
   const task = newNode('T')
   const root = tree(task)
   const l = layoutTree(root)
   const mod = l.nodes.find(n => n.depth === 1)!
-  expect(mod.h).toBeGreaterThan(COMPACT_TASK_H)
+  expect(mod.h).toBeGreaterThan(BARE_TASK_H)
 })
 
 test('a description makes a module card taller too', () => {
@@ -120,10 +162,24 @@ test('the root card height is unchanged', () => {
   expect(hOf(root, root.id)).toBe(ROOT_H)
 })
 
-test('a childless node at depth 1 is measured as a task, not a module', () => {
+test('a childless node at depth 1 is measured as a task, not a container', () => {
   const leafMod = newNode('Just an item')
   const root = newNode('Project', { collapsed: false, children: [leafMod] })
-  expect(hOf(root, leafMod.id)).toBe(COMPACT_TASK_H)
+  expect(hOf(root, leafMod.id)).toBe(BARE_TASK_H)
+})
+
+test('nesting is unbounded — a deep node with children is measured as a container', () => {
+  const grandchild = newNode('Deep leaf')
+  const child = newNode('Deep container', { collapsed: false, children: [grandchild] })
+  const task = newNode('Task', { collapsed: false, children: [child] })
+  const root = tree(task)
+  const pred = (n: Node, depth: number) => (depth === 0 ? n.collapsed !== true : n.collapsed === false)
+  const l = layoutTree(root, pred)
+  const deep = l.nodes.find(n => n.id === child.id)!
+  const leaf = l.nodes.find(n => n.id === grandchild.id)!
+  expect(deep.depth).toBe(3)
+  expect(deep.h).toBeGreaterThan(leaf.h)
+  expect(leaf.h).toBe(BARE_TASK_H)
 })
 
 test('vertical rows are spaced by the tallest card at each depth', () => {

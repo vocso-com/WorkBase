@@ -75,6 +75,13 @@ export interface Node {
   // Show `dependsOn` links as dashed edges in Flow. Absent means on, so no
   // existing document needs migrating.
   flowDeps?: boolean
+  // Root-level only: show a one-line description teaser on every Flow card.
+  // Absent means on.
+  flowDesc?: boolean
+  // This card is expanded on the Flow canvas, showing its full description and
+  // detail counts. Absent means collapsed. Distinct from `collapsed`, which
+  // controls whether the node's *children* are laid out.
+  cardOpen?: boolean
   createdAt: string
   updatedAt: string
 }
