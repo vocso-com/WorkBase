@@ -186,7 +186,11 @@ export function layoutTree(
   const showDesc = opts.showDesc !== false
   const nodes: FlowNode[] = []
   const edges: FlowEdge[] = []
+  // Extent of each node's whole subtree band…
   const sub = new Map<string, number>()
+  // …and of just its children's stack, which can be smaller than the band when
+  // the node's own card is the taller of the two.
+  const kids = new Map<string, number>()
 
   const isExpandable = (n: Node, depth: number) => n.children.length > 0 && isExpanded(n, depth)
   const hOf = (n: Node, depth: number) => nodeH(n, depth, showDesc)
@@ -222,6 +226,7 @@ export function layoutTree(
       if (i < n.children.length - 1) total += ROW_GAP
     })
     const e = Math.max(own, total)
+    kids.set(n.id, total)
     sub.set(n.id, e)
     return e
   }
@@ -234,7 +239,13 @@ export function layoutTree(
     if (!isExpandable(n, depth)) {
       center = start + own / 2
     } else {
-      let cursor = start
+      // The band `measure` reserved is max(own card, children stack). When the
+      // card is the taller of the two, the children have to be centred inside
+      // that band — otherwise they sit at the top of it, the parent is centred
+      // on *them*, and the parent's card is drawn above its own band, running
+      // into the sibling before it.
+      const band = sub.get(n.id)!
+      let cursor = start + Math.max(0, (band - (kids.get(n.id) ?? 0)) / 2)
       const centers: number[] = []
       for (const c of n.children) {
         const cc = place(c, depth + 1, cursor, n.id)

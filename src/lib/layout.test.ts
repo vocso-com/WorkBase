@@ -246,3 +246,53 @@ test('dep edge ids never collide with child edge ids', () => {
   const l = layoutTree(tree(a, b))
   expect(new Set(l.edges.map(e => e.id)).size).toBe(l.edges.length)
 })
+
+// ── No card may overlap another ──────────────────────────────────────────────
+
+/** Every pair of cards sharing a column, with the vertical gap between them. */
+function columnGaps(root: Node, orientation: 'h' | 'v' = 'h', opts = {}) {
+  const pred = (n: Node, depth: number) => (depth === 0 ? n.collapsed !== true : n.collapsed === false)
+  const l = layoutTree(root, pred, orientation, opts)
+  const cols = new Map<number, { y: number; h: number; t: string }[]>()
+  for (const n of l.nodes) {
+    const key = orientation === 'h' ? n.x : n.y
+    const item = orientation === 'h' ? { y: n.y, h: n.h, t: n.node.title } : { y: n.x, h: n.w, t: n.node.title }
+    cols.set(key, [...(cols.get(key) ?? []), item])
+  }
+  const gaps: { a: string; b: string; gap: number }[] = []
+  for (const list of cols.values()) {
+    list.sort((p, q) => p.y - q.y)
+    for (let i = 1; i < list.length; i++) {
+      gaps.push({ a: list[i - 1].t, b: list[i].t, gap: list[i].y - (list[i - 1].y + list[i - 1].h) })
+    }
+  }
+  return gaps
+}
+
+test('a container taller than its children does not overlap the sibling above it', () => {
+  // The regression: the container's card is taller than the single short child
+  // it is centred against, so it used to be drawn above its own band.
+  const shortChild = newNode('Tiny')
+  const tall = newNode('Tall container', { collapsed: false, children: [shortChild] })
+  const before = newNode('Sibling above')
+  const root = newNode('Project', { collapsed: false, children: [before, tall] })
+  const gaps = columnGaps(root)
+  expect(gaps.every(g => g.gap >= 0)).toBe(true)
+  expect(gaps.find(g => g.b === 'Tall container')!.gap).toBeGreaterThanOrEqual(16)
+})
+
+test('no two cards in a column ever overlap, in either orientation', () => {
+  const build = () => {
+    const deep = newNode('Deep', { collapsed: false, children: [newNode('Leaf')] })
+    const mod1 = newNode('One', { collapsed: false, description: 'A note that is long enough to wrap.', children: [deep] })
+    const mod2 = newNode('Two', { collapsed: false, children: [newNode('A'), newNode('B')] })
+    const mod3 = newNode('Three', { collapsed: false, children: [newNode('C', { tags: [{ name: 'X', color: 'blue' }] })] })
+    return newNode('Project', { collapsed: false, children: [mod1, mod2, mod3, newNode('Loose task')] })
+  }
+  for (const orientation of ['h', 'v'] as const) {
+    for (const showDesc of [true, false]) {
+      const bad = columnGaps(build(), orientation, { showDesc }).filter(g => g.gap < 0)
+      expect({ orientation, showDesc, bad }).toEqual({ orientation, showDesc, bad: [] })
+    }
+  }
+})
