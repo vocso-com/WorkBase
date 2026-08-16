@@ -16,6 +16,7 @@ export function ConfirmDialog() {
   if (!current) return null
 
   const confirm = () => { current.onConfirm(); close() }
+  const alt = () => { current.onAlt?.(); close() }
 
   return (
     <div className="confirm-overlay" onClick={close}>
@@ -29,6 +30,9 @@ export function ConfirmDialog() {
         </div>
         <div className="confirm-actions">
           <button className="ghostbtn" onClick={close}>Cancel</button>
+          {current.altLabel && current.onAlt ? (
+            <button className="ghostbtn confirm-alt" onClick={alt}>{current.altLabel}</button>
+          ) : null}
           <button className={`newbtn${current.danger ? ' newbtn-danger' : ''}`} onClick={confirm} autoFocus>
             {current.confirmLabel ?? 'Confirm'}
           </button>

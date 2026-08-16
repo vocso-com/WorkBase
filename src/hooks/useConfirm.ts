@@ -6,6 +6,10 @@ export interface ConfirmOpts {
   confirmLabel?: string
   danger?: boolean
   onConfirm: () => void
+  // An optional second way to say yes, sitting between Cancel and the primary
+  // action — for prompts where "do it" has two reasonable meanings.
+  altLabel?: string
+  onAlt?: () => void
 }
 
 interface ConfirmState {

@@ -734,12 +734,24 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 
 /* Confirm dialog */
 .confirm-overlay{position:fixed;inset:0;z-index:90;background:rgba(15,18,24,.5);backdrop-filter:blur(4px);display:flex;align-items:flex-start;justify-content:center;padding:16vh 20px 20px;}
-.confirm{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.32);padding:22px;display:flex;flex-direction:column;align-items:flex-start;gap:12px;}
-.confirm-ic{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--chip);color:var(--muted);}
+/* Icon in its own column beside the text, actions on a full-width row beneath —
+   so a third action sits on one line instead of wrapping. */
+.confirm{width:100%;max-width:500px;background:var(--card);border:1px solid var(--line);border-radius:16px;
+  box-shadow:0 24px 60px rgba(0,0,0,.32);padding:24px;
+  display:grid;grid-template-columns:40px minmax(0,1fr);column-gap:14px;row-gap:20px;align-items:start;}
+.confirm-ic{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:21px;background:var(--chip);color:var(--muted);}
 .confirm-ic.danger{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red);}
+.confirm-body{min-width:0;padding-top:2px;}
 .confirm-title{font-size:16.5px;font-weight:700;letter-spacing:-.01em;}
-.confirm-msg{font-size:13.5px;color:var(--muted);line-height:1.5;margin-top:3px;}
-.confirm-actions{display:flex;gap:10px;align-self:stretch;justify-content:flex-end;margin-top:6px;}
+.confirm-msg{font-size:13.5px;color:var(--muted);line-height:1.55;margin-top:5px;}
+.confirm-actions{grid-column:1/-1;display:flex;flex-wrap:nowrap;align-items:center;gap:10px;justify-content:flex-end;}
+/* With a third action the row would crowd, so Cancel moves to the far left —
+   dismiss on one side, the two ways to say yes on the other. */
+.confirm-actions:has(.confirm-alt)>.ghostbtn:first-child{margin-right:auto;}
+.confirm-actions button{white-space:nowrap;}
+/* The second affirmative: a real choice next to Cancel, without competing with
+   the primary action. */
+.confirm-alt{border-color:color-mix(in srgb,var(--ink) 18%,var(--line));color:var(--ink);font-weight:600;}
 
 /* Settings sections */
 .brand-ic-img{background-size:cover;background-position:center;}
@@ -941,7 +953,9 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 /* Root node shows the project's own logo in a clean white tile (contained) */
 .fn-band-ic-img{background-color:#fff;background-size:contain;background-repeat:no-repeat;background-position:center;background-origin:content-box;padding:4px;}
 .fn-root-body{min-width:0;padding:10px 0;display:flex;flex-direction:column;gap:4px;}
-.fn-root .fn-title{font-size:16px;font-weight:700;letter-spacing:-.015em;-webkit-line-clamp:1;}
+/* Explicit line-height: the inherited 1.25 clipped descenders against the
+   line-clamp's overflow:hidden. */
+.fn-root .fn-title{font-size:16px;line-height:22px;font-weight:700;letter-spacing:-.015em;-webkit-line-clamp:1;}
 .fn-sub{font-size:11.5px;color:var(--muted);}
 /* Flow card rows. The heights and gaps below are mirrored by the measurement
    constants in lib/layout.ts (CARD_PAD_Y, CARD_ROW_GAP, TITLE_LINE_H,

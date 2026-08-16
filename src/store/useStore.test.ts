@@ -90,3 +90,44 @@ test('setStatus and remove', () => {
   act(() => { useStore.getState().remove(cid) })
   expect(useStore.getState().doc.roots[0].children).toHaveLength(0)
 })
+
+test('completeSubtree marks the node and every descendant done', () => {
+  let pid = '', mid = '', a = '', b = ''
+  act(() => {
+    const s = useStore.getState()
+    pid = s.addProject('Rebuild')
+    mid = s.addChildNode(pid, 'Design')
+    a = s.addChildNode(mid, 'Wireframes')
+    b = s.addChildNode(a, 'Deep sub-task')
+  })
+  act(() => { useStore.getState().completeSubtree(mid) })
+  const find = (id: string) => {
+    let hit: { status: string } | null = null
+    const walk = (n: { id: string; status: string; children: never[] }) => {
+      if (n.id === id) hit = n
+      ;(n.children as { id: string; status: string; children: never[] }[]).forEach(walk)
+    }
+    useStore.getState().doc.roots.forEach(r => walk(r as never))
+    return hit!
+  }
+  expect(find(mid).status).toBe('done')
+  expect(find(a).status).toBe('done')
+  expect(find(b).status).toBe('done')
+  // The project above it is untouched — only the subtree completes.
+  expect(find(pid).status).not.toBe('done')
+})
+
+test('completeSubtree leaves already-done descendants done rather than toggling them', () => {
+  let pid = '', mid = '', a = ''
+  act(() => {
+    const s = useStore.getState()
+    pid = s.addProject('Rebuild')
+    mid = s.addChildNode(pid, 'Design')
+    a = s.addChildNode(mid, 'Wireframes')
+    s.toggleDone(a)
+  })
+  act(() => { useStore.getState().completeSubtree(mid) })
+  const mod = useStore.getState().doc.roots[0].children[0]
+  expect(mod.status).toBe('done')
+  expect(mod.children[0].status).toBe('done')
+})

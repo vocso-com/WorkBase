@@ -475,6 +475,8 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging
       message: `“${node.title}” has ${open} sub-item${open === 1 ? '' : 's'} that ${open === 1 ? 'is' : 'are'} not done yet. Mark it complete anyway?`,
       confirmLabel: 'Mark complete',
       onConfirm: toggle,
+      altLabel: 'Complete all sub-items too',
+      onAlt: () => useStore.getState().completeSubtree(node.id),
     })
   }
 
@@ -569,7 +571,7 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging
           <div className="fn-title">{node.title}</div>
           <div className="fn-sub">{node.children.length} modules · {leaves(node).length} tasks</div>
         </div>
-        <ProgressRing value={progressOf(node)} color={hex(color)} size={40} />
+        <ProgressRing value={progressOf(node)} color={hex(color)} size={54} />
         {actions}
         {toggle}
       </div>

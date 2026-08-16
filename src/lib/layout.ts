@@ -60,7 +60,9 @@ const ROW_GAP = 16
 // font really fits): over-reserving leaves a few px of slack, while
 // under-reserving would clip text.
 
-export const ROOT_H = 100
+// Tall enough for the 54px progress ring plus the header, title and subtitle
+// without the title's descenders clipping.
+export const ROOT_H = 116
 export const MIN_TASK_H = 58
 export const MIN_MOD_H = 72
 

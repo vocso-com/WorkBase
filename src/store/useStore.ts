@@ -38,6 +38,7 @@ interface State {
   rename: (id: string, title: string) => void
   setStatus: (id: string, status: Status) => void
   toggleDone: (id: string) => void
+  completeSubtree: (id: string) => void
   patch: (id: string, patch: Partial<Node>) => void
   addTag: (name: string, color: ColorKey) => void
   addComment: (id: string, text: string) => void
@@ -235,6 +236,30 @@ export const useStore = create<State>((set, get) => ({
     if (parent) get().logActivity(parent.id, `${verb} “${n.title}”`)
     get().logActivity(id, done ? 'Marked not done' : 'Marked complete')
     if (!done && get().doc.profile?.soundsEnabled !== false) playComplete()
+  },
+  /**
+   * Mark a node and everything under it done, in one write. Applied as a single
+   * batched update (like setCollapsedAll) rather than a toggleDone per node, so
+   * a large subtree is one render and one persist — and because toggleDone
+   * would *un*-complete descendants that were already done.
+   */
+  completeSubtree(id) {
+    const root = findNode(get().doc.roots, id)
+    if (!root) return
+    const ids: string[] = []
+    const walk = (n: Node) => { if (n.status !== 'done') ids.push(n.id); n.children.forEach(walk) }
+    walk(root)
+    if (ids.length === 0) return
+    const updatedAt = new Date().toISOString()
+    set(s => {
+      let roots = s.doc.roots
+      for (const nid of ids) roots = updateNode(roots, nid, { status: 'done', updatedAt })
+      return { doc: { ...s.doc, roots } }
+    })
+    const others = ids.length - (root.status === 'done' ? 0 : 1)
+    get().logActivity(id, others > 0 ? `Marked complete with ${others} sub-item${others === 1 ? '' : 's'}` : 'Marked complete')
+    if (get().doc.profile?.soundsEnabled !== false) playComplete()
+    schedulePersist(get)
   },
   patch(id, patch) {
     const stamped = { ...patch, updatedAt: new Date().toISOString() }
