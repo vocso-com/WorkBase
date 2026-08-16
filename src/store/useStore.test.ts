@@ -131,3 +131,91 @@ test('completeSubtree leaves already-done descendants done rather than toggling 
   expect(mod.status).toBe('done')
   expect(mod.children[0].status).toBe('done')
 })
+
+// ── Starting work promotes the containers above it ───────────────────────────
+
+function fixture() {
+  let pid = '', mid = '', tid = ''
+  act(() => {
+    const s = useStore.getState()
+    pid = s.addProject('Rebuild')
+    mid = s.addChildNode(pid, 'Design')
+    tid = s.addChildNode(mid, 'Wireframes')
+  })
+  return { pid, mid, tid }
+}
+const statusOf = (id: string) => {
+  let hit = ''
+  const walk = (n: { id: string; status: string; children: unknown[] }) => {
+    if (n.id === id) hit = n.status
+    ;(n.children as { id: string; status: string; children: unknown[] }[]).forEach(walk)
+  }
+  useStore.getState().doc.roots.forEach(r => walk(r as never))
+  return hit
+}
+
+test('ticking a task moves its module and project to In progress', () => {
+  const { pid, mid, tid } = fixture()
+  expect(statusOf(pid)).toBe('todo')
+  act(() => { useStore.getState().toggleDone(tid) })
+  expect(statusOf(mid)).toBe('doing')
+  expect(statusOf(pid)).toBe('doing')
+})
+
+test('setting a task to any non-todo status promotes its containers', () => {
+  const { pid, mid, tid } = fixture()
+  act(() => { useStore.getState().setStatus(tid, 'blocked') })
+  expect(statusOf(mid)).toBe('doing')
+  expect(statusOf(pid)).toBe('doing')
+})
+
+test('un-ticking is not starting work, so nothing is promoted', () => {
+  const { pid, mid, tid } = fixture()
+  act(() => { useStore.getState().toggleDone(tid) })
+  act(() => {
+    // Put the containers back, then un-tick.
+    useStore.getState().setStatus(mid, 'todo')
+    useStore.getState().setStatus(pid, 'todo')
+    useStore.getState().toggleDone(tid)
+  })
+  expect(statusOf(mid)).toBe('todo')
+  expect(statusOf(pid)).toBe('todo')
+})
+
+test('an explicit status on a container is never overridden', () => {
+  const { pid, mid, tid } = fixture()
+  act(() => { useStore.getState().setStatus(pid, 'blocked') })
+  act(() => { useStore.getState().toggleDone(tid) })
+  // The module was still To do so it advances; the project's own choice stands.
+  expect(statusOf(mid)).toBe('doing')
+  expect(statusOf(pid)).toBe('blocked')
+})
+
+test('a container already past To do is left alone', () => {
+  const { pid, mid, tid } = fixture()
+  act(() => { useStore.getState().setStatus(pid, 'done') })
+  act(() => { useStore.getState().toggleDone(tid) })
+  expect(statusOf(pid)).toBe('done')
+  // The module was still To do, so it advances as usual.
+  expect(statusOf(mid)).toBe('doing')
+})
+
+test('completing a whole subtree promotes the containers above it', () => {
+  const f = fixture()
+  act(() => { useStore.getState().completeSubtree(f.mid) })
+  expect(statusOf(f.pid)).toBe('doing')
+})
+
+test('the promotion is recorded in the container’s activity', () => {
+  const { pid, tid } = fixture()
+  act(() => { useStore.getState().toggleDone(tid) })
+  const project = useStore.getState().doc.roots.find(r => r.id === pid)!
+  expect((project.activities ?? []).some(a => a.text.includes('In progress'))).toBe(true)
+})
+
+test('a project ticked directly has no containers to promote', () => {
+  let pid = ''
+  act(() => { pid = useStore.getState().addProject('Solo') })
+  act(() => { useStore.getState().toggleDone(pid) })
+  expect(statusOf(pid)).toBe('done')
+})

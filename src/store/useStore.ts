@@ -7,7 +7,7 @@ import { mergeProjectExport, type ProjectExport } from '../lib/export/json'
 import { applyImport as applyImportPlan, type ParsedImport, type ImportCandidate } from '../lib/export/importPlan'
 import { newNode } from '../lib/factory'
 import { projectPrefix, nextShortId } from '../lib/shortid'
-import { addChild, updateNode, deleteNode, moveNode, reorderChildren, findNode, findParent } from '../lib/tree'
+import { addChild, updateNode, deleteNode, moveNode, reorderChildren, findNode, findParent, pathTo } from '../lib/tree'
 import { wouldCycle, dependents } from '../lib/deps'
 import { instantiateTemplate, projectToTemplate } from '../lib/templates'
 import { playComplete } from '../lib/sound'
@@ -91,6 +91,35 @@ function ensureFlushOnUnload(get: () => State) {
     if (timer) clearTimeout(timer)
     void get().adapter.save(get().doc)
   })
+}
+
+/**
+ * Starting work on a task means its module and project are underway, so any
+ * ancestor still sitting in "To do" moves to "In progress".
+ *
+ * Deliberately silent rather than a prompt: there is only one sensible answer,
+ * and asking on every first tick in every project is friction for no decision.
+ * It matters because Projects Home groups by status — a project with work
+ * happening inside it does not belong in the To do lane.
+ *
+ * Only ever fires *from* `todo`, so an explicit Blocked, Done or custom stage is
+ * never overridden by activity underneath it.
+ */
+function promoteAncestors(get: () => State, set: (fn: (s: State) => Partial<State>) => void, id: string): void {
+  const roots = get().doc.roots
+  const stale = pathTo(roots, id)
+    .slice(0, -1)
+    .map(aid => findNode(roots, aid))
+    .filter((n): n is Node => !!n && n.status === 'todo')
+  if (stale.length === 0) return
+
+  const updatedAt = new Date().toISOString()
+  set(s => {
+    let next = s.doc.roots
+    for (const n of stale) next = updateNode(next, n.id, { status: 'doing', updatedAt })
+    return { doc: { ...s.doc, roots: next } }
+  })
+  for (const n of stale) get().logActivity(n.id, 'Moved to In progress — work started inside')
 }
 
 function rootPrefixFor(roots: Node[], id: string): string {
@@ -223,6 +252,7 @@ export const useStore = create<State>((set, get) => ({
   setStatus(id, status) {
     const n = findNode(get().doc.roots, id)
     get().patch(id, { status })
+    if (status !== 'todo') promoteAncestors(get, set, id)
     if (n && n.status !== status) {
       const label = mergedStages(get().doc.stages).find(st => st.id === status)?.label ?? status
       get().logActivity(id, `Moved to ${label}`)
@@ -239,6 +269,8 @@ export const useStore = create<State>((set, get) => ({
     const parent = findParent(get().doc.roots, id)
     if (parent) get().logActivity(parent.id, `${verb} “${n.title}”`)
     get().logActivity(id, done ? 'Marked not done' : 'Marked complete')
+    // Only on the way to done — un-ticking is not "starting work".
+    if (!done) promoteAncestors(get, set, id)
     if (!done && get().doc.profile?.soundsEnabled !== false) playComplete()
   },
   /**
@@ -275,6 +307,7 @@ export const useStore = create<State>((set, get) => ({
       for (const nid of ids) roots = updateNode(roots, nid, { status: 'done', updatedAt })
       return { doc: { ...s.doc, roots } }
     })
+    promoteAncestors(get, set, id)
     const others = ids.length - (root.status === 'done' ? 0 : 1)
     get().logActivity(id, others > 0 ? `Marked complete with ${others} sub-item${others === 1 ? '' : 's'}` : 'Marked complete')
     if (get().doc.profile?.soundsEnabled !== false) playComplete()
