@@ -90,6 +90,10 @@ export function AboutModal() {
           <button className="ghostbtn" onClick={() => { hide(); useTransfer.getState().showImport() }}>Import data</button>
           <button className="newbtn" onClick={() => { hide(); useTransfer.getState().showAccountExport() }}>Export your data</button>
         </div>
+
+        <div className="about-legal">
+          © {new Date().getFullYear()} VOCSO Technologies Pvt Ltd · vocso.com
+        </div>
       </div>
     </div>
   )
