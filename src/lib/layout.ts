@@ -69,7 +69,7 @@ const CARD_BORDER_Y = 4 // 2px top + 2px bottom; cards are border-box
 const CARD_ROW_GAP = 6
 const HEAD_H = 22 // status dot + kicker + priority + shortId, incl. the hairline
 const TITLE_LINE_H = 19
-const DESC_LINE_H = 16
+const DESC_LINE_H = 18
 const FOOTER_H = 22 // due, attachment/dependency counts, expand control
 const TAGS_H = 22
 const MOD_TITLE_H = 24 // icon + title, taller than a plain title line
@@ -77,7 +77,7 @@ const MOD_ROLLUP_H = 20 // counts + due + the meta strip
 const MOD_BAR_H = 6 // ProgressBar
 
 const TITLE_CPL = 30 // characters per line at the title's size
-const DESC_CPL = 38
+const DESC_CPL = 34
 const MAX_TITLE_LINES = 2
 /** Collapsed cards get a one-line teaser; expanding one reveals up to four. */
 const TEASER_LINES = 1

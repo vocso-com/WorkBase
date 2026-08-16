@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import type { Node, Stage } from '../types'
 import { hex, stageMeta, PRIORITY_META } from '../theme'
 import { layoutTree, cardHasMeta, cardHasFooter, type FlowNode, type ExpandPredicate } from '../lib/layout'
-import { progressOf, statusCounts } from '../lib/progress'
+import { progressOf, statusCounts, openDescendants } from '../lib/progress'
 import { leaves } from '../lib/tree'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { toText } from '../lib/text'
@@ -14,6 +14,7 @@ import { askConfirm } from '../hooks/useConfirm'
 import { ProgressBar } from './ui/ProgressBar'
 import { Icon } from './ui/Icon'
 import { ProgressRing } from './ui/ProgressRing'
+import { Checkbox } from './ui/Checkbox'
 import { DueChip } from './DueChip'
 
 const MIN_K = 0.3
@@ -52,6 +53,9 @@ export function FlowView({ node }: { node: Node }) {
   const [live, setLive] = useState<LiveDrag | null>(null)
   const [dropTarget, setDropTarget] = useState<string | null>(null)
   const pan = useRef<{ sx: number; sy: number; ox: number; oy: number } | null>(null)
+  // When the canvas last actually moved under a drag — used to tell a genuine
+  // double-click apart from two pans in quick succession.
+  const pannedAt = useRef(0)
   const nodeDrag = useRef<{ id: string; sx: number; sy: number; ox: number; oy: number; moved: boolean } | null>(null)
 
   const posOf = useCallback(
@@ -136,13 +140,26 @@ export function FlowView({ node }: { node: Node }) {
   const onMove = (e: React.PointerEvent) => {
     const p = pan.current
     if (!p) return
+    if (Math.abs(e.clientX - p.sx) + Math.abs(e.clientY - p.sy) > 3) pannedAt.current = Date.now()
     setTf(t => ({ ...t, x: p.ox + (e.clientX - p.sx), y: p.oy + (e.clientY - p.sy) }))
   }
-  const onUp = () => { pan.current = null }
+  // Capture has to be released explicitly: while it is held the viewport keeps
+  // swallowing every pointer event and `pointerleave` never fires, so a missed
+  // pointerup (window blur, context menu, dragging off-window) would leave the
+  // canvas stuck panning.
+  const releasePan = (e: React.PointerEvent) => {
+    const el = e.currentTarget as HTMLElement
+    if (el.hasPointerCapture?.(e.pointerId)) el.releasePointerCapture(e.pointerId)
+    pan.current = null
+  }
 
   // Double-click empty canvas → create a node where you clicked.
   const onDoubleClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.fn')) return
+    // Two clicks that close together are also what panning twice in a row looks
+    // like. Creating a node then is never what was meant, so a recent drag
+    // suppresses it.
+    if (Date.now() - pannedAt.current < 400) return
     const vp = vpRef.current
     if (!vp) return
     const rect = vp.getBoundingClientRect()
@@ -181,7 +198,11 @@ export function FlowView({ node }: { node: Node }) {
     }
     setDropTarget(target)
   }
-  const onNodeUp = (fn: FlowNode) => {
+  const onNodeUp = (fn: FlowNode, e?: React.PointerEvent) => {
+    if (e) {
+      const el = e.currentTarget as HTMLElement
+      if (el.hasPointerCapture?.(e.pointerId)) el.releasePointerCapture(e.pointerId)
+    }
     const d = nodeDrag.current
     nodeDrag.current = null
     const target = dropTarget
@@ -237,7 +258,16 @@ export function FlowView({ node }: { node: Node }) {
 
   return (
     <div className="flow-wrap" style={{ '--board-accent': accent } as React.CSSProperties}>
-      <div ref={vpRef} className="flow-vp" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerLeave={onUp} onDoubleClick={onDoubleClick}>
+      <div
+        ref={vpRef}
+        className="flow-vp"
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={releasePan}
+        onPointerCancel={releasePan}
+        onLostPointerCapture={() => { pan.current = null }}
+        onDoubleClick={onDoubleClick}
+      >
         <div className="fcanvas" style={{ transform: `translate(${tf.x}px, ${tf.y}px) scale(${tf.k})`, width: layout.width, height: layout.height }}>
           <svg className="fedges" width={layout.width} height={layout.height}>
             <defs>
@@ -293,7 +323,8 @@ export function FlowView({ node }: { node: Node }) {
               isDropTarget={dropTarget === fn.id}
               onPointerDown={e => onNodeDown(e, fn)}
               onPointerMove={onNodeMove}
-              onPointerUp={() => onNodeUp(fn)}
+              onPointerUp={e => onNodeUp(fn, e)}
+              onPointerCancel={e => onNodeUp(fn, e)}
               onOpen={() => useDetail.getState().open(fn.id)}
               onToggle={() => toggle(fn)}
               onAdd={() => addChild(fn)}
@@ -391,16 +422,20 @@ interface CardProps {
   isDropTarget: boolean
   onPointerDown: (e: React.PointerEvent) => void
   onPointerMove: (e: React.PointerEvent) => void
-  onPointerUp: () => void
+  onPointerUp: (e: React.PointerEvent) => void
+  onPointerCancel: (e: React.PointerEvent) => void
   onOpen: () => void
   onToggle: () => void
   onAdd: () => void
   onDelete: () => void
 }
 
-function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onOpen, onToggle, onAdd, onDelete }: CardProps) {
+function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onOpen, onToggle, onAdd, onDelete }: CardProps) {
   const { node, depth } = fn
   const drop = isDropTarget ? ' fn-droptarget' : ''
+  // Named distinctly: the container branch below has its own `done` count, and
+  // shadowing it here silently interpolates a number into the class name.
+  const doneCls = node.status === 'done' ? ' fn-done' : ''
   const sm = stageMeta(stages, node.status, stageLabels)
   // Which card renders is decided by kind, not depth — depth is unbounded, so a
   // task that grew sub-tasks becomes a container like any other. Color follows
@@ -425,22 +460,32 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging
   // Header: status as a dot and priority as a flag, so neither costs a whole
   // row the way a pair of pills did. The kicker says what the card is, the
   // shortId identifies it.
+  // The completion control sits against the card's own title, never in the
+  // header — the header's kicker names the *containing* card, so a tick there
+  // reads as completing the parent.
+  // Completing something whose sub-items are still open is usually a mistake,
+  // but sometimes it is exactly right — so this warns and then gets out of the
+  // way rather than refusing.
+  const onTick = () => {
+    const toggle = () => useStore.getState().toggleDone(node.id)
+    const open = openDescendants(node)
+    if (node.status === 'done' || open === 0) { toggle(); return }
+    askConfirm({
+      title: 'Sub-items still open',
+      message: `“${node.title}” has ${open} sub-item${open === 1 ? '' : 's'} that ${open === 1 ? 'is' : 'are'} not done yet. Mark it complete anyway?`,
+      confirmLabel: 'Mark complete',
+      onConfirm: toggle,
+    })
+  }
+
+  const tick = (
+    <span className="fn-tick" onPointerDown={stop} title={node.status === 'done' ? 'Mark not done' : 'Mark done'}>
+      <Checkbox status={node.status} onToggle={onTick} />
+    </span>
+  )
+
   const head = (
     <div className="fn-head">
-      {/* The status dot doubles as the completion control: hovering the card
-          swaps it for a tick, so a task can be finished without opening it. */}
-      <span className="fn-mark">
-        <span className="fn-status" style={{ background: sm.dot }} title={sm.label} />
-        <button
-          className="fn-tick"
-          onPointerDown={stop}
-          onClick={() => useStore.getState().toggleDone(node.id)}
-          aria-label={node.status === 'done' ? 'Mark not done' : 'Mark done'}
-          title={node.status === 'done' ? 'Mark not done' : 'Mark done'}
-        >
-          <Icon name={node.status === 'done' ? 'ti-square-check' : 'ti-square'} />
-        </button>
-      </span>
       <span className="fn-kicker">{kicker}</span>
       {prio ? (
         <span className="fn-flag" style={{ color: hex(prio.color) }} title={`${prio.label} priority`}>
@@ -503,7 +548,7 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging
     </button>
   ) : null
 
-  const handlers = { onPointerDown, onPointerMove, onPointerUp, onDoubleClick: (e: React.MouseEvent) => { e.stopPropagation(); onOpen() } }
+  const handlers = { onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onDoubleClick: (e: React.MouseEvent) => { e.stopPropagation(); onOpen() } }
 
   // Every card is outlined in its own color — status for tasks, identity for
   // modules and the root — so the canvas reads as a set of tagged objects.
@@ -536,10 +581,15 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging
     const done = statusCounts(node).done
     const kids = node.children.length
     return (
-      <div className={`fn fn-mod${dragging ? ' fn-drag' : ''}${drop}`} style={{ ...style, ...outline }} {...handlers}>
+      <div className={`fn fn-mod${dragging ? ' fn-drag' : ''}${drop}${doneCls}`} style={{ ...style, ...outline }} {...handlers}>
         {head}
         <div className="fn-mod-title">
-          <span className="fn-mod-ic" style={{ background: tagBg(color), color: tagFg(color) }}><Icon name={node.icon ?? 'ti-folder'} /></span>
+          {/* Hovering swaps the identity tile for the tick — same slot, so the
+              title never shifts. */}
+          <span className="fn-mark fn-mark-lg">
+            <span className="fn-mod-ic" style={{ background: tagBg(color), color: tagFg(color) }}><Icon name={node.icon ?? 'ti-folder'} /></span>
+            {tick}
+          </span>
           <span className="fn-title">{node.title}</span>
         </div>
         {description}
@@ -559,9 +609,15 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging
 
   const tags = node.tags ?? []
   return (
-    <div className={`fn fn-task${dragging ? ' fn-drag' : ''}${drop}`} style={{ ...style, ...outline }} {...handlers}>
+    <div className={`fn fn-task${dragging ? ' fn-drag' : ''}${drop}${doneCls}`} style={{ ...style, ...outline }} {...handlers}>
       {head}
-      <div className="fn-title fn-task-title">{node.title}</div>
+      <div className="fn-titlerow">
+        <span className="fn-mark">
+          <span className="fn-status" style={{ background: sm.dot }} title={sm.label} />
+          {tick}
+        </span>
+        <div className="fn-title fn-task-title">{node.title}</div>
+      </div>
       {description}
       {/* Rendered only when measured: an empty footer div still occupies its
           CSS height and would spill out of the card. */}

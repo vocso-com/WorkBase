@@ -901,16 +901,25 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
   box-shadow:inset 0 -1px 0 var(--line);}
 /* Status and priority live up here as a dot and a flag, so neither costs the
    card a whole row the way a pair of pills did. */
-/* Fixed-width slot so swapping the dot for the tick on hover never reflows the
-   header. */
-.fn-mark{position:relative;width:14px;height:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+/* The completion control lives against the card's own title. Its slot is a
+   fixed size so swapping the status dot (or a container's identity tile) for
+   the tick on hover never shifts the title. */
+.fn-mark{position:relative;width:18px;height:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.fn-mark-lg{width:24px;height:24px;}
 .fn-status{width:7px;height:7px;border-radius:50%;transition:opacity .12s;}
-.fn-tick{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;border:none;
-  background:transparent;padding:0;cursor:pointer;font-size:14px;line-height:1;color:var(--faint);
-  opacity:0;transition:opacity .12s,color .12s;}
-.fn-tick:hover{color:var(--teal);}
-.fn:hover .fn-status{opacity:0;}
-.fn:hover .fn-tick{opacity:1;}
+/* Wraps the shared Checkbox so a completed card shows the same solid tick as
+   every other surface in the app. */
+.fn-tick{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .12s;}
+.fn:hover .fn-status,.fn:hover .fn-mark-lg .fn-mod-ic,.fn-done .fn-status{opacity:0;}
+/* A completed card keeps its tick on show — the mark is the clearest signal
+   that it is done, so it should not need a hover to be read. */
+.fn:hover .fn-tick,.fn-done .fn-tick{opacity:1;}
+/* The mark's slot is one title line tall so the dot centres on the first line
+   of a title that wraps. */
+.fn-titlerow{display:flex;align-items:flex-start;gap:8px;flex-shrink:0;min-width:0;}
+.fn-titlerow .fn-mark{height:19px;}
+.fn-titlerow .fn-title{flex:1;min-width:0;}
 .fn-kicker{font-size:9.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;}
 .fn-flag{font-size:11px;line-height:1;flex-shrink:0;display:flex;}
@@ -941,7 +950,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .fn-mod{background:var(--card);border:2px solid var(--line);border-radius:14px;box-shadow:var(--shadow-flat);padding:11px 13px;display:flex;flex-direction:column;justify-content:flex-start;gap:6px;transition:box-shadow .15s, transform .15s;}
 .fn-mod:hover{box-shadow:var(--shadow-flat-hover);transform:translateY(-2px);}
 .fn-mod-title{display:flex;align-items:center;gap:8px;height:24px;flex-shrink:0;}
-.fn-mod-ic{width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.fn-mod-ic{width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;transition:opacity .12s;}
 .fn-mod .fn-title{font-size:15px;line-height:20px;flex:1;min-width:0;-webkit-line-clamp:1;}
 .fn-mod-rollup{display:flex;align-items:center;gap:8px;height:20px;flex-shrink:0;overflow:hidden;}
 .fn-count{display:flex;align-items:center;gap:3px;font-size:11px;font-weight:600;color:var(--faint);
@@ -955,7 +964,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 /* One-line teaser when collapsed, up to four lines when the card is expanded —
    clamped either way so a description can never outgrow the height layout.ts
    reserved for it. */
-.fn-desc{font-size:11.5px;line-height:16px;color:var(--muted);overflow:hidden;flex-shrink:0;
+.fn-desc{font-size:12.5px;line-height:18px;color:var(--muted);overflow:hidden;flex-shrink:0;
   display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;word-break:break-word;}
 .fn-desc-open{-webkit-line-clamp:4;}
 .fn-task-foot{display:flex;align-items:center;gap:6px;height:22px;flex-shrink:0;overflow:hidden;}
