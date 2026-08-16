@@ -50,7 +50,17 @@ export default function App() {
   // or unverified past the grace period). No-ops when there's no endpoint/email.
   useEffect(() => {
     if (!ready) return
-    void checkStatus(email).then(r => setLock(r.blocked ? r.reason : null))
+    void checkStatus(email).then(r => {
+      setLock(r.blocked ? r.reason : null)
+      // The registry is the authority on verification. Without this the local
+      // flag is written once at OTP time and never revisited, so the two can
+      // drift apart permanently with the app always believing its own copy.
+      // `undefined` means we never got an answer (no endpoint, offline) — leave
+      // the local value alone rather than clearing a real verification.
+      if (r.verified !== undefined && r.verified !== emailVerified) {
+        useStore.getState().setProfile({ emailVerified: r.verified })
+      }
+    })
   }, [ready, email, emailVerified])
   // The reminder widget runs in a separate window and routes its changes here
   // (the main window is the single writer of the data file).
