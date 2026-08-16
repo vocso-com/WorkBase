@@ -1508,3 +1508,16 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .depchip-blocked{background:color-mix(in srgb,var(--red) 13%,transparent);color:var(--red);}
 .depchip-blocking{background:color-mix(in srgb,var(--amber) 16%,transparent);color:var(--amber);}
 .ol-row .depchip{margin-left:auto;}
+
+/* Hosted template directory. */
+.tpl-sechead{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.tpl-refresh{display:inline-flex;align-items:center;gap:4px;font:inherit;font-size:11px;font-weight:650;
+  color:var(--muted);background:transparent;border:none;cursor:pointer;padding:2px 4px;border-radius:6px;text-transform:none;letter-spacing:0;}
+.tpl-refresh:hover:not(:disabled){color:var(--ink);}
+.tpl-refresh:disabled{opacity:.5;cursor:default;}
+.tpl-card-locked .tpl-cover{filter:saturate(.55);}
+.tpl-card-locked .tpl-card-t{color:var(--muted);}
+.tpl-lock{position:absolute;top:8px;right:8px;display:inline-flex;align-items:center;gap:3px;
+  font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#fff;
+  background:rgba(17,24,39,.55);backdrop-filter:blur(4px);border-radius:20px;padding:3px 8px;}
+.tpl-lock i{font-size:12px;}

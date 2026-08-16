@@ -1,0 +1,29 @@
+{
+  "id": "tpl-client-discovery",
+  "name": "Client Discovery",
+  "description": "Everything to learn before you quote a number",
+  "icon": "ti-search",
+  "color": "teal",
+  "category": "agency",
+  "tier": "free",
+  "modules": [
+    { "name": "Understand the business", "icon": "ti-building", "color": "teal", "items": [
+      { "title": "Kick-off call booked", "priority": "high" },
+      { "title": "Who are the decision makers?" },
+      { "title": "What does success look like in 6 months?" },
+      { "title": "Current numbers — traffic, leads, revenue" }
+    ]},
+    { "name": "Audit what exists", "icon": "ti-checklist", "color": "blue", "items": [
+      { "title": "Existing site / product walkthrough" },
+      { "title": "Analytics access requested" },
+      { "title": "Brand assets collected" },
+      { "title": "Competitors reviewed" }
+    ]},
+    { "name": "Shape the engagement", "icon": "ti-file-text", "color": "violet", "items": [
+      { "title": "Scope drafted", "priority": "high" },
+      { "title": "Rough budget agreed verbally" },
+      { "title": "Timeline sketched" },
+      { "title": "Proposal sent", "priority": "high" }
+    ]}
+  ]
+}

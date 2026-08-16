@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "templates:validate": "node scripts/publish-templates.mjs --dry",
+    "templates:publish": "node scripts/publish-templates.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",

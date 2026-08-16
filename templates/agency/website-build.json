@@ -1,0 +1,35 @@
+{
+  "id": "tpl-website-build",
+  "name": "Website Build",
+  "description": "Discovery to launch, the way most site projects actually run",
+  "icon": "ti-world",
+  "color": "blue",
+  "category": "agency",
+  "tier": "free",
+  "modules": [
+    { "name": "Plan", "icon": "ti-map", "color": "teal", "items": [
+      { "title": "Sitemap agreed", "priority": "high" },
+      { "title": "Content inventory" },
+      { "title": "Technical requirements" }
+    ]},
+    { "name": "Design", "icon": "ti-palette", "color": "violet", "items": [
+      { "title": "Moodboard approved" },
+      { "title": "Key page designs" },
+      { "title": "Responsive states" },
+      { "title": "Client sign-off", "priority": "high" }
+    ]},
+    { "name": "Build", "icon": "ti-code", "color": "blue", "items": [
+      { "title": "Environment + repo set up" },
+      { "title": "Templates built" },
+      { "title": "CMS wired" },
+      { "title": "Content loaded" }
+    ]},
+    { "name": "Launch", "icon": "ti-rocket", "color": "amber", "items": [
+      { "title": "Cross-browser pass" },
+      { "title": "Performance budget met" },
+      { "title": "Analytics + redirects live", "priority": "high" },
+      { "title": "DNS cut over", "priority": "high" },
+      { "title": "Post-launch check at 24h" }
+    ]}
+  ]
+}

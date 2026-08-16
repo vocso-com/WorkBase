@@ -1,0 +1,28 @@
+{
+  "id": "tpl-retainer-month",
+  "name": "Retainer Month",
+  "description": "A repeatable month of retained work, so nothing quietly slips",
+  "icon": "ti-calendar-repeat",
+  "color": "indigo",
+  "category": "agency",
+  "tier": "pro",
+  "modules": [
+    { "name": "Plan the month", "icon": "ti-target-arrow", "color": "indigo", "items": [
+      { "title": "Review last month's numbers" },
+      { "title": "Agree priorities with client", "priority": "high" },
+      { "title": "Allocate hours across the team" }
+    ]},
+    { "name": "Deliver", "icon": "ti-tools", "color": "blue", "items": [
+      { "title": "Week 1 block" },
+      { "title": "Week 2 block" },
+      { "title": "Week 3 block" },
+      { "title": "Week 4 block" }
+    ]},
+    { "name": "Report & invoice", "icon": "ti-report", "color": "lime", "items": [
+      { "title": "Hours reconciled against scope", "priority": "high" },
+      { "title": "Monthly report written" },
+      { "title": "Call booked to walk it through" },
+      { "title": "Invoice raised", "priority": "high" }
+    ]}
+  ]
+}

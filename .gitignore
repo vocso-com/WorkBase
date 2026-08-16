@@ -8,3 +8,6 @@ src-tauri/gen/
 
 # Local, per-machine Claude settings
 .claude/settings.local.json
+
+# Local dev overrides (per-machine)
+.env.local

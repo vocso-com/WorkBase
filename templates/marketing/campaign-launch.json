@@ -1,0 +1,28 @@
+{
+  "id": "tpl-campaign-launch",
+  "name": "Campaign Launch",
+  "description": "Brief to live, with the approval gates that usually get skipped",
+  "icon": "ti-speakerphone",
+  "color": "coral",
+  "category": "marketing",
+  "tier": "free",
+  "modules": [
+    { "name": "Brief", "icon": "ti-bulb", "color": "amber", "items": [
+      { "title": "Audience and offer agreed", "priority": "high" },
+      { "title": "Success metric chosen" },
+      { "title": "Budget signed off" }
+    ]},
+    { "name": "Make", "icon": "ti-brush", "color": "coral", "items": [
+      { "title": "Copy drafted" },
+      { "title": "Creative produced" },
+      { "title": "Landing page built" },
+      { "title": "Legal / brand review", "priority": "high" }
+    ]},
+    { "name": "Ship", "icon": "ti-send", "color": "teal", "items": [
+      { "title": "Tracking verified end to end", "priority": "high" },
+      { "title": "Scheduled" },
+      { "title": "Live check at 1h" },
+      { "title": "Results reviewed at 7 days" }
+    ]}
+  ]
+}
