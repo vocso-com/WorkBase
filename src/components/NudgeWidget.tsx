@@ -122,7 +122,11 @@ export function NudgeWidget({ standalone }: { standalone?: boolean } = {}) {
           {shown.map(i => {
             const di = dueInfo(i.node.dueDate)
             return (
-              <div className="nudge-card" key={i.node.id} style={{ ['--pc' as string]: hex(i.rootColor) }}>
+              <div
+                className={`nudge-card${i.node.status === 'done' ? ' nudge-card-done' : ''}`}
+                key={i.node.id}
+                style={{ ['--pc' as string]: hex(i.rootColor) }}
+              >
                 <span className="nudge-dot" title={i.rootTitle} />
                 <span className="nudge-check" onPointerDown={e => e.stopPropagation()}>
                   <Checkbox status={i.node.status} onToggle={() => tickDone(i.node.id)} />

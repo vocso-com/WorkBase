@@ -550,7 +550,12 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .nudge-due-overdue{color:var(--red);background:color-mix(in srgb,var(--red) 12%,transparent);}
 .nudge-due-today,.nudge-due-soon{color:color-mix(in srgb,var(--amber) 80%,var(--ink));background:color-mix(in srgb,var(--amber) 15%,transparent);}
 .nudge-due-upcoming{color:var(--muted);background:var(--chip);}
-.nudge-check{display:inline-flex;flex-shrink:0;}
+/* Hover-reveal tick, same as a My Work row: the slot collapses to nothing so
+   the title sits where the tick will appear, and reflows into place on hover.
+   A done item keeps its tick on show. */
+.nudge-check{display:inline-flex;flex-shrink:0;overflow:hidden;width:0;margin-right:0;opacity:0;
+  transition:width .14s ease,margin-right .14s ease,opacity .12s ease;}
+.nudge-card:hover .nudge-check,.nudge-card-done .nudge-check{width:18px;margin-right:8px;opacity:1;}
 .nudge-more{border:none;background:var(--chip);cursor:pointer;font:inherit;font-size:12px;font-weight:600;color:var(--muted);padding:8px;text-align:center;border-radius:8px;margin-top:1px;}
 .nudge-more:hover{color:var(--ink);background:var(--btn);}
 /* Momentum streak — a little dopamine when you tick things off. */
