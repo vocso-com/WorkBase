@@ -4,6 +4,7 @@ import type { StoreDoc, Node, Status, ColorKey, Template } from '../types'
 import { pickAdapter, type StorageAdapter } from '../lib/storage'
 import { emptyDocument, DEFAULT_WORKSPACE_ID } from '../lib/serialize'
 import { mergeProjectExport, type ProjectExport } from '../lib/export/json'
+import { applyImport as applyImportPlan, type ParsedImport, type ImportCandidate } from '../lib/export/importPlan'
 import { newNode } from '../lib/factory'
 import { projectPrefix, nextShortId } from '../lib/shortid'
 import { addChild, updateNode, deleteNode, moveNode, reorderChildren, findNode, findParent } from '../lib/tree'
@@ -28,6 +29,7 @@ interface State {
   addProject: (name: string) => string
   addProjectFromTemplate: (tpl: Template, name?: string) => string
   importProject: (exp: ProjectExport) => string
+  applyImport: (parsed: ParsedImport, decisions: ImportCandidate[]) => { added: number; updated: number; ignored: number; openId?: string }
   addWorkspace: (name: string) => string
   renameWorkspace: (id: string, name: string) => void
   deleteWorkspace: (id: string) => void
@@ -245,6 +247,13 @@ export const useStore = create<State>((set, get) => ({
    * a large subtree is one render and one persist — and because toggleDone
    * would *un*-complete descendants that were already done.
    */
+  /** Apply an import dialog's decisions: add, update or skip each project. */
+  applyImport(parsed, decisions) {
+    const out = applyImportPlan(get().doc, parsed, decisions)
+    set({ doc: out.doc })
+    schedulePersist(get)
+    return { added: out.added, updated: out.updated, ignored: out.ignored, openId: out.openId }
+  },
   /** Add an exported project to this document and return its new root id. */
   importProject(exp) {
     const next = mergeProjectExport(get().doc, exp)

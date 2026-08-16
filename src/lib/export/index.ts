@@ -1,17 +1,19 @@
 import type { Node, StoreDoc } from '../../types'
 import { projectToMarkdown } from './markdown'
 import { toProjectExport } from './json'
+import { projectToCsv } from './csv'
 import { renderViewToCanvas, canvasToPng, canvasToJpeg, frameCanvas } from './image'
 import { pdfFromJpeg } from './pdf'
 import { saveFile, exportName, isoDate } from './save'
 
-export type ExportFormat = 'png' | 'pdf' | 'md' | 'json'
+export type ExportFormat = 'png' | 'pdf' | 'md' | 'json' | 'csv'
 
-export const EXPORT_FORMATS: { key: ExportFormat; label: string; icon: string; hint: string }[] = [
-  { key: 'png', label: 'Image', icon: 'ti-photo', hint: 'A picture of this view' },
-  { key: 'pdf', label: 'PDF', icon: 'ti-file-type-pdf', hint: 'This view on one page' },
-  { key: 'md', label: 'Markdown', icon: 'ti-markdown', hint: 'The project as text' },
-  { key: 'json', label: 'JSON', icon: 'ti-code', hint: 'Re-importable project file' },
+export const EXPORT_FORMATS: { key: ExportFormat; label: string; icon: string; ext: string; hint: string }[] = [
+  { key: 'png', label: 'Image', icon: 'ti-photo', ext: '.png', hint: 'A picture of this view, exactly as it looks now' },
+  { key: 'pdf', label: 'PDF', icon: 'ti-file-type-pdf', ext: '.pdf', hint: 'The same picture, on one page, ready to send' },
+  { key: 'md', label: 'Markdown', icon: 'ti-markdown', ext: '.md', hint: 'The project as text, for a doc or a wiki' },
+  { key: 'csv', label: 'Spreadsheet', icon: 'ti-table', ext: '.csv', hint: 'One row per item — opens in Excel, imports back' },
+  { key: 'json', label: 'JSON', icon: 'ti-code', ext: '.json', hint: 'Everything, exactly — the best format to import back' },
 ]
 
 /**
@@ -37,6 +39,15 @@ export async function exportView(
       ext: 'md',
       data: projectToMarkdown(node, doc.stages, doc.stageLabels, isoDate(now)),
       mime: 'text/markdown',
+    })
+  }
+
+  if (format === 'csv') {
+    return saveFile({
+      name,
+      ext: 'csv',
+      data: projectToCsv(node, doc.stages, doc.stageLabels),
+      mime: 'text/csv',
     })
   }
 

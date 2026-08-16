@@ -17,7 +17,7 @@ import { showWidgetFromMain } from '../lib/desktopWidget'
 import { isTauri } from '../lib/platform'
 import { useTabs } from '../hooks/useTabs'
 import { useVocab } from '../hooks/useVocab'
-import { exportView, EXPORT_FORMATS, type ExportFormat } from '../lib/export'
+import { useTransfer } from '../hooks/useTransfer'
 import { AvatarMenu } from './AvatarMenu'
 import { WorkspaceSwitcher } from './WorkspaceSwitcher'
 import { TabBar } from './TabBar'
@@ -195,55 +195,10 @@ function HeaderProgress({ node }: { node: Node }) {
 }
 
 function ExportMenu({ node }: { node: Node }) {
-  const [open, setOpen] = useState(false)
-  const [busy, setBusy] = useState<ExportFormat | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    const onDown = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as globalThis.Node)) setOpen(false) }
-    document.addEventListener('mousedown', onDown)
-    return () => document.removeEventListener('mousedown', onDown)
-  }, [open])
-
-  const run = async (format: ExportFormat) => {
-    setError(null)
-    setBusy(format)
-    try {
-      // The image formats rasterize whatever the project page is rendering, so
-      // the element is read at export time rather than threaded down as a ref.
-      const viewEl = document.querySelector<HTMLElement>('.proj-page')
-      await exportView(format, node, useStore.getState().doc, viewEl)
-      setOpen(false)
-    } catch (e) {
-      setError((e as Error).message || 'Export failed.')
-    } finally {
-      setBusy(null)
-    }
-  }
-
   return (
-    <div className="viewmenu" ref={ref}>
-      <button className="viewmenu-btn" onClick={() => setOpen(o => !o)} title="Export this project">
-        <Icon name="ti-download" /> Export
-        <Icon name="ti-chevron-down" className="viewmenu-caret" />
-      </button>
-      {open ? (
-        <div className="viewmenu-pop viewmenu-pop-wide">
-          {EXPORT_FORMATS.map(f => (
-            <button key={f.key} className="viewmenu-item expmenu-item" disabled={busy !== null} onClick={() => run(f.key)}>
-              <Icon name={busy === f.key ? 'ti-loader-2' : f.icon} className={busy === f.key ? 'expmenu-spin' : undefined} />
-              <span className="expmenu-txt">
-                <b>{f.label}</b>
-                <span>{f.hint}</span>
-              </span>
-            </button>
-          ))}
-          {error ? <div className="expmenu-err"><Icon name="ti-alert-triangle" /> {error}</div> : null}
-        </div>
-      ) : null}
-    </div>
+    <button className="viewmenu-btn" onClick={() => useTransfer.getState().showExport(node.id)} title="Export this project">
+      <Icon name="ti-download" /> Export
+    </button>
   )
 }
 

@@ -7,8 +7,7 @@ import { BUILTIN_TEMPLATES } from '../lib/templates'
 import { hex } from '../theme'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { useVocab } from '../hooks/useVocab'
-import { parseProjectExport } from '../lib/export/json'
-import { openTextFile } from '../lib/export/save'
+import { useTransfer } from '../hooks/useTransfer'
 import { Icon } from './ui/Icon'
 
 function taskCount(tpl: Template): number {
@@ -21,12 +20,10 @@ export function NewProjectModal() {
   const custom = useStore(s => s.doc.templates)
   const v = useVocab()
   const [name, setName] = useState('')
-  const [importError, setImportError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open) return
     setName('')
-    setImportError(null)
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') hide() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -44,23 +41,9 @@ export function NewProjectModal() {
     openProject(id)
   }
 
-  /**
-   * Bring in a project someone exported as JSON. The file carries its own
-   * stages and labels, so it lands intact even in a document that never had
-   * them; ids and shortIds are re-issued, so importing twice gives two
-   * projects rather than a collision.
-   */
-  const importFromFile = async () => {
-    setImportError(null)
-    try {
-      const text = await openTextFile('json')
-      if (!text) return
-      const id = useStore.getState().importProject(parseProjectExport(text))
-      if (name.trim()) useStore.getState().rename(id, name.trim())
-      openProject(id)
-    } catch (e) {
-      setImportError((e as Error).message || 'That file could not be imported.')
-    }
+  const importFromFile = () => {
+    hide()
+    useTransfer.getState().showImport()
   }
 
   const createFromTemplate = (tpl: Template) => {
@@ -111,11 +94,10 @@ export function NewProjectModal() {
             <div className="tpl-blank-ic"><Icon name="ti-file-import" /></div>
             <div>
               <div className="tpl-blank-t">Import a {v.project} file</div>
-              <div className="tpl-blank-s">From a {v.project} exported as JSON — its {v.modules}, {v.tasks} and labels come with it</div>
+              <div className="tpl-blank-s">From a .json or .csv export — choose what comes in and what to do about duplicates</div>
             </div>
             <Icon name="ti-arrow-right" style={{ marginLeft: 'auto', color: 'var(--faint)' }} />
           </div>
-          {importError ? <div className="tpl-err"><Icon name="ti-alert-triangle" /> {importError}</div> : null}
 
           <div className="tpl-sechead">Templates</div>
           <div className="tpl-grid">

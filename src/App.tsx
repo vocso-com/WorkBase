@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useStore } from './store/useStore'
 import { useNav } from './hooks/useNav'
-import { useDetail } from './hooks/useDetail'
 import { AppHeader } from './components/AppHeader'
 import { ProjectsHome } from './components/ProjectsHome'
 import ProjectPage from './components/ProjectPage'
 import { MyWorkPage } from './components/MyWorkPage'
 import { CardModal } from './components/CardModal'
 import { NewProjectModal } from './components/NewProjectModal'
+import { useTransfer } from './hooks/useTransfer'
+import { ExportModal } from './components/ExportModal'
+import { ImportModal } from './components/ImportModal'
 import { SettingsModal } from './components/SettingsModal'
 import { OnboardingModal } from './components/OnboardingModal'
 import { AppLock } from './components/AppLock'
@@ -23,7 +25,7 @@ import { QuickCapture } from './components/QuickCapture'
 import { buildWork } from './lib/execution'
 import { setDockBadge } from './lib/desktopWidget'
 import { DEFAULT_WORKSPACE_ID } from './lib/serialize'
-import { exportDoc, importDoc } from './lib/transfer'
+import { exportDoc } from './lib/transfer'
 import { isTauri } from './lib/platform'
 import { initRouter } from './lib/router'
 import { initTabs, useTabs } from './hooks/useTabs'
@@ -95,18 +97,7 @@ export default function App() {
               alert((e as Error).message)
             }
           }}
-          onImport={async () => {
-            try {
-              const d = await importDoc()
-              if (d) {
-                useStore.getState().replaceDoc(d)
-                useNav.getState().home()
-                useDetail.getState().close()
-              }
-            } catch (e) {
-              alert((e as Error).message)
-            }
-          }}
+          onImport={() => useTransfer.getState().showImport()}
         />
         <div style={{ padding: '16px 32px 28px' }}>
           {myWork ? <MyWorkPage /> : path.length === 0 ? <ProjectsHome /> : <ProjectPage />}
@@ -114,6 +105,8 @@ export default function App() {
       </div>
       <CardModal />
       <NewProjectModal />
+      <ExportModal />
+      <ImportModal />
       <QuickCapture />
       <SettingsModal />
       <SearchPalette />

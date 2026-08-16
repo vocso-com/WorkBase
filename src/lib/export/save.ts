@@ -3,7 +3,7 @@ import { isTauri } from '../platform'
 export interface SaveSpec {
   /** Suggested filename without extension. */
   name: string
-  ext: 'json' | 'md' | 'png' | 'pdf'
+  ext: 'json' | 'md' | 'png' | 'pdf' | 'csv'
   data: string | Uint8Array
   mime: string
 }
@@ -13,6 +13,7 @@ const FILTER: Record<SaveSpec['ext'], string> = {
   md: 'Markdown',
   png: 'PNG image',
   pdf: 'PDF',
+  csv: 'CSV spreadsheet',
 }
 
 /**
@@ -63,11 +64,11 @@ export function slugify(title: string): string {
 }
 
 /** Read a file the user picks. Resolves to null if they cancel. */
-export async function openTextFile(ext: 'json'): Promise<string | null> {
+export async function openTextFile(): Promise<string | null> {
   if (isTauri()) {
     const { open } = await import('@tauri-apps/plugin-dialog')
     const { readTextFile } = await import('@tauri-apps/plugin-fs')
-    const path = await open({ multiple: false, directory: false, filters: [{ name: FILTER[ext], extensions: [ext] }] })
+    const path = await open({ multiple: false, directory: false, filters: [{ name: 'WorkBase data', extensions: ['json', 'csv'] }] })
     if (!path || Array.isArray(path)) return null
     return readTextFile(path)
   }
@@ -75,7 +76,7 @@ export async function openTextFile(ext: 'json'): Promise<string | null> {
   return new Promise((resolve, reject) => {
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = `.${ext}`
+    input.accept = '.json,.csv,application/json,text/csv'
     // A cancelled picker fires no event at all in most browsers, so the promise
     // simply never settles — the caller shows no spinner, so nothing hangs.
     input.onchange = () => {

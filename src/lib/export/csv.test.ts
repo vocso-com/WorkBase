@@ -1,6 +1,5 @@
 import { projectToCsv, csvToProjects, encodeCsv, decodeCsv } from './csv'
 import { newNode } from '../factory'
-import type { Node } from '../../types'
 
 const sample = () => {
   const deep = newNode('Sub task', { shortId: 'RE-4', status: 'done' })

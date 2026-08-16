@@ -1386,3 +1386,40 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .tpl-err{display:flex;align-items:flex-start;gap:7px;font-size:12.5px;color:var(--red);line-height:1.45;
   background:color-mix(in srgb,var(--red) 8%,transparent);border:1px solid color-mix(in srgb,var(--red) 22%,transparent);
   border-radius:10px;padding:9px 11px;margin-top:-4px;}
+
+/* ── Export / Import dialogs ─────────────────────────────────────────────── */
+.xfer{max-width:620px;}
+.xfer-list{display:flex;flex-direction:column;gap:8px;}
+.xfer-opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;cursor:pointer;
+  background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;
+  transition:border-color .12s,background .12s,transform .1s;}
+.xfer-opt:hover:not(:disabled){border-color:color-mix(in srgb,var(--ink) 16%,var(--line));background:var(--chip);}
+.xfer-opt:disabled{opacity:.55;cursor:default;}
+.xfer-opt-ic{width:34px;height:34px;border-radius:10px;background:var(--chip);color:var(--muted);
+  display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.xfer-opt-txt{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;}
+.xfer-opt-txt b{font-size:13.5px;font-weight:650;color:var(--ink);}
+.xfer-opt-txt span{font-size:12px;color:var(--muted);}
+.xfer-ext{font-size:11px;font-weight:700;color:var(--faint);letter-spacing:.02em;}
+.xfer-go{color:var(--faint);font-size:17px;flex-shrink:0;}
+.xfer-done{color:var(--teal);font-size:18px;flex-shrink:0;}
+.xfer-note{display:flex;align-items:flex-start;gap:7px;font-size:12.5px;color:var(--muted);line-height:1.45;
+  background:var(--chip);border-radius:10px;padding:9px 11px;}
+.xfer-pick{width:100%;text-align:left;font:inherit;}
+.xfer-pick:disabled{opacity:.6;cursor:default;}
+/* One project from the file, with what to do about it. */
+.xfer-row{border:1px solid var(--line);border-radius:12px;padding:11px 13px;display:flex;flex-direction:column;gap:9px;}
+.xfer-row-off{opacity:.5;}
+.xfer-row-head{display:flex;align-items:center;gap:10px;cursor:pointer;}
+.xfer-row-title{font-size:13.5px;font-weight:650;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.xfer-row-meta{font-size:11.5px;color:var(--faint);flex-shrink:0;font-variant-numeric:tabular-nums;}
+.xfer-warn{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--amber);}
+.xfer-res{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;}
+.xfer-res-opt{display:flex;flex-direction:column;gap:2px;text-align:left;font:inherit;cursor:pointer;
+  background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;transition:border-color .12s,background .12s;}
+.xfer-res-opt b{font-size:12.5px;font-weight:650;color:var(--ink);}
+.xfer-res-opt span{font-size:11px;color:var(--muted);line-height:1.35;}
+.xfer-res-opt:hover{border-color:color-mix(in srgb,var(--ink) 16%,var(--line));}
+.xfer-res-opt.on{border-color:var(--blue);background:color-mix(in srgb,var(--blue) 9%,var(--card));}
+.xfer-res-opt.on.danger{border-color:var(--red);background:color-mix(in srgb,var(--red) 9%,var(--card));}
+.xfer-actions{display:flex;justify-content:flex-end;gap:10px;}
