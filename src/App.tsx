@@ -25,7 +25,6 @@ import { QuickCapture } from './components/QuickCapture'
 import { buildWork } from './lib/execution'
 import { setDockBadge } from './lib/desktopWidget'
 import { DEFAULT_WORKSPACE_ID } from './lib/serialize'
-import { exportDoc } from './lib/transfer'
 import { isTauri } from './lib/platform'
 import { initRouter } from './lib/router'
 import { initTabs, useTabs } from './hooks/useTabs'
@@ -90,13 +89,7 @@ export default function App() {
           path={path}
           onHome={() => useTabs.getState().goHome()}
           onGoto={i => useNav.getState().goto(i)}
-          onExport={async () => {
-            try {
-              await exportDoc(useStore.getState().doc)
-            } catch (e) {
-              alert((e as Error).message)
-            }
-          }}
+          onExport={() => useTransfer.getState().showAccountExport()}
           onImport={() => useTransfer.getState().showImport()}
         />
         <div style={{ padding: '16px 32px 28px' }}>

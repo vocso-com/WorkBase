@@ -1,21 +1,21 @@
 import { create } from 'zustand'
 
 interface TransferState {
-  /** Id of the project the export dialog is for; null when closed. */
-  exportFor: string | null
+  /** The whole-account backup dialog. */
+  accountExport: boolean
   importOpen: boolean
-  showExport: (nodeId: string) => void
-  hideExport: () => void
+  showAccountExport: () => void
+  hideAccountExport: () => void
   showImport: () => void
   hideImport: () => void
 }
 
-/** Which transfer dialog is open. Export and Import are never both up. */
+/** Which account-level transfer dialog is open. Never both at once. */
 export const useTransfer = create<TransferState>(set => ({
-  exportFor: null,
+  accountExport: false,
   importOpen: false,
-  showExport: nodeId => set({ exportFor: nodeId, importOpen: false }),
-  hideExport: () => set({ exportFor: null }),
-  showImport: () => set({ importOpen: true, exportFor: null }),
+  showAccountExport: () => set({ accountExport: true, importOpen: false }),
+  hideAccountExport: () => set({ accountExport: false }),
+  showImport: () => set({ importOpen: true, accountExport: false }),
   hideImport: () => set({ importOpen: false }),
 }))

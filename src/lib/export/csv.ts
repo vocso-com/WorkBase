@@ -70,6 +70,11 @@ export function decodeCsv(text: string): string[][] {
 }
 
 export function projectToCsv(node: Node, stages: Stage[] = [], stageLabels?: Record<string, string>): string {
+  return projectsToCsv([node], stages, stageLabels)
+}
+
+/** Several projects in one sheet — each root starts a fresh level-0 row. */
+export function projectsToCsv(nodes: Node[], stages: Stage[] = [], stageLabels?: Record<string, string>): string {
   const rows: string[][] = [[...CSV_COLUMNS]]
   // shortId is the key on the way back in, so a node without one still needs a
   // stable handle; fall back to a positional id.
@@ -94,7 +99,7 @@ export function projectToCsv(node: Node, stages: Stage[] = [], stageLabels?: Rec
     ])
     n.children.forEach((c, i) => walk(c, key, level + 1, path, `${index}.${i + 1}`))
   }
-  walk(node, '', 0, [], '1')
+  nodes.forEach((n, i) => walk(n, '', 0, [], String(i + 1)))
   return encodeCsv(rows)
 }
 
