@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { uploadFile } from '../lib/uploads'
 import { useStore } from '../store/useStore'
 import { useSettings } from '../hooks/useSettings'
+import { useTransfer } from '../hooks/useTransfer'
 import { VOCAB, VOCAB_KEYS } from '../lib/vocab'
 import { Icon } from './ui/Icon'
 
@@ -124,12 +125,33 @@ export function SettingsModal() {
           </div>
 
           <div className="set-sec">
+            <div className="set-sec-h">Export &amp; import data</div>
+            <div className="set-hint">Back up everything, or move it to another computer.</div>
+            <div className="set-xfer">
+              <button className="set-xfer-btn" onClick={() => { hide(); useTransfer.getState().showAccountExport() }}>
+                <Icon name="ti-database-export" />
+                <span>
+                  <b>Export your data</b>
+                  <span>A full backup, or every project as a spreadsheet</span>
+                </span>
+              </button>
+              <button className="set-xfer-btn" onClick={() => { hide(); useTransfer.getState().showImport() }}>
+                <Icon name="ti-file-import" />
+                <span>
+                  <b>Import data</b>
+                  <span>Bring in a backup, a project or a spreadsheet</span>
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div className="set-sec">
             <div className="set-sec-h">Storage &amp; privacy</div>
             <div className="set-privacy">
               <Icon name="ti-lock" />
               <div>
                 <b>Everything stays on this device.</b>
-                <span>Your projects, tasks and images are saved locally in WorkBase's app data — no account, no cloud, nothing leaves your machine. Use Export from the menu to back up or move your data.</span>
+                <span>Your projects, tasks and images are saved locally in WorkBase's app data — no account, no cloud, nothing leaves your machine. Setting up on a new computer? Export a backup here, then import it there.</span>
               </div>
             </div>
           </div>

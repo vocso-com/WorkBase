@@ -10,6 +10,7 @@ import { NewProjectModal } from './components/NewProjectModal'
 import { useTransfer } from './hooks/useTransfer'
 import { ExportModal } from './components/ExportModal'
 import { ImportModal } from './components/ImportModal'
+import { AboutModal } from './components/AboutModal'
 import { SettingsModal } from './components/SettingsModal'
 import { OnboardingModal } from './components/OnboardingModal'
 import { AppLock } from './components/AppLock'
@@ -100,6 +101,7 @@ export default function App() {
       <NewProjectModal />
       <ExportModal />
       <ImportModal />
+      <AboutModal />
       <QuickCapture />
       <SettingsModal />
       <SearchPalette />

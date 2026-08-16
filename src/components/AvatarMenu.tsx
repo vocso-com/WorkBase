@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../store/useStore'
 import { useSettings } from '../hooks/useSettings'
+import { useAbout } from '../hooks/useAbout'
 import { useOnboarding } from '../hooks/useOnboarding'
 import { useTheme, type ThemeMode } from '../hooks/useTheme'
 import { Icon } from './ui/Icon'
@@ -91,7 +92,7 @@ export function AvatarMenu({ onExport, onImport }: { onExport: () => void; onImp
             style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 8px', borderRadius: 8, fontSize: 13.5, color: 'var(--ink)', cursor: 'pointer' }}>
             <Icon name="ti-download" style={{ fontSize: 17, color: 'var(--muted)' }} /> Import data
           </div>
-          <div className="avatar-menu-item" onClick={() => setOpen(false)}
+          <div className="avatar-menu-item" onClick={() => { setOpen(false); useAbout.getState().show() }}
             style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 8px', borderRadius: 8, fontSize: 13.5, color: 'var(--ink)', cursor: 'pointer' }}>
             <Icon name="ti-info-circle" style={{ fontSize: 17, color: 'var(--muted)' }} /> About WorkBase
           </div>
