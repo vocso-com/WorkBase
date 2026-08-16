@@ -11,6 +11,9 @@ export interface FlowNode {
   h: number
   hasChildren: boolean
   expanded: boolean
+  // The node this one hangs off, so a card can name its container in the
+  // header row. Absent on the root.
+  parentId?: string
 }
 
 export type ExpandPredicate = (node: Node, depth: number) => boolean
@@ -35,7 +38,7 @@ export interface FlowLayout {
   height: number
 }
 
-const NODE_W = 260
+const NODE_W = 280
 const COL_GAP = 96
 const ROW_GAP = 16
 
@@ -51,21 +54,22 @@ const ROW_GAP = 16
 // font really fits): over-reserving leaves a few px of slack, while
 // under-reserving would clip text.
 
-export const ROOT_H = 94
+export const ROOT_H = 100
 export const MIN_TASK_H = 58
 export const MIN_MOD_H = 72
 
 const CARD_PAD_Y = 22 // 11 top + 11 bottom
 const CARD_ROW_GAP = 6
-const TITLE_LINE_H = 18
+const HEAD_H = 22 // kicker + shortId, including the hairline under it
+const TITLE_LINE_H = 19
 const DESC_LINE_H = 16
-const FOOTER_H = 24 // stage pill / due chip / priority
+const FOOTER_H = 22 // stage pill / priority / due chip
 const TAGS_H = 22
-const MOD_HEAD_H = 28 // icon + title
+const MOD_TITLE_H = 24 // icon + title, taller than a plain title line
 const MOD_ROLLUP_H = 20 // done/total + earliest due
 const MOD_BAR_H = 6 // ProgressBar
 
-const TITLE_CPL = 32 // characters per line at the title's size
+const TITLE_CPL = 30 // characters per line at the title's size
 const DESC_CPL = 38
 const MAX_LINES = 2
 
@@ -80,12 +84,13 @@ const stack = (rows: number[], min: number): number => {
 }
 
 function taskH(n: Node): number {
-  const hasFooter = !!(n.status || n.dueDate || n.priority)
+  // Every task has a status, so the footer row is always present.
   return stack(
     [
+      HEAD_H,
       lines(n.title, TITLE_CPL) * TITLE_LINE_H,
       lines(n.description, DESC_CPL) * DESC_LINE_H,
-      hasFooter ? FOOTER_H : 0,
+      FOOTER_H,
       n.tags && n.tags.length > 0 ? TAGS_H : 0,
     ],
     MIN_TASK_H,
@@ -94,7 +99,7 @@ function taskH(n: Node): number {
 
 function moduleH(n: Node): number {
   return stack(
-    [MOD_HEAD_H, lines(n.description, DESC_CPL) * DESC_LINE_H, MOD_ROLLUP_H, MOD_BAR_H],
+    [HEAD_H, MOD_TITLE_H, lines(n.description, DESC_CPL) * DESC_LINE_H, MOD_ROLLUP_H, MOD_BAR_H],
     MIN_MOD_H,
   )
 }
@@ -158,7 +163,7 @@ export function layoutTree(root: Node, isExpanded: ExpandPredicate = DEFAULT_EXP
   }
   measure(root, 0)
 
-  function place(n: Node, depth: number, start: number): number {
+  function place(n: Node, depth: number, start: number, parentId?: string): number {
     const own = selfExtent(n, depth)
     let center: number
 
@@ -168,7 +173,7 @@ export function layoutTree(root: Node, isExpanded: ExpandPredicate = DEFAULT_EXP
       let cursor = start
       const centers: number[] = []
       for (const c of n.children) {
-        const cc = place(c, depth + 1, cursor)
+        const cc = place(c, depth + 1, cursor, n.id)
         centers.push(cc)
         edges.push({
           id: `${n.id}->${c.id}`,
@@ -187,7 +192,7 @@ export function layoutTree(root: Node, isExpanded: ExpandPredicate = DEFAULT_EXP
     const x = orientation === 'h' ? primary(depth) : center - w / 2
     const y = orientation === 'h' ? center - h / 2 : primary(depth)
     nodes.push({
-      id: n.id, node: n, depth, x, y, w, h,
+      id: n.id, node: n, depth, x, y, w, h, parentId,
       hasChildren: n.children.length > 0, expanded: isExpandable(n, depth),
     })
     return center

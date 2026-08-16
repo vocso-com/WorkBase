@@ -51,12 +51,13 @@ test('a childless root yields a single node and no edges', () => {
 
 // ── Content-measured card heights ────────────────────────────────────────────
 
-// Every task has a status, so the footer row (stage pill) always renders: the
-// compact card is one title line + one footer row. Asserted exactly so that a
-// change to the height constants cannot shift the canvas silently.
-const COMPACT_TASK_H = 70
+// Every card carries the header row (kicker + shortId), and every task has a
+// status, so the compact task is header + one title line + the stage pill row.
+// Asserted exactly so a change to the height constants cannot shift the canvas
+// silently — if this number moves, the CSS row heights must move with it.
+const COMPACT_TASK_H = 22 /* pad */ + 22 /* head */ + 6 + 19 /* title */ + 6 + 22 /* footer */
 
-test('a bare task is one title line plus the stage pill row', () => {
+test('a bare task is the header, one title line and the stage pill row', () => {
   const t = newNode('Ship it')
   expect(hOf(tree(t), t.id)).toBe(COMPACT_TASK_H)
   expect(COMPACT_TASK_H).toBeGreaterThanOrEqual(MIN_TASK_H)

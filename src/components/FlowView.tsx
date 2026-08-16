@@ -7,6 +7,8 @@ import { leaves } from '../lib/tree'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { useStore } from '../store/useStore'
 import { useDetail } from '../hooks/useDetail'
+import { useVocab } from '../hooks/useVocab'
+import type { Vocab } from '../lib/vocab'
 import { askConfirm } from '../hooks/useConfirm'
 import { ProgressBar } from './ui/ProgressBar'
 import { Icon } from './ui/Icon'
@@ -34,6 +36,7 @@ function descendantsOf(n: Node): Set<string> {
 export function FlowView({ node }: { node: Node }) {
   const stages = useStore(s => s.doc.stages)
   const stageLabels = useStore(s => s.doc.stageLabels)
+  const vocab = useVocab()
   const [orient, setOrient] = useState<'h' | 'v'>(node.flowOrientation ?? 'h')
   const showDeps = node.flowDeps !== false
   // Restore the remembered orientation when switching to a different project.
@@ -281,6 +284,7 @@ export function FlowView({ node }: { node: Node }) {
               fn={fn}
               stages={stages}
               stageLabels={stageLabels}
+              kicker={kickerFor(fn, byId, vocab)}
               pos={posOf(fn)}
               dragging={live?.id === fn.id}
               isDropTarget={dropTarget === fn.id}
@@ -368,6 +372,7 @@ interface CardProps {
   fn: FlowNode
   stages: Stage[]
   stageLabels?: Record<string, string>
+  kicker: string
   pos: { x: number; y: number }
   dragging: boolean
   isDropTarget: boolean
@@ -380,20 +385,34 @@ interface CardProps {
   onDelete: () => void
 }
 
-function FlowNodeCard({ fn, stages, stageLabels, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onOpen, onToggle, onAdd, onDelete }: CardProps) {
+function FlowNodeCard({ fn, stages, stageLabels, kicker, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onOpen, onToggle, onAdd, onDelete }: CardProps) {
   const { node, depth } = fn
   const drop = isDropTarget ? ' fn-droptarget' : ''
   const sm = stageMeta(stages, node.status, stageLabels)
-  // Tasks are colored by status (a custom label color overrides); modules and
-  // the root keep their identity color, also overridable.
-  const color: string = depth === 2 ? (node.labelColor ?? sm.color) : (node.labelColor ?? node.color ?? 'gray')
+  // Which card renders is decided by kind, not depth: a childless node at depth
+  // 1 is a task, not a module. Color follows the same rule — tasks take the
+  // status color, containers keep their identity color, `labelColor` overrides
+  // either.
+  const isModuleCard = depth === 1 && node.children.length > 0
+  const isContainer = depth === 0 || isModuleCard
+  const color: string = node.labelColor ?? (isContainer ? (node.color ?? 'gray') : sm.color)
   const style: React.CSSProperties = { left: pos.x, top: pos.y, width: fn.w, height: fn.h, zIndex: dragging ? 20 : undefined }
   const stop = (e: React.PointerEvent) => e.stopPropagation()
 
   const actions = (
     <div className="fn-act">
+      <button onPointerDown={stop} onClick={onOpen} aria-label="Open details" title="Open details"><Icon name="ti-arrows-diagonal" /></button>
       <button onPointerDown={stop} onClick={onAdd} aria-label="Add child" title="Add sub-item"><Icon name="ti-plus" /></button>
       {depth > 0 ? <button className="fn-del" onPointerDown={stop} onClick={onDelete} aria-label="Delete" title="Delete"><Icon name="ti-trash" /></button> : null}
+    </div>
+  )
+
+  // The reference header: a small uppercase label for what this card is, and
+  // its shortId on the right, separated from the body by a hairline.
+  const head = (
+    <div className="fn-head">
+      <span className="fn-kicker">{kicker}</span>
+      <span className="fn-sid">{node.shortId}</span>
     </div>
   )
 
@@ -411,9 +430,13 @@ function FlowNodeCard({ fn, stages, stageLabels, pos, dragging, isDropTarget, on
 
   const handlers = { onPointerDown, onPointerMove, onPointerUp, onDoubleClick: (e: React.MouseEvent) => { e.stopPropagation(); onOpen() } }
 
+  // Every card is outlined in its own color — status for tasks, identity for
+  // modules and the root — so the canvas reads as a set of tagged objects.
+  const outline: React.CSSProperties = { borderColor: hex(color) }
+
   if (depth === 0) {
     return (
-      <div className={`fn fn-root${dragging ? ' fn-drag' : ''}${drop}`} style={style} {...handlers}>
+      <div className={`fn fn-root${dragging ? ' fn-drag' : ''}${drop}`} style={{ ...style, ...outline }} {...handlers}>
         <div className="fn-band" style={{ background: `linear-gradient(135deg, ${hex(color)}, ${hex(color)}bb)` }}>
           {node.image ? (
             <div className="fn-band-ic fn-band-ic-img" style={{ backgroundImage: `url(${node.image})` }} />
@@ -422,6 +445,7 @@ function FlowNodeCard({ fn, stages, stageLabels, pos, dragging, isDropTarget, on
           )}
         </div>
         <div className="fn-root-body">
+          {head}
           <div className="fn-title">{node.title}</div>
           <div className="fn-sub">{node.children.length} modules · {leaves(node).length} tasks</div>
         </div>
@@ -432,14 +456,15 @@ function FlowNodeCard({ fn, stages, stageLabels, pos, dragging, isDropTarget, on
     )
   }
 
-  if (depth === 1 && node.children.length > 0) {
+  if (isModuleCard) {
     const total = leaves(node).filter(l => l.id !== node.id).length
     const done = statusCounts(node).done
     return (
-      <div className={`fn fn-mod${dragging ? ' fn-drag' : ''}${drop}`} style={style} {...handlers}>
-        <div className="fn-mod-head">
-          <div className="fn-mod-ic" style={{ background: tagBg(color), color: tagFg(color) }}><Icon name={node.icon ?? 'ti-folder'} /></div>
-          <div className="fn-title">{node.title}</div>
+      <div className={`fn fn-mod${dragging ? ' fn-drag' : ''}${drop}`} style={{ ...style, ...outline }} {...handlers}>
+        {head}
+        <div className="fn-mod-title">
+          <span className="fn-mod-ic" style={{ background: tagBg(color), color: tagFg(color) }}><Icon name={node.icon ?? 'ti-folder'} /></span>
+          <span className="fn-title">{node.title}</span>
         </div>
         {node.description ? <div className="fn-desc">{node.description}</div> : null}
         <div className="fn-mod-rollup">
@@ -456,11 +481,8 @@ function FlowNodeCard({ fn, stages, stageLabels, pos, dragging, isDropTarget, on
   const tags = node.tags ?? []
   const prio = node.priority ? PRIORITY_META[node.priority] : null
   return (
-    <div
-      className={`fn fn-task${dragging ? ' fn-drag' : ''}${drop}`}
-      style={{ ...style, borderLeftColor: hex(color), background: `color-mix(in srgb, ${hex(color)} 9%, var(--card))` }}
-      {...handlers}
-    >
+    <div className={`fn fn-task${dragging ? ' fn-drag' : ''}${drop}`} style={{ ...style, ...outline }} {...handlers}>
+      {head}
       <div className="fn-title fn-task-title">{node.title}</div>
       {node.description ? <div className="fn-desc">{node.description}</div> : null}
       <div className="fn-task-foot">
@@ -477,6 +499,19 @@ function FlowNodeCard({ fn, stages, stageLabels, pos, dragging, isDropTarget, on
       {toggle}
     </div>
   )
+}
+
+/**
+ * The uppercase label in a card's header row: what this card *is*. The root and
+ * modules name their own kind; a task names the module it belongs to, falling
+ * back to the kind when it hangs directly off the project.
+ */
+function kickerFor(fn: FlowNode, byId: Map<string, FlowNode>, vocab: Vocab): string {
+  if (fn.depth === 0) return vocab.project
+  if (fn.depth === 1 && fn.node.children.length > 0) return vocab.module
+  const parent = fn.parentId ? byId.get(fn.parentId) : undefined
+  if (parent && parent.depth > 0) return parent.node.title
+  return vocab.task
 }
 
 /**
