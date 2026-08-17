@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useStore } from './store/useStore'
 import { useNav } from './hooks/useNav'
 import { AppHeader } from './components/AppHeader'
@@ -88,21 +88,40 @@ export default function App() {
   })()
   useEffect(() => { void setDockBadge(badge) }, [badge])
 
+  // Fixed-height views (the Flow viewport, the board) size themselves against
+  // the window minus the top chrome. That chrome's height varies — the verify
+  // banner comes and goes — so measure it live into a CSS variable instead of
+  // hard-coding it, or the flow controls at the viewport's bottom edge get
+  // pushed off-screen when the banner is showing.
+  const chromeRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const el = chromeRef.current
+    if (!el) return
+    const apply = () => document.documentElement.style.setProperty('--wb-top-chrome', `${el.offsetHeight}px`)
+    apply()
+    if (typeof ResizeObserver === 'undefined') return // e.g. jsdom in tests
+    const ro = new ResizeObserver(apply) // catches the banner mounting/unmounting
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   if (!ready) return <div style={{ padding: 40, color: 'var(--muted)' }}>Loading…</div>
   if (lock) return <><AppLock reason={lock} /><OnboardingModal /><ConfirmDialog /></>
 
   return (
     <div style={{ display: 'flex', alignItems: 'stretch', minHeight: '100vh' }}>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <VerifyNudge />
-        <AppHeader
-          roots={roots}
-          path={path}
-          onHome={() => useTabs.getState().goHome()}
-          onGoto={i => useNav.getState().goto(i)}
-          onExport={() => useTransfer.getState().showAccountExport()}
-          onImport={() => useTransfer.getState().showImport()}
-        />
+        <div ref={chromeRef}>
+          <VerifyNudge />
+          <AppHeader
+            roots={roots}
+            path={path}
+            onHome={() => useTabs.getState().goHome()}
+            onGoto={i => useNav.getState().goto(i)}
+            onExport={() => useTransfer.getState().showAccountExport()}
+            onImport={() => useTransfer.getState().showImport()}
+          />
+        </div>
         <div style={{ padding: '16px 32px 28px' }}>
           {myWork ? <MyWorkPage /> : path.length === 0 ? <ProjectsHome /> : <ProjectPage />}
         </div>
