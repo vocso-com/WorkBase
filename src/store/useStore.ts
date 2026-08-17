@@ -13,11 +13,10 @@ import { instantiateTemplate, projectToTemplate } from '../lib/templates'
 import { playComplete } from '../lib/sound'
 import { PROJECT_ICONS, mergedStages } from '../theme'
 import { sampleDoc } from '../lib/seed'
+import { demoBucket } from '../lib/demoBucket'
+import { fetchCatalog, fetchTemplate } from '../lib/directory'
 
 const SEEDED_KEY = 'manage.seeded'
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
 
 const PALETTE: ColorKey[] = ['blue', 'teal', 'coral', 'violet', 'amber']
 
@@ -26,6 +25,7 @@ interface State {
   ready: boolean
   adapter: StorageAdapter
   init: (adapter?: StorageAdapter) => Promise<void>
+  seedIfNeeded: () => Promise<void>
   addProject: (name: string) => string
   addProjectFromTemplate: (tpl: Template, name?: string) => string
   importProject: (exp: ProjectExport) => string
@@ -139,17 +139,55 @@ export const useStore = create<State>((set, get) => ({
     } catch (e) {
       console.error('Manage: failed to load data, starting empty', e)
     }
-    if (doc.roots.length === 0 && isTauri() && localStorage.getItem(SEEDED_KEY) !== '1') {
-      doc = sampleDoc()
-      try {
-        await a.save(doc)
-        localStorage.setItem(SEEDED_KEY, '1')
-      } catch (e) {
-        console.error('Manage: failed to persist seed data (showing it in-memory)', e)
-      }
-    }
     set({ doc, adapter: a, ready: true })
     ensureFlushOnUnload(get)
+    // A returning user whose workspace is empty but who has already onboarded
+    // gets their demo now. A brand-new user is seeded when onboarding resolves,
+    // once we know their user type (see seedIfNeeded / OnboardingModal).
+    if (doc.roots.length === 0 && !!doc.profile?.userEmail) void get().seedIfNeeded()
+  },
+
+  /**
+   * Seed a first-run demo project once, keyed to the user's type. Prefers a
+   * hosted demo for their bucket (fetched when online), and always falls back
+   * to the bundled sample so a fresh install is never an empty screen. Never
+   * overwrites real data, and runs at most once (guarded by SEEDED_KEY).
+   */
+  async seedIfNeeded() {
+    if (get().doc.roots.length > 0) return
+    if (localStorage.getItem(SEEDED_KEY) === '1') return
+    const profile = get().doc.profile
+    const bucket = demoBucket(profile?.userType)
+
+    let seeded: StoreDoc | null = null
+    try {
+      const cat = await fetchCatalog(profile?.userEmail)
+      const demos = (cat?.templates ?? []).filter(t => t.kind === 'demo' && !t.locked)
+      const pick = demos.find(t => t.demo_for === bucket) ?? demos.find(t => t.demo_for === 'personal')
+      if (pick) {
+        const tpl = await fetchTemplate(pick.id, pick.version, profile?.userEmail)
+        const base = emptyDocument()
+        base.profile = profile
+        const root = instantiateTemplate(tpl, base.roots)
+        root.workspace = base.activeWorkspace
+        base.roots.push(root)
+        seeded = base
+      }
+    } catch { /* offline or no directory — fall back to the bundled sample */ }
+
+    if (!seeded) {
+      seeded = sampleDoc()
+      seeded.profile = profile // keep the profile captured during onboarding
+    }
+    // Re-check after the awaits, so we never clobber data that arrived meanwhile.
+    if (get().doc.roots.length > 0) return
+    try {
+      await get().adapter.save(seeded)
+      localStorage.setItem(SEEDED_KEY, '1')
+    } catch (e) {
+      console.error('Manage: failed to persist seed data (showing it in-memory)', e)
+    }
+    set({ doc: seeded })
   },
   addProject(name) {
     const roots = get().doc.roots

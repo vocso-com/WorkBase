@@ -90,6 +90,12 @@ export function NewProjectModal() {
     useStore.getState().deleteTemplate(id)
   }
 
+  // Demos are for first-run seeding, not the gallery — keep them out. And the
+  // set of directory ids lets the bundled floor de-duplicate against the live
+  // catalogue.
+  const dirTemplates = (dir ?? []).filter(entry => entry.kind !== 'demo')
+  const dirIds = new Set(dirTemplates.map(entry => entry.id))
+
   return (
     <div className="modal-overlay" onClick={hide}>
       <div className="modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
@@ -135,12 +141,14 @@ export function NewProjectModal() {
 
           <div className="tpl-sechead">Templates</div>
           <div className="tpl-grid">
-            {BUILTIN_TEMPLATES.map(tpl => (
+            {/* The live directory wins over the bundled floor: hide a built-in
+                once its hosted counterpart (same id) is in the catalogue. */}
+            {BUILTIN_TEMPLATES.filter(tpl => !dirIds.has(tpl.id)).map(tpl => (
               <TemplateCard key={tpl.id} tpl={tpl} onPick={() => createFromTemplate(tpl)} />
             ))}
           </div>
 
-          {dir && dir.length > 0 ? (
+          {dirTemplates.length > 0 ? (
             <>
               <div className="tpl-sechead">
                 Directory
@@ -159,7 +167,7 @@ export function NewProjectModal() {
               </div>
               {dirErr ? <div className="tpl-err"><Icon name="ti-alert-triangle" /> {dirErr}</div> : null}
               <div className="tpl-grid">
-                {dir.map(entry => (
+                {dirTemplates.map(entry => (
                   <DirectoryCard key={entry.id} entry={entry} busy={dirBusy} onPick={() => void createFromDirectory(entry)} />
                 ))}
               </div>

@@ -11,5 +11,11 @@ interface OnboardingState {
 export const useOnboarding = create<OnboardingState>(set => ({
   open: false,
   show: () => set({ open: true }),
-  hide: () => set({ open: false }),
+  // Closing onboarding (answered or skipped) is the moment we know the user's
+  // type, so it's when a brand-new install seeds its demo. seedIfNeeded is a
+  // no-op once seeded or when real data exists, so re-opens are harmless.
+  hide: () => {
+    set({ open: false })
+    void import('../store/useStore').then(m => m.useStore.getState().seedIfNeeded()).catch(() => {})
+  },
 }))
