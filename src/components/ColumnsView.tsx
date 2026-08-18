@@ -103,8 +103,9 @@ export function ColumnsView({ node }: { node: Node }) {
                   <span className="ol-spacer" />
                 )}
                 <span className="ol-row-check" onClick={e => e.stopPropagation()}>
-                  <Checkbox status={c.status} onToggle={() => confirmToggleDone(c)} />
+                  <Checkbox round status={c.status} onToggle={() => confirmToggleDone(c)} />
                 </span>
+                <span className="ol-row-ic"><Icon name={isParent ? (c.icon ?? 'ti-list-tree') : 'ti-file'} /></span>
                 <span className="ol-row-title">{c.title}</span>
                 <DepBadges node={c} roots={roots} compact />
                 <NodeMenu id={c.id} className="ol-row-menu" />
