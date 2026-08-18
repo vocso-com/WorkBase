@@ -175,14 +175,21 @@ export function FlowView({ node }: { node: Node }) {
     if (!vp) return
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
-      const rect = vp.getBoundingClientRect()
-      const mx = e.clientX - rect.left
-      const my = e.clientY - rect.top
-      setTf(t => {
-        const k = clamp(t.k * (e.deltaY < 0 ? 1.12 : 0.89), MIN_K, MAX_K)
-        const r = k / t.k
-        return { k, x: mx - (mx - t.x) * r, y: my - (my - t.y) * r }
-      })
+      // Zoom on pinch (the trackpad pinch gesture arrives as ctrl+wheel) or when
+      // ⌘/Ctrl is held; a plain two-finger swipe pans, so you can move around the
+      // canvas without pressing the trackpad — the Figma/Miro convention.
+      if (e.ctrlKey || e.metaKey) {
+        const rect = vp.getBoundingClientRect()
+        const mx = e.clientX - rect.left
+        const my = e.clientY - rect.top
+        setTf(t => {
+          const k = clamp(t.k * (e.deltaY < 0 ? 1.12 : 0.89), MIN_K, MAX_K)
+          const r = k / t.k
+          return { k, x: mx - (mx - t.x) * r, y: my - (my - t.y) * r }
+        })
+      } else {
+        setTf(t => ({ ...t, x: t.x - e.deltaX, y: t.y - e.deltaY }))
+      }
     }
     vp.addEventListener('wheel', onWheel, { passive: false })
     return () => vp.removeEventListener('wheel', onWheel)
@@ -684,7 +691,7 @@ export function FlowView({ node }: { node: Node }) {
         <button onClick={fit} aria-label="Fit to screen" title="Fit to screen"><Icon name="ti-maximize" /></button>
         <button onClick={toggleFullscreen} aria-label="Full screen" title="Full screen (presentation)"><Icon name="ti-arrows-maximize" /></button>
       </div>
-      <div className="flow-hint"><Icon name="ti-keyboard" /> Arrows move · Tab/Enter add · Space done · F2 rename · double-click opens</div>
+      <div className="flow-hint"><Icon name="ti-keyboard" /> Scroll to pan · pinch to zoom · Tab/Enter add · Space done · double-click opens</div>
     </div>
   )
 }
