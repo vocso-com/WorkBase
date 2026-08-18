@@ -93,12 +93,14 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .ol-row-menu{flex-shrink:0;}
 .ol-row-menu .nmenu-btn{opacity:0;font-size:16px;transition:opacity .12s,background .12s,color .12s;}
 .ol-row:hover .ol-row-menu .nmenu-btn,.ol-row-menu .nmenu-btn:focus-visible{opacity:1;}
-.ol-main{flex:1;min-width:0;overflow:hidden;display:flex;border-radius:16px 16px 0 0;}
+.ol-main{flex:1;min-width:0;overflow-y:auto;display:flex;align-items:flex-start;}
 .ol-tree{border-radius:0;}
-/* The card detail reused inline: fill the pane, drop the overlay chrome.
-   Doubled class beats the base .cardmodal rules that come later in the file. */
-.cm-inline{flex:1;min-width:0;height:100%;display:flex;}
-.cardmodal.cardmodal-inline{flex:1;min-width:0;width:100%;max-width:none;height:100%;max-height:none;border:none;border-radius:0;box-shadow:none;}
+/* The card detail reused inline: sits at the top of the pane and sizes to its
+   content (so short items don't leave a big empty white block below), scrolling
+   within the pane when it's taller. Doubled class beats the base .cardmodal
+   rules that come later in the file. */
+.cm-inline{flex:1;min-width:0;display:flex;}
+.cardmodal.cardmodal-inline{flex:1;min-width:0;width:100%;max-width:none;height:auto;max-height:none;border:none;border-radius:0;box-shadow:none;}
 
 .crumb{display:flex;align-items:center;gap:7px;padding:16px 28px 2px;font-size:13.5px;color:var(--muted);}
 .crumb b{color:var(--ink);font-weight:600;}
