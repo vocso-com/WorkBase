@@ -4,19 +4,16 @@ import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-
 import { useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { hex } from '../theme'
-import { progressOf } from '../lib/progress'
+import { isComplete } from '../lib/deps'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { useStore } from '../store/useStore'
 import { useDetail } from '../hooks/useDetail'
 import { Icon } from './ui/Icon'
+import { Checkbox } from './ui/Checkbox'
 import { ProgressBar } from './ui/ProgressBar'
 import { DepBadges } from './DepBadges'
 import { BoardItemRow } from './BoardItemRow'
 import { NodeMenu } from './NodeMenu'
-
-function isChildDone(child: Node): boolean {
-  return child.children.length > 0 ? progressOf(child) === 100 : child.status === 'done'
-}
 
 function AddItemRow({ node }: { node: Node }) {
   const [adding, setAdding] = useState(false)
@@ -53,7 +50,7 @@ export function ModuleCard({ node, onOpen }: { node: Node; onOpen: () => void })
   const roots = useStore(s => s.doc.roots)
   const color = node.color ?? 'gray'
   const total = node.children.length
-  const done = node.children.filter(isChildDone).length
+  const done = node.children.filter(isComplete).length
   const canDrillIn = node.children.length > 0
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: node.id, data: { type: 'module' } })
@@ -73,6 +70,9 @@ export function ModuleCard({ node, onOpen }: { node: Node; onOpen: () => void })
       <div className="pad">
         <div ref={nest.setNodeRef} className={`row1 mc-head${nest.isOver ? ' mc-nesting' : ''}`} {...attributes} {...listeners}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
+            <span className="mc-check" onClick={e => e.stopPropagation()} onPointerDown={e => e.stopPropagation()}>
+              <Checkbox status={node.status} onToggle={() => useStore.getState().toggleDone(node.id)} />
+            </span>
             <div className="ic" style={{ width: 32, height: 32, fontSize: 17, background: tagBg(color), color: tagFg(color) }}>
               <Icon name={node.icon ?? 'ti-folder'} />
             </div>

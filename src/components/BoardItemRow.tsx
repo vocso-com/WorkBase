@@ -13,6 +13,7 @@ import { Checkbox } from './ui/Checkbox'
 import { Tag } from './ui/Tag'
 import { DueChip } from './DueChip'
 import { DepBadges } from './DepBadges'
+import { NodeMenu } from './NodeMenu'
 
 // A single board checklist row (leaf task or a sub-module) that can be dragged
 // to reorder within its card, moved to another card, or dropped onto a card
@@ -48,7 +49,9 @@ export function BoardItemRow({ child, color, parentId }: { child: Node; color: s
         title="Open details"
       >
         {grip}
-        <span className="check-sub-ic"><Icon name="ti-list-tree" /></span>
+        <span className="check-cb" onClick={e => e.stopPropagation()}>
+          <Checkbox status={child.status} color={color} onToggle={() => useStore.getState().toggleDone(child.id)} />
+        </span>
         <span className="check-parent-title">{child.title}</span>
         <div className="check-parent-meta">
           <DueChip dueDate={child.dueDate} />
@@ -61,6 +64,7 @@ export function BoardItemRow({ child, color, parentId }: { child: Node; color: s
             aria-label="Open sub-items"
             title="Open sub-items"
           ><Icon name="ti-chevron-right" /></button>
+          <NodeMenu id={child.id} className="check-menu" />
         </div>
       </div>
     )
@@ -87,6 +91,7 @@ export function BoardItemRow({ child, color, parentId }: { child: Node; color: s
       {child.status === 'blocked' ? (
         <span className="mini" style={{ background: tagBg('red'), color: tagFg('red') }}>Blocked</span>
       ) : null}
+      <NodeMenu id={child.id} className="check-menu" />
     </div>
   )
 }

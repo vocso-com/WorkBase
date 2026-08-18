@@ -4,6 +4,8 @@ import { findNode } from '../lib/tree'
 import { useStore } from '../store/useStore'
 import { DepBadges } from './DepBadges'
 import { Icon } from './ui/Icon'
+import { Checkbox } from './ui/Checkbox'
+import { NodeMenu } from './NodeMenu'
 import { CardModal } from './CardModal'
 
 interface Row { node: Node; depth: number }
@@ -55,9 +57,12 @@ export function ColumnsView({ node }: { node: Node }) {
                 ) : (
                   <span className="ol-spacer" />
                 )}
-                <span className="ol-row-ic"><Icon name={isParent ? (c.icon ?? 'ti-list-tree') : (c.status === 'done' ? 'ti-circle-check' : 'ti-circle')} /></span>
+                <span className="ol-row-check" onClick={e => e.stopPropagation()}>
+                  <Checkbox status={c.status} onToggle={() => useStore.getState().toggleDone(c.id)} />
+                </span>
                 <span className="ol-row-title">{c.title}</span>
                 <DepBadges node={c} roots={roots} compact />
+                <NodeMenu id={c.id} className="ol-row-menu" />
               </div>
             )
           })}

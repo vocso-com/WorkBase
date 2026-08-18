@@ -73,13 +73,16 @@ test('toggling a checklist checkbox updates done/total and does not drill in', a
 
   expect(screen.getByText('0/1')).toBeInTheDocument()
 
-  await user.click(screen.getByRole('button', { name: 'toggle done' }))
+  // Toggle the leaf child "Sub Item" specifically — modules and rows now all
+  // carry a checkbox, so scope the query to that row.
+  const subRow = screen.getByText('Sub Item').closest('[data-testid^="child-row-"]') as HTMLElement
+  await user.click(within(subRow).getByRole('button', { name: 'toggle done' }))
 
   expect(screen.getByText('1/1')).toBeInTheDocument()
   expect(useNav.getState().path).toEqual([pid])
 })
 
-test('a non-leaf child row has no toggle checkbox, a leaf child row does', async () => {
+test('both leaf and non-leaf child rows have a toggle checkbox', async () => {
   let pid = ''
   let moduleId = ''
   let nonLeafChildId = ''
@@ -94,8 +97,9 @@ test('a non-leaf child row has no toggle checkbox, a leaf child row does', async
   act(() => { useNav.getState().open(pid) })
   render(<ProjectPage />)
 
+  // Consistent with Flow: every item is markable complete, containers included.
   const nonLeafRow = screen.getByTestId(`child-row-${nonLeafChildId}`)
-  expect(within(nonLeafRow).queryByRole('button', { name: 'toggle done' })).not.toBeInTheDocument()
+  expect(within(nonLeafRow).getByRole('button', { name: 'toggle done' })).toBeInTheDocument()
 
   const leafRow = screen.getByTestId(`child-row-${leafChildId}`)
   expect(within(leafRow).getByRole('button', { name: 'toggle done' })).toBeInTheDocument()

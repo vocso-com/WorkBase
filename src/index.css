@@ -89,6 +89,10 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .ol-row-ic{flex-shrink:0;display:flex;font-size:15px;color:var(--muted);}
 .ol-row.active .ol-row-ic{color:color-mix(in srgb,var(--proj,var(--blue)) 70%,var(--ink));}
 .ol-row-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ol-row-check{flex-shrink:0;display:inline-flex;align-items:center;}
+.ol-row-menu{flex-shrink:0;}
+.ol-row-menu .nmenu-btn{opacity:0;font-size:16px;transition:opacity .12s,background .12s,color .12s;}
+.ol-row:hover .ol-row-menu .nmenu-btn,.ol-row-menu .nmenu-btn:focus-visible{opacity:1;}
 .ol-main{flex:1;min-width:0;overflow:hidden;display:flex;border-radius:16px 16px 0 0;}
 .ol-tree{border-radius:0;}
 /* The card detail reused inline: fill the pane, drop the overlay chrome.
@@ -353,6 +357,10 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .mc-nesting{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--blue) 55%,transparent);background:color-mix(in srgb,var(--blue) 9%,transparent);}
 .check-drill-btn{border:none;background:none;cursor:pointer;color:var(--faint);font-size:16px;padding:2px;border-radius:6px;display:flex;flex-shrink:0;transition:color .12s,background .12s;}
 .check-drill-btn:hover{color:var(--ink);background:var(--chip);}
+.check-cb,.mc-check{flex-shrink:0;display:inline-flex;align-items:center;}
+.check-menu{flex-shrink:0;}
+.check-menu .nmenu-btn{opacity:0;transition:opacity .12s,background .12s,color .12s;}
+.check-item:hover .check-menu .nmenu-btn,.check-menu .nmenu-btn:focus-visible{opacity:1;}
 
 /* Kanban board — Trello-style depth */
 /* Transparent so the tinted dotted canvas from .proj-page shows through,
