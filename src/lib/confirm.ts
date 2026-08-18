@@ -63,3 +63,20 @@ export function challengeSize(node: Node, siblings: Node[]): SizeKey | null {
   const steps = Math.abs(ORDER.indexOf(best) - ORDER.indexOf(node.size))
   return steps > 1 ? best : null
 }
+
+/**
+ * Every container whose work is finished but which nobody has confirmed.
+ *
+ * Pushed rather than left to be discovered — a state that waits to be noticed
+ * is a state that rots, and the whole point is that nothing here goes stale
+ * without someone being asked.
+ */
+export function readyToCloseNodes(roots: Node[]): Node[] {
+  const out: Node[] = []
+  const walk = (n: Node) => {
+    if (readyToClose(n)) out.push(n)
+    n.children.forEach(walk)
+  }
+  roots.forEach(walk)
+  return out
+}

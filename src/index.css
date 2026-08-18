@@ -150,6 +150,16 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .size-challenge{display:block;margin-top:6px;font-size:11.5px;font-weight:600;text-align:left;
   padding:5px 9px;border-radius:8px;border:1px dashed var(--line);background:var(--chip);color:var(--faint);cursor:pointer;}
 .size-challenge:hover{color:var(--text);border-style:solid;}
+.nudge-close{display:flex;flex-direction:column;gap:4px;padding:0 10px 8px;}
+.nudge-close-row{display:flex;align-items:center;gap:7px;font-size:12px;
+  padding:6px 9px;border-radius:9px;background:var(--chip);border:1px solid var(--line);}
+.nudge-close-ic{color:var(--teal,#14b8a6);flex-shrink:0;}
+.nudge-close-main{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  background:none;border:0;cursor:pointer;color:var(--faint);font-size:12px;}
+.nudge-close-main b{color:var(--text);font-weight:650;}
+.nudge-close-go{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:7px;
+  border:1px solid var(--line);background:var(--bg);cursor:pointer;flex-shrink:0;}
+.nudge-close-go:hover{border-color:var(--text);}
 .pcard .foot{padding:12px 18px;}
 .pad{padding:15px 16px 4px;}
 .row1{display:flex;align-items:flex-start;justify-content:space-between;}

@@ -9,6 +9,7 @@ import { DEFAULT_WORKSPACE_ID } from '../lib/serialize'
 import { goToNode } from '../lib/goto'
 import { focusMain, setWidgetVisible, quickAddFromWidget, commitToMain, startWidgetDrag, TOGGLE_DONE_EVENT, SNOOZE_EVENT } from '../lib/desktopWidget'
 import { dueInfo } from '../lib/due'
+import { readyToCloseNodes } from '../lib/confirm'
 import { hex } from '../theme'
 import { Checkbox } from './ui/Checkbox'
 import { Icon } from './ui/Icon'
@@ -72,13 +73,21 @@ export function NudgeWidget({ standalone }: { standalone?: boolean } = {}) {
   const part = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
   const greeting = firstName ? `Good ${part}, ${firstName}` : `Good ${part}`
 
+  // Rollup advances a node into progress on its own but never completes one —
+  // starting is a fact, finishing is a judgment. So a container whose work is
+  // finished is pushed here for a one-click confirm rather than flipping itself.
+  const toClose = readyToCloseNodes(wsRoots)
   const reminders = [...work.overdue, ...work.today]
   const shown = reminders.slice(0, 5)
   const ready = work.focus.length || work.anytime.length
 
   const hasReminders = remindersOn && reminders.length > 0
   const hasNudge = myWorkOn && work.total > 0
-  if ((!standalone && closed) || (!hasReminders && !hasNudge)) return null
+  // A container waiting on a human is reason enough on its own — a prompt that
+  // only appears when something else already opened the widget is a prompt that
+  // rots unseen, which is the whole failure this is meant to prevent.
+  const hasToClose = remindersOn && toClose.length > 0
+  if ((!standalone && closed) || (!hasReminders && !hasNudge && !hasToClose)) return null
 
   // In the desktop widget, actions hand off to the main window; in-app they
   // navigate directly.
@@ -116,6 +125,22 @@ export function NudgeWidget({ standalone }: { standalone?: boolean } = {}) {
         <span className="nudge-pill pill-ready"><b>{ready}</b> ready</span>
         <Icon name="ti-arrow-right" className="nudge-stats-go" />
       </button>
+
+      {!collapsed && hasToClose ? (
+        <div className="nudge-close">
+          {toClose.slice(0, 3).map(n => (
+            <div className="nudge-close-row" key={n.id}>
+              <Icon name="ti-circle-check" className="nudge-close-ic" />
+              <button className="nudge-close-main" onClick={() => openNode(n.id)}>
+                <b>{n.title}</b> — all {n.children.length} {n.children.length === 1 ? 'item' : 'items'} complete
+              </button>
+              <button className="nudge-close-go" onClick={() => useStore.getState().setStatus(n.id, 'done')}>
+                Close
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       {!collapsed && hasReminders ? (
         <div className="nudge-list">
