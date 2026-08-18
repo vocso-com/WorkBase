@@ -45,13 +45,17 @@ test('a container dependency is complete once ticked done, even with an open chi
   expect(isBlocked(roots, a)).toBe(false)
 })
 
-test('a container auto-completes when every child is done', () => {
+test('a container with every child done is ready to close, not complete', () => {
   const c = newNode('C', { shortId: 'P-6' })
   const c1 = newNode('c1', { shortId: 'P-7' })
   const c2 = newNode('c2', { shortId: 'P-8' })
   c.children = [c1, c2]
   expect(isComplete(c)).toBe(false)
   c1.status = 'done'; c2.status = 'done'
+  // 100% means ready to close. Something that depends on C stays blocked until
+  // a human confirms — finishing is a judgment.
+  expect(isComplete(c)).toBe(false)
+  c.status = 'done'
   expect(isComplete(c)).toBe(true)
 })
 

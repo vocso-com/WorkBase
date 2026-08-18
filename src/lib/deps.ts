@@ -1,17 +1,17 @@
 import type { Node } from '../types'
 import { findNode } from './tree'
-import { progressOf } from './progress'
 
 /**
- * A node is "complete" when it's explicitly marked done — the case that matters
- * for a container someone ticked off directly — or, failing that, when it's a
- * container whose children are all done (auto-complete). Without the first
- * clause, checking off a parent (status 'done') left anything that depended on
- * it still blocked whenever a child was unfinished.
+ * A node is complete only when it is explicitly marked done.
+ *
+ * This used to also treat a container at 100% progress as complete. Under
+ * computed rollup that is wrong: 100% means *ready to close*, not closed, and
+ * unblocking a dependent task on work its owner never confirmed is precisely
+ * the kind of quiet lie that makes a board untrustworthy. Finishing is a
+ * judgment, so something has to have made it.
  */
 export function isComplete(n: Node): boolean {
-  if (n.status === 'done') return true
-  return n.children.length > 0 && progressOf(n) === 100
+  return n.status === 'done'
 }
 
 /** Resolved nodes this node is blocked by (skips ids that no longer exist). */

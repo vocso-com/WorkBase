@@ -1,11 +1,41 @@
 import type { Node, Status } from '../types'
 import { leaves } from './tree'
+import { weightOf } from './weight'
 
+/**
+ * How complete a node is, 0-100, derived from the leaves beneath it.
+ *
+ * Weighted rather than flat: counting leaves equally makes a project read 80%
+ * done when the four remaining items are the hard ones, which is worse than no
+ * number at all because people plan around it.
+ *
+ * Two deliberate rules:
+ *
+ * - A started leaf earns nothing. Giving `doing` partial credit moves the bar
+ *   when nothing has been finished, which is exactly the false comfort this
+ *   whole feature exists to remove. Leaves are binary; `blocked` and custom
+ *   stages count as not done.
+ * - An explicit `done` is authoritative and reads 100 whatever sits beneath it.
+ *   A human said it was finished, and finishing is a judgment. Open children
+ *   added afterwards raise a prompt rather than silently reopening it.
+ */
 export function progressOf(node: Node): number {
-  const ls = leaves(node)
-  if (ls.length === 0) return 0
-  const done = ls.filter(l => l.status === 'done').length
-  return Math.round((done / ls.length) * 100)
+  return Math.round(rawProgress(node))
+}
+
+// Rounds once at the top; rounding at every level would drift with depth.
+function rawProgress(node: Node): number {
+  if (node.status === 'done') return 100
+  const kids = node.children
+  if (kids.length === 0) return 0
+  let weighted = 0
+  let total = 0
+  for (const c of kids) {
+    const w = weightOf(c, kids)
+    total += w
+    weighted += w * rawProgress(c)
+  }
+  return total === 0 ? 0 : weighted / total
 }
 
 export function statusCounts(node: Node): Record<Status, number> {

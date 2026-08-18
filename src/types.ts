@@ -6,6 +6,11 @@ export type ColorKey =
   | 'blue' | 'teal' | 'coral' | 'violet' | 'amber' | 'red' | 'gray'
   | 'indigo' | 'cyan' | 'lime' | 'pink' | 'slate'
 
+// Explicit weight of a node relative to its siblings. Doubling from a default
+// of M, so each step is "twice the previous". Absent means the weight is
+// inferred from subtree size instead — see lib/weight.ts.
+export type SizeKey = 'S' | 'M' | 'L' | 'XL' | 'XXL'
+
 export interface Tag {
   name: string
   color: ColorKey
@@ -86,6 +91,15 @@ export interface Node {
   // detail counts. Absent means collapsed. Distinct from `collapsed`, which
   // controls whether the node's *children* are laid out.
   cardOpen?: boolean
+  // Explicit size relative to siblings. Absent means inferred from subtree size.
+  size?: SizeKey
+  // Set when status becomes 'done', cleared when un-done. Recorded so weights
+  // can be learned from real completion history later.
+  completedAt?: string
+  // Root-level only: total weight captured at kickoff (first move to 'doing'),
+  // so scope growth since then can be reported.
+  baselineWeight?: number
+  baselineAt?: string
   createdAt: string
   updatedAt: string
 }
@@ -99,6 +113,8 @@ export interface TemplateTask {
 
 export interface TemplateModule {
   name: string
+  // Declared prior: how big this module is relative to the template's others.
+  size?: SizeKey
   color?: string
   icon?: string
   items: TemplateTask[]
