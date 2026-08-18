@@ -45,16 +45,20 @@ export function FlowView({ node }: { node: Node }) {
   const vocab = useVocab()
   const [orient, setOrient] = useState<'h' | 'v'>(node.flowOrientation ?? 'h')
   const showDeps = node.flowDeps !== false
-  const showDesc = node.flowDesc !== false
+  const flowDescOn = node.flowDesc !== false
+  const vpRef = useRef<HTMLDivElement>(null)
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const [tf, setTf] = useState<Transform>({ x: 0, y: 0, k: 1 })
+  // Level-of-detail: zoomed far out, drop the description/meta rows so the canvas
+  // reads as clean labelled boxes (and lays out tighter). The card render gets
+  // the same effective flag, so measured and rendered heights stay in step.
+  const LOD_K = 0.5
+  const showDesc = flowDescOn && tf.k >= LOD_K
   // Restore the remembered orientation when switching to a different project.
   useEffect(() => { setOrient(node.flowOrientation ?? 'h') }, [node.id, node.flowOrientation])
   const layout = useMemo(() => layoutTree(node, expandPred, orient, { showDesc }), [node, orient, showDesc])
   const byId = useMemo(() => new Map(layout.nodes.map(n => [n.id, n])), [layout])
   const accent = hex(node.color)
-
-  const vpRef = useRef<HTMLDivElement>(null)
-  const wrapRef = useRef<HTMLDivElement>(null)
-  const [tf, setTf] = useState<Transform>({ x: 0, y: 0, k: 1 })
   const [live, setLive] = useState<LiveDrag | null>(null)
   const [dropTarget, setDropTarget] = useState<string | null>(null)
   const [selId, setSel] = useState<string | null>(null)   // keyboard-focused node
@@ -567,11 +571,11 @@ export function FlowView({ node }: { node: Node }) {
           <Icon name={orient === 'h' ? 'ti-layout-distribute-vertical' : 'ti-layout-distribute-horizontal'} />
         </button>
         <button
-          className={showDesc ? 'on' : undefined}
-          onClick={() => { refit.current = true; useStore.getState().patch(node.id, { flowDesc: !showDesc }) }}
+          className={flowDescOn ? 'on' : undefined}
+          onClick={() => { refit.current = true; useStore.getState().patch(node.id, { flowDesc: !flowDescOn }) }}
           aria-label="Toggle descriptions"
-          aria-pressed={showDesc}
-          title={showDesc ? 'Hide descriptions' : 'Show descriptions'}
+          aria-pressed={flowDescOn}
+          title={flowDescOn ? 'Hide descriptions' : 'Show descriptions'}
         >
           <Icon name="ti-align-left" />
         </button>
