@@ -14,6 +14,7 @@ import { useVocab } from '../hooks/useVocab'
 import type { Vocab } from '../lib/vocab'
 import { confirmDeleteNode } from '../lib/confirmDelete'
 import { confirmToggleDone } from '../lib/confirmToggleDone'
+import { askConfirm } from '../hooks/useConfirm'
 import { ProgressBar } from './ui/ProgressBar'
 import { Icon } from './ui/Icon'
 import { ProgressRing } from './ui/ProgressRing'
@@ -62,6 +63,8 @@ export function FlowView({ node }: { node: Node }) {
   const [readyMode, setReadyMode] = useState(false)        // dim done + blocked, so actionable work stands out
   const [linkDrag, setLinkDrag] = useState<{ sourceId: string; x: number; y: number } | null>(null) // drag-to-connect a dependency
   const [linkTarget, setLinkTarget] = useState<string | null>(null)
+  const [marquee, setMarquee] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null) // shift-drag rubber-band
+  const [multiSel, setMultiSel] = useState<Set<string>>(new Set()) // marquee-selected nodes
 
   // Spotlight: the selected node's full dependency chain — everything it
   // (transitively) depends on, plus everything that depends on it. Non-chain
@@ -164,12 +167,20 @@ export function FlowView({ node }: { node: Node }) {
     return () => vp.removeEventListener('wheel', onWheel)
   }, [])
 
+  const toCanvas = (e: React.PointerEvent) => {
+    const vp = vpRef.current; if (!vp) return { x: 0, y: 0 }
+    const r = vp.getBoundingClientRect()
+    return { x: (e.clientX - r.left - tf.x) / tf.k, y: (e.clientY - r.top - tf.y) / tf.k }
+  }
   const onDown = (e: React.PointerEvent) => {
     if ((e.target as HTMLElement).closest('.fn')) return
+    try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* transient pointer */ }
+    if (e.shiftKey) { const p = toCanvas(e); setMarquee({ x0: p.x, y0: p.y, x1: p.x, y1: p.y }); return } // rubber-band select
+    if (multiSel.size) setMultiSel(new Set()) // plain click on empty canvas clears the selection
     pan.current = { sx: e.clientX, sy: e.clientY, ox: tf.x, oy: tf.y }
-    e.currentTarget.setPointerCapture(e.pointerId)
   }
   const onMove = (e: React.PointerEvent) => {
+    if (marquee) { const p = toCanvas(e); setMarquee(m => (m ? { ...m, x1: p.x, y1: p.y } : m)); return }
     const p = pan.current
     if (!p) return
     if (Math.abs(e.clientX - p.sx) + Math.abs(e.clientY - p.sy) > 3) pannedAt.current = Date.now()
@@ -182,6 +193,18 @@ export function FlowView({ node }: { node: Node }) {
   const releasePan = (e: React.PointerEvent) => {
     const el = e.currentTarget as HTMLElement
     if (el.hasPointerCapture?.(e.pointerId)) el.releasePointerCapture(e.pointerId)
+    if (marquee) {
+      const x0 = Math.min(marquee.x0, marquee.x1), x1 = Math.max(marquee.x0, marquee.x1)
+      const y0 = Math.min(marquee.y0, marquee.y1), y1 = Math.max(marquee.y0, marquee.y1)
+      const hit = new Set<string>()
+      if (x1 - x0 > 4 || y1 - y0 > 4) {
+        for (const n of layout.nodes) {
+          const q = n.node.pos ?? { x: n.x, y: n.y }
+          if (q.x < x1 && q.x + n.w > x0 && q.y < y1 && q.y + n.h > y0) hit.add(n.id)
+        }
+      }
+      setMultiSel(hit); setMarquee(null); pan.current = null; return
+    }
     pan.current = null
   }
 
@@ -389,7 +412,7 @@ export function FlowView({ node }: { node: Node }) {
         if (curNode) confirmDeleteNode(curNode, () => { setSel(null); if (useDetail.getState().openId === cur) useDetail.getState().close() })
         return
       }
-      if (e.key === 'Escape') { setSel(null); return }
+      if (e.key === 'Escape') { setSel(null); setMultiSel(new Set()); return }
       if ((e.key === 'f' || e.key === 'F') && !e.metaKey && !e.ctrlKey) { e.preventDefault(); if (cur) focusRef.current(cur); return }
       if (e.key === 'Enter' || e.key === 'Tab') {
         e.preventDefault()
@@ -407,6 +430,16 @@ export function FlowView({ node }: { node: Node }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [selectAndCenter])
 
+  // Bulk actions on a marquee selection.
+  const bulkComplete = () => { multiSel.forEach(id => useStore.getState().setStatus(id, 'done')); setMultiSel(new Set()) }
+  const bulkDelete = () => {
+    const ids = [...multiSel]
+    askConfirm({
+      title: 'Delete', danger: true, confirmLabel: `Delete ${ids.length}`,
+      message: `Delete ${ids.length} selected item${ids.length === 1 ? '' : 's'} and their sub-items? This can't be undone.`,
+      onConfirm: () => { ids.forEach(id => useStore.getState().remove(id)); setMultiSel(new Set()) },
+    })
+  }
   const resetLayout = () => { refit.current = true; useStore.getState().clearPositions(node.id) }
   const toggleOrient = () => {
     const next = orient === 'h' ? 'v' : 'h'
@@ -507,10 +540,23 @@ export function FlowView({ node }: { node: Node }) {
               onCancelEdit={() => setEditId(null)}
               linkTarget={linkTarget === fn.id}
               onLinkStart={e => startLink(e, fn)}
+              multi={multiSel.has(fn.id)}
             />
           ))}
+          {marquee ? (
+            <div className="fn-marquee" style={{ left: Math.min(marquee.x0, marquee.x1), top: Math.min(marquee.y0, marquee.y1), width: Math.abs(marquee.x1 - marquee.x0), height: Math.abs(marquee.y1 - marquee.y0) }} />
+          ) : null}
         </div>
       </div>
+
+      {multiSel.size > 0 ? (
+        <div className="fn-bulk">
+          <span className="fn-bulk-n">{multiSel.size} selected</span>
+          <button onClick={bulkComplete} title="Mark all done"><Icon name="ti-check" /> Complete</button>
+          <button onClick={bulkDelete} className="fn-bulk-del" title="Delete all"><Icon name="ti-trash" /> Delete</button>
+          <button className="fn-bulk-x" onClick={() => setMultiSel(new Set())} aria-label="Clear selection"><Icon name="ti-x" /></button>
+        </div>
+      ) : null}
 
       <div className="flow-ctl">
         <button
@@ -632,9 +678,10 @@ interface CardProps {
   onCancelEdit: () => void
   linkTarget: boolean
   onLinkStart: (e: React.PointerEvent) => void
+  multi: boolean
 }
 
-function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onOpen, onToggle, onAdd, onDelete, selected, dimmed, editing, onCommitTitle, onCancelEdit, linkTarget, onLinkStart }: CardProps) {
+function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onOpen, onToggle, onAdd, onDelete, selected, dimmed, editing, onCommitTitle, onCancelEdit, linkTarget, onLinkStart, multi }: CardProps) {
   const { node, depth } = fn
   const drop = isDropTarget ? ' fn-droptarget' : ''
   // Named distinctly: the container branch below has its own `done` count, and
@@ -745,7 +792,7 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging
   // Every card is outlined in its own color — status for tasks, identity for
   // modules and the root — so the canvas reads as a set of tagged objects.
   const outline: React.CSSProperties = { borderColor: hex(color) }
-  const sel = (selected ? ' is-sel' : '') + (dimmed ? ' is-dim' : '') + (linkTarget ? ' is-linktarget' : '')
+  const sel = (selected ? ' is-sel' : '') + (dimmed ? ' is-dim' : '') + (linkTarget ? ' is-linktarget' : '') + (multi ? ' is-multi' : '')
   const linkHandle = (
     <button
       className="fn-link"
