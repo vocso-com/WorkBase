@@ -20,6 +20,7 @@ import { ProgressBar } from './ui/ProgressBar'
 import { Dependencies } from './Dependencies'
 import { DatePicker } from './DatePicker'
 import { Icon } from './ui/Icon'
+import { SizePicker } from './SizePicker'
 import { Tag } from './ui/Tag'
 import { Checkbox } from './ui/Checkbox'
 
@@ -444,6 +445,8 @@ export function CardModal({ inlineNode }: { inlineNode?: Node } = {}) {
                   </div>
                 ) : null}
               </div>
+
+              <SizePicker node={node} />
 
               <div className="cm-qp-wrap">
                 <button

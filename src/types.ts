@@ -149,6 +149,12 @@ export interface Profile {
   // tasks (default on); `nudgeMyWork` adds a soft My Work summary (default off).
   nudgeReminders?: boolean
   nudgeMyWork?: boolean
+  // Optional calibration: roughly how many hours an M-sized item takes in this
+  // shop. Display only — sizing stays a relative comparison, because an hour
+  // attached to a task becomes a commitment people pad against. Absent by
+  // default, and always rendered with a "≈". Learned from real completion
+  // history later rather than asked for per task.
+  hoursPerM?: number
   // Play a chime on task completion and when a reminder surfaces (default on).
   soundsEnabled?: boolean
 }

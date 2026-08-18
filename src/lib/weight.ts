@@ -39,3 +39,18 @@ export function sharesOf(siblings: Node[]): number[] {
   if (total === 0) return []
   return weights.map(w => w / total)
 }
+
+/**
+ * What share a node would claim if it were given `key` — the number behind the
+ * picker, so choosing a size shows its effect rather than an abstract label.
+ * Siblings keep whatever they have declared and default to M, since one
+ * declaration switches the whole set to size semantics.
+ */
+export function shareIfSized(node: Node, siblings: Node[], key: SizeKey): number {
+  const others = siblings.reduce(
+    (t, s) => (s.id === node.id ? t : t + SIZE_WEIGHT[s.size ?? 'M']),
+    0,
+  )
+  const mine = SIZE_WEIGHT[key]
+  return mine / (mine + others)
+}

@@ -1,4 +1,4 @@
-import { SIZE_WEIGHT, weightOf, sharesOf } from './weight'
+import { SIZE_WEIGHT, weightOf, sharesOf, shareIfSized } from './weight'
 import { newNode } from './factory'
 import type { Node } from '../types'
 
@@ -43,4 +43,19 @@ test('shares always sum to 1 so levels compose independently', () => {
 
 test('sharesOf an empty set is empty rather than dividing by zero', () => {
   expect(sharesOf([])).toEqual([])
+})
+
+test('shareIfSized previews what a size would claim before it is chosen', () => {
+  const build = kid('Build')
+  const set = [build, kid('Design'), kid('Content'), kid('QA')]
+  // Siblings have no declaration yet, so they default to M once one is set.
+  expect(shareIfSized(build, set, 'XXL')).toBeCloseTo(8 / 11, 5)
+  expect(shareIfSized(build, set, 'M')).toBeCloseTo(1 / 4, 5)
+  expect(shareIfSized(build, set, 'S')).toBeCloseTo(0.5 / 3.5, 5)
+})
+
+test('shareIfSized respects the declarations siblings already carry', () => {
+  const build = kid('Build')
+  const set = [build, kid('Design', { size: 'XL' }), kid('QA', { size: 'S' })]
+  expect(shareIfSized(build, set, 'M')).toBeCloseTo(1 / 5.5, 5)
 })
