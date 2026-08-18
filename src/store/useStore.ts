@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { nanoid } from 'nanoid'
-import type { StoreDoc, Node, Status, ColorKey, Template } from '../types'
+import type { StoreDoc, Node, Status, ColorKey, Template, SizeKey } from '../types'
 import { pickAdapter, type StorageAdapter } from '../lib/storage'
 import { emptyDocument, DEFAULT_WORKSPACE_ID } from '../lib/serialize'
 import { mergeProjectExport, type ProjectExport } from '../lib/export/json'
@@ -9,6 +9,7 @@ import { newNode } from '../lib/factory'
 import { projectPrefix, nextShortId } from '../lib/shortid'
 import { addChild, updateNode, deleteNode, deleteKeepingChildren, moveNode, reorderChildren, findNode, findParent, pathTo } from '../lib/tree'
 import { wouldCycle, dependents } from '../lib/deps'
+import { totalScope } from '../lib/scope'
 import { instantiateTemplate, projectToTemplate } from '../lib/templates'
 import { playComplete } from '../lib/sound'
 import { PROJECT_ICONS, mergedStages } from '../theme'
@@ -57,6 +58,7 @@ interface State {
   removeStage: (id: string) => void
   renameStage: (id: string, label: string) => void
   moveStageTo: (id: string, beforeId: string | null) => void
+  setSize: (id: string, size: SizeKey | undefined) => void
   setProfile: (patch: Partial<StoreDoc['profile']>) => void
   addDependency: (id: string, dependsOnId: string) => boolean
   removeDependency: (id: string, dependsOnId: string) => void
@@ -92,6 +94,23 @@ function ensureFlushOnUnload(get: () => State) {
     if (timer) clearTimeout(timer)
     void get().adapter.save(get().doc)
   })
+}
+
+/**
+ * A project's scope at the moment work first starts on it — its kickoff.
+ *
+ * Captured once and never revised, so "scope has grown 40% since kickoff" means
+ * something. Growing the plan afterwards is exactly what we want to measure,
+ * not something that should quietly move the goalposts.
+ */
+function captureBaseline(get: () => State, set: (fn: (s: State) => Partial<State>) => void, id: string): void {
+  const roots = get().doc.roots
+  const rootId = pathTo(roots, id)[0]
+  if (!rootId) return
+  const root = findNode(roots, rootId)
+  if (!root || root.baselineWeight) return
+  const patch = { baselineWeight: totalScope(root), baselineAt: new Date().toISOString() }
+  set(s => ({ doc: { ...s.doc, roots: updateNode(s.doc.roots, rootId, patch) } }))
 }
 
 /**
@@ -353,9 +372,20 @@ export const useStore = create<State>((set, get) => ({
     schedulePersist(get)
   },
   patch(id, patch) {
-    const stamped = { ...patch, updatedAt: new Date().toISOString() }
+    const now = new Date().toISOString()
+    const stamped: Partial<Node> = { ...patch, updatedAt: now }
+    // Completion is dated so weights can be learned from real history later.
+    // The activity log already records the transition, so clearing on un-done
+    // loses nothing and keeps this field bounded.
+    if (patch.status !== undefined) {
+      stamped.completedAt = patch.status === 'done' ? now : undefined
+    }
     set(s => ({ doc: { ...s.doc, roots: updateNode(s.doc.roots, id, stamped) } }))
+    if (patch.status !== undefined && patch.status !== 'todo') captureBaseline(get, set, id)
     schedulePersist(get)
+  },
+  setSize(id, size) {
+    get().patch(id, { size })
   },
   addTag(name, color) {
     const n = name.trim()

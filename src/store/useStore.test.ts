@@ -219,3 +219,40 @@ test('a project ticked directly has no containers to promote', () => {
   act(() => { useStore.getState().toggleDone(pid) })
   expect(statusOf(pid)).toBe('done')
 })
+
+test('completing a task records when it happened, and un-completing clears it', () => {
+  let pid = '', cid = ''
+  act(() => { pid = useStore.getState().addProject('P') })
+  act(() => { cid = useStore.getState().addChildNode(pid, 'Task') })
+  act(() => { useStore.getState().toggleDone(cid) })
+  const done = useStore.getState().doc.roots[0].children[0]
+  expect(done.completedAt).toBeTruthy()
+  act(() => { useStore.getState().toggleDone(cid) })
+  expect(useStore.getState().doc.roots[0].children[0].completedAt).toBeUndefined()
+})
+
+test('a project captures its scope baseline the first time work starts', () => {
+  let pid = '', a = '', b = ''
+  act(() => { pid = useStore.getState().addProject('P') })
+  act(() => { a = useStore.getState().addChildNode(pid, 'A') })
+  act(() => { b = useStore.getState().addChildNode(pid, 'B') })
+  act(() => { useStore.getState().setStatus(a, 'doing') })
+
+  const captured = useStore.getState().doc.roots[0].baselineWeight
+  expect(captured).toBe(2)
+
+  // Growing the plan afterwards must not move the baseline.
+  act(() => { useStore.getState().addChildNode(b, 'B1') })
+  act(() => { useStore.getState().setStatus(b, 'doing') })
+  expect(useStore.getState().doc.roots[0].baselineWeight).toBe(2)
+})
+
+test('setSize declares a weight relative to siblings', () => {
+  let pid = '', mid = ''
+  act(() => { pid = useStore.getState().addProject('P') })
+  act(() => { mid = useStore.getState().addChildNode(pid, 'Build') })
+  act(() => { useStore.getState().setSize(mid, 'XXL') })
+  expect(useStore.getState().doc.roots[0].children[0].size).toBe('XXL')
+  act(() => { useStore.getState().setSize(mid, undefined) })
+  expect(useStore.getState().doc.roots[0].children[0].size).toBeUndefined()
+})
