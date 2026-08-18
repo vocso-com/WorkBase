@@ -52,6 +52,12 @@ export function RichText({
   const wrapRef = useRef<HTMLDivElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const docRef = useRef<HTMLInputElement>(null)
+  // True while a native file/image picker is open. Opening it blurs the editor,
+  // which would otherwise trip the blur-to-close below and unmount the very
+  // <input> we're waiting on — so the picked file's change event would fire
+  // into a detached input and nothing embeds. Reset when the dialog returns
+  // (pick or cancel both restore window focus).
+  const picking = useRef(false)
 
   useEffect(() => {
     if (editing && ref.current) {
@@ -146,6 +152,14 @@ export function RichText({
       insertHtml(block + '<p><br></p>')
     }
   }
+  // Open a picker while holding the editor open across the native dialog.
+  const openPicker = (which: 'img' | 'doc') => {
+    rememberSelection()
+    picking.current = true
+    const done = () => { picking.current = false; window.removeEventListener('focus', done) }
+    window.addEventListener('focus', done) // fires when the dialog closes (pick or cancel)
+    ;(which === 'img' ? fileRef : docRef).current?.click()
+  }
   const onPaste = (e: React.ClipboardEvent) => {
     const imgs = [...e.clipboardData.files].filter(f => f.type.startsWith('image/'))
     if (imgs.length) { e.preventDefault(); void embedFiles(imgs) }
@@ -169,7 +183,7 @@ export function RichText({
   }
 
   return (
-    <div ref={wrapRef} className="rt rt-focus" onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) { setEditing(false); emit() } }}>
+    <div ref={wrapRef} className="rt rt-focus" onBlur={e => { if (picking.current) return; if (!e.currentTarget.contains(e.relatedTarget as Node)) { setEditing(false); emit() } }}>
       {bubble ? (
         <div className="rt-bubble" style={{ top: bubble.top, left: bubble.left }} onMouseDown={e => e.preventDefault()}>
           <Btn cmd="bold" icon="ti-bold" label="Bold" />
@@ -195,10 +209,10 @@ export function RichText({
         onDrop={onDrop}
       />
       <div className="rt-insert">
-        <button type="button" onMouseDown={e => { e.preventDefault(); rememberSelection() }} onClick={() => fileRef.current?.click()}><Icon name="ti-photo" /> Image</button>
-        <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={e => { if (e.target.files) void embedFiles(e.target.files); e.target.value = '' }} />
-        <button type="button" onMouseDown={e => { e.preventDefault(); rememberSelection() }} onClick={() => docRef.current?.click()}><Icon name="ti-paperclip" /> File</button>
-        <input ref={docRef} type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.zip" multiple hidden onChange={e => { if (e.target.files) void embedFiles(e.target.files); e.target.value = '' }} />
+        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => openPicker('img')}><Icon name="ti-photo" /> Image</button>
+        <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={e => { picking.current = false; if (e.target.files) void embedFiles(e.target.files); e.target.value = '' }} />
+        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => openPicker('doc')}><Icon name="ti-paperclip" /> File</button>
+        <input ref={docRef} type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.zip" multiple hidden onChange={e => { picking.current = false; if (e.target.files) void embedFiles(e.target.files); e.target.value = '' }} />
         <button type="button" className="rt-done" onMouseDown={e => { e.preventDefault(); setEditing(false); emit() }}>Done</button>
       </div>
     </div>
