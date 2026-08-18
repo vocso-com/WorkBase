@@ -37,6 +37,24 @@ const expandPred: ExpandPredicate = (n, depth) => (depth === 0 ? n.collapsed !==
 interface Transform { x: number; y: number; k: number }
 interface LiveDrag { id: string; x: number; y: number }
 
+// The pan/zoom is remembered per project (device-local, not part of the doc —
+// it's a personal view, and writing it into the doc on every pan frame would
+// churn history and cloud sync). A refresh returns you to where you left off;
+// first-ever open falls back to fit-to-screen.
+const viewKey = (id: string) => `wb.flowView.${id}`
+function loadView(id: string): Transform | null {
+  try {
+    const v = JSON.parse(localStorage.getItem(viewKey(id)) || 'null')
+    if (v && Number.isFinite(v.x) && Number.isFinite(v.y) && Number.isFinite(v.k)) return v
+  } catch { /* corrupt / unavailable */ }
+  return null
+}
+function saveView(id: string, t: Transform) {
+  try {
+    localStorage.setItem(viewKey(id), JSON.stringify({ x: Math.round(t.x), y: Math.round(t.y), k: +t.k.toFixed(4) }))
+  } catch { /* private mode / quota */ }
+}
+
 function descendantsOf(n: Node): Set<string> {
   const s = new Set<string>()
   const walk = (m: Node) => { s.add(m.id); m.children.forEach(walk) }
@@ -185,8 +203,20 @@ export function FlowView({ node }: { node: Node }) {
   }, [])
   useEffect(() => clearCenter, [clearCenter]) // clean up on unmount
 
-  // Frame on switching to a different project/module.
-  useLayoutEffect(() => { fitRef.current() }, [node.id])
+  // On switching to a project, restore its remembered pan/zoom — or frame it if
+  // this is the first time it's been opened.
+  useLayoutEffect(() => {
+    const saved = loadView(node.id)
+    if (saved) setTf(saved)
+    else fitRef.current()
+  }, [node.id])
+  // Remember the pan/zoom (debounced) so a refresh keeps your place.
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => saveView(node.id, tf), 350)
+    return () => { if (saveTimer.current) clearTimeout(saveTimer.current) }
+  }, [tf, node.id])
   // Re-frame after collapse/expand-all, orientation change, or layout reset.
   useEffect(() => {
     if (refit.current) { refit.current = false; fitRef.current() }
