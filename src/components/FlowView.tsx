@@ -3,11 +3,12 @@ import type { Node, Stage } from '../types'
 import { hex, stageMeta, PRIORITY_META } from '../theme'
 import { layoutTree, cardHasMeta, cardHasFooter, type FlowNode, type ExpandPredicate } from '../lib/layout'
 import { progressOf, statusCounts } from '../lib/progress'
-import { leaves } from '../lib/tree'
+import { leaves, findNode, findParent } from '../lib/tree'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { toText } from '../lib/text'
 import { useStore } from '../store/useStore'
 import { useDetail } from '../hooks/useDetail'
+import { useConfirm } from '../hooks/useConfirm'
 import { useVocab } from '../hooks/useVocab'
 import type { Vocab } from '../lib/vocab'
 import { confirmDeleteNode } from '../lib/confirmDelete'
@@ -53,6 +54,8 @@ export function FlowView({ node }: { node: Node }) {
   const [tf, setTf] = useState<Transform>({ x: 0, y: 0, k: 1 })
   const [live, setLive] = useState<LiveDrag | null>(null)
   const [dropTarget, setDropTarget] = useState<string | null>(null)
+  const [selId, setSel] = useState<string | null>(null)   // keyboard-focused node
+  const [editId, setEditId] = useState<string | null>(null) // node being renamed inline
   const pan = useRef<{ sx: number; sy: number; ox: number; oy: number } | null>(null)
   // When the canvas last actually moved under a drag — used to tell a genuine
   // double-click apart from two pans in quick succession.
@@ -227,10 +230,10 @@ export function FlowView({ node }: { node: Node }) {
         useStore.getState().setPos(fn.id, { x: live.x, y: live.y })
       }
     } else {
-      // Single click: center this node and its sub-nodes. Deferred, so a
-      // double-click (which opens the node) can cancel it before it moves —
-      // see centerTimer / clearCenter. If it's collapsed, expand one level
-      // first, then frame the revealed children.
+      // Select immediately (the keyboard focus ring), then center this node and
+      // its sub-nodes. Centering is deferred, so a double-click (which opens the
+      // node) can cancel it before it moves — see centerTimer / clearCenter.
+      setSel(fn.id)
       clearCenter()
       centerTimer.current = setTimeout(() => {
         centerTimer.current = null
@@ -255,6 +258,89 @@ export function FlowView({ node }: { node: Node }) {
       if (useDetail.getState().openId === fn.id) useDetail.getState().close()
     })
   }
+
+  // ── Selection, keyboard navigation & inline editing ───────────────────────
+  // Pan (keeping zoom) so a node sits in the middle of the viewport.
+  const centerNode = useCallback((id: string) => {
+    const fnode = byId.get(id); const vp = vpRef.current
+    if (!fnode || !vp) return
+    const p = fnode.node.pos ?? { x: fnode.x, y: fnode.y }
+    setTf(t => ({ k: t.k, x: vp.clientWidth / 2 - (p.x + fnode.w / 2) * t.k, y: vp.clientHeight / 2 - (p.y + fnode.h / 2) * t.k }))
+  }, [byId])
+  const selectAndCenter = useCallback((id: string) => { setSel(id); centerNode(id) }, [centerNode])
+
+  // A node created or revealed by the keyboard is selected (and optionally
+  // opened for renaming) once the layout that includes it has been computed.
+  const pending = useRef<{ id: string; edit: boolean } | null>(null)
+  useEffect(() => {
+    const p = pending.current
+    if (p && byId.has(p.id)) { pending.current = null; selectAndCenter(p.id); if (p.edit) setEditId(p.id) }
+  }, [byId, selectAndCenter])
+
+  // Latest state for the single window key listener.
+  const kb = useRef({ selId, orient, node, byId, editId })
+  kb.current = { selId, orient, node, byId, editId }
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const { selId, orient, node, byId, editId } = kb.current
+      if (editId) return // the inline editor owns its keys
+      const t = e.target as HTMLElement | null
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
+      if (useConfirm.getState().current || useDetail.getState().openId) return // don't fight a dialog/modal
+
+      const store = useStore.getState()
+      const cur = selId && byId.has(selId) ? selId : null
+      const curNode = cur ? findNode([node], cur) : null
+      const isExpanded = (n: Node) => n.children.length > 0 && byId.has(n.children[0].id)
+      const arrows = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']
+
+      if (arrows.includes(e.key)) {
+        e.preventDefault()
+        if (!curNode) { selectAndCenter(node.id); return }
+        const parent = findParent([node], cur!)
+        const sibs = parent ? parent.children : [node]
+        const idx = sibs.findIndex(s => s.id === cur)
+        const child = e.key === (orient === 'h' ? 'ArrowRight' : 'ArrowDown')
+        const parentDir = e.key === (orient === 'h' ? 'ArrowLeft' : 'ArrowUp')
+        const next = e.key === (orient === 'h' ? 'ArrowDown' : 'ArrowRight')
+        if (child) {
+          if (curNode.children.length === 0) return
+          if (!isExpanded(curNode)) { store.setCollapsed(cur!, false); pending.current = { id: curNode.children[0].id, edit: false } }
+          else selectAndCenter(curNode.children[0].id)
+        } else if (parentDir) {
+          if (isExpanded(curNode)) store.setCollapsed(cur!, true)
+          else if (parent) selectAndCenter(parent.id)
+        } else {
+          const nx = sibs[idx + (next ? 1 : -1)]
+          if (nx) selectAndCenter(nx.id)
+        }
+        return
+      }
+
+      if (e.key === ' ') { e.preventDefault(); if (curNode) confirmToggleDone(curNode); return }
+      if (e.key === 'F2') { e.preventDefault(); if (cur) setEditId(cur); return }
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault()
+        if (curNode) confirmDeleteNode(curNode, () => { setSel(null); if (useDetail.getState().openId === cur) useDetail.getState().close() })
+        return
+      }
+      if (e.key === 'Escape') { setSel(null); return }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault()
+        if (!curNode) { if (node.children[0]) selectAndCenter(node.children[0].id); return }
+        // Enter → sibling (child of the same parent); Tab → child of the node.
+        const parent = e.key === 'Enter' ? (findParent([node], cur!) ?? node) : curNode
+        const name = parent.id === node.id ? 'New module' : 'New item'
+        store.setCollapsed(parent.id, false)
+        const id = store.addChildNode(parent.id, name)
+        pending.current = { id, edit: true }
+        return
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [selectAndCenter])
+
   const resetLayout = () => { refit.current = true; useStore.getState().clearPositions(node.id) }
   const toggleOrient = () => {
     const next = orient === 'h' ? 'v' : 'h'
@@ -338,6 +424,10 @@ export function FlowView({ node }: { node: Node }) {
               onToggle={() => toggle(fn)}
               onAdd={() => addChild(fn)}
               onDelete={() => del(fn)}
+              selected={selId === fn.id}
+              editing={editId === fn.id}
+              onCommitTitle={title => { const t = title.trim(); if (t) useStore.getState().patch(fn.id, { title: t }); setEditId(null) }}
+              onCancelEdit={() => setEditId(null)}
             />
           ))}
         </div>
@@ -381,7 +471,7 @@ export function FlowView({ node }: { node: Node }) {
         <span className="flow-sep" />
         <button onClick={fit} aria-label="Fit to screen"><Icon name="ti-maximize" /></button>
       </div>
-      <div className="flow-hint"><Icon name="ti-click" /> Click to focus · double-click to open · drag to arrange</div>
+      <div className="flow-hint"><Icon name="ti-keyboard" /> Arrows move · Tab/Enter add · Space done · F2 rename · double-click opens</div>
     </div>
   )
 }
@@ -437,9 +527,13 @@ interface CardProps {
   onToggle: () => void
   onAdd: () => void
   onDelete: () => void
+  selected: boolean
+  editing: boolean
+  onCommitTitle: (title: string) => void
+  onCancelEdit: () => void
 }
 
-function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onOpen, onToggle, onAdd, onDelete }: CardProps) {
+function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onOpen, onToggle, onAdd, onDelete, selected, editing, onCommitTitle, onCancelEdit }: CardProps) {
   const { node, depth } = fn
   const drop = isDropTarget ? ' fn-droptarget' : ''
   // Named distinctly: the container branch below has its own `done` count, and
@@ -550,10 +644,30 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging
   // Every card is outlined in its own color — status for tasks, identity for
   // modules and the root — so the canvas reads as a set of tagged objects.
   const outline: React.CSSProperties = { borderColor: hex(color) }
+  const sel = selected ? ' is-sel' : ''
+
+  // The title, swapped for an inline editor when this node is being renamed
+  // (F2, or right after a keyboard add). Commits on Enter/blur, reverts on Esc.
+  const titleContent = editing ? (
+    <input
+      className="fn-title-edit"
+      defaultValue={node.title}
+      autoFocus
+      onFocus={e => e.currentTarget.select()}
+      onPointerDown={e => e.stopPropagation()}
+      onClick={e => e.stopPropagation()}
+      onKeyDown={e => {
+        e.stopPropagation()
+        if (e.key === 'Enter') onCommitTitle(e.currentTarget.value)
+        else if (e.key === 'Escape') onCancelEdit()
+      }}
+      onBlur={e => onCommitTitle(e.currentTarget.value)}
+    />
+  ) : node.title
 
   if (depth === 0) {
     return (
-      <div className={`fn fn-root${dragging ? ' fn-drag' : ''}${drop}`} style={{ ...style, ...outline }} {...handlers}>
+      <div className={`fn fn-root${dragging ? ' fn-drag' : ''}${drop}${sel}`} style={{ ...style, ...outline }} {...handlers}>
         <div className="fn-band" style={{ background: `linear-gradient(135deg, ${hex(color)}, ${hex(color)}bb)` }}>
           {node.image ? (
             <div className="fn-band-ic fn-band-ic-img" style={{ backgroundImage: `url(${node.image})` }} />
@@ -563,7 +677,7 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging
         </div>
         <div className="fn-root-body">
           {head}
-          <div className="fn-title">{node.title}</div>
+          <div className="fn-title">{titleContent}</div>
           <div className="fn-sub">{node.children.length} modules · {leaves(node).length} tasks</div>
         </div>
         <ProgressRing value={progressOf(node)} color={hex(color)} size={54} />
@@ -578,7 +692,7 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging
     const done = statusCounts(node).done
     const kids = node.children.length
     return (
-      <div className={`fn fn-mod${dragging ? ' fn-drag' : ''}${drop}${doneCls}`} style={{ ...style, ...outline }} {...handlers}>
+      <div className={`fn fn-mod${dragging ? ' fn-drag' : ''}${drop}${doneCls}${sel}`} style={{ ...style, ...outline }} {...handlers}>
         {head}
         <div className="fn-mod-title">
           {/* Hovering swaps the identity tile for the tick — same slot, so the
@@ -587,7 +701,7 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging
             <span className="fn-mod-ic" style={{ background: tagBg(color), color: tagFg(color) }}><Icon name={node.icon ?? 'ti-folder'} /></span>
             {tick}
           </span>
-          <span className="fn-title">{node.title}</span>
+          <span className="fn-title">{titleContent}</span>
         </div>
         {description}
         <div className="fn-mod-rollup">
@@ -606,14 +720,14 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging
 
   const tags = node.tags ?? []
   return (
-    <div className={`fn fn-task${dragging ? ' fn-drag' : ''}${drop}${doneCls}`} style={{ ...style, ...outline }} {...handlers}>
+    <div className={`fn fn-task${dragging ? ' fn-drag' : ''}${drop}${doneCls}${sel}`} style={{ ...style, ...outline }} {...handlers}>
       {head}
       <div className="fn-titlerow">
         <span className="fn-mark">
           <span className="fn-status" style={{ background: sm.dot }} title={sm.label} />
           {tick}
         </span>
-        <div className="fn-title fn-task-title">{node.title}</div>
+        <div className="fn-title fn-task-title">{titleContent}</div>
       </div>
       {description}
       {/* Rendered only when measured: an empty footer div still occupies its
