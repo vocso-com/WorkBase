@@ -23,6 +23,7 @@ import { DueChip } from './DueChip'
 
 const MIN_K = 0.3
 const MAX_K = 1.8
+const MM_W = 176, MM_H = 128, MM_PAD = 6 // minimap box
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
 
 // Root stays expanded unless explicitly collapsed; deeper nodes default to
@@ -59,6 +60,19 @@ export function FlowView({ node }: { node: Node }) {
   const layout = useMemo(() => layoutTree(node, expandPred, orient, { showDesc }), [node, orient, showDesc])
   const byId = useMemo(() => new Map(layout.nodes.map(n => [n.id, n])), [layout])
   const accent = hex(node.color)
+
+  // Bounding box of all cards, for the minimap's scale.
+  const bounds = useMemo(() => {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+    for (const n of layout.nodes) {
+      const p = n.node.pos ?? { x: n.x, y: n.y }
+      minX = Math.min(minX, p.x); minY = Math.min(minY, p.y)
+      maxX = Math.max(maxX, p.x + n.w); maxY = Math.max(maxY, p.y + n.h)
+    }
+    if (!isFinite(minX)) return { minX: 0, minY: 0, w: layout.width || 1, h: layout.height || 1 }
+    return { minX, minY, w: Math.max(1, maxX - minX), h: Math.max(1, maxY - minY) }
+  }, [layout])
+  const mmScale = Math.min((MM_W - MM_PAD * 2) / bounds.w, (MM_H - MM_PAD * 2) / bounds.h)
   const [live, setLive] = useState<LiveDrag | null>(null)
   const [dropTarget, setDropTarget] = useState<string | null>(null)
   const [selId, setSel] = useState<string | null>(null)   // keyboard-focused node
@@ -444,6 +458,19 @@ export function FlowView({ node }: { node: Node }) {
       onConfirm: () => { ids.forEach(id => useStore.getState().remove(id)); setMultiSel(new Set()) },
     })
   }
+  // Minimap: click or drag to recenter the main view on that point.
+  const mmDrag = useRef(false)
+  const mmTo = (e: React.PointerEvent) => {
+    const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    const cx = bounds.minX + (e.clientX - r.left - MM_PAD) / mmScale
+    const cy = bounds.minY + (e.clientY - r.top - MM_PAD) / mmScale
+    const vp = vpRef.current; if (!vp) return
+    setTf(t => ({ k: t.k, x: vp.clientWidth / 2 - cx * t.k, y: vp.clientHeight / 2 - cy * t.k }))
+  }
+  const mmDown = (e: React.PointerEvent) => { e.stopPropagation(); mmDrag.current = true; try { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId) } catch { /* transient */ } mmTo(e) }
+  const mmMove = (e: React.PointerEvent) => { if (mmDrag.current) mmTo(e) }
+  const mmUp = (e: React.PointerEvent) => { mmDrag.current = false; try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId) } catch { /* ok */ } }
+
   const resetLayout = () => { refit.current = true; useStore.getState().clearPositions(node.id) }
   const toggleOrient = () => {
     const next = orient === 'h' ? 'v' : 'h'
@@ -559,6 +586,19 @@ export function FlowView({ node }: { node: Node }) {
           <button onClick={bulkComplete} title="Mark all done"><Icon name="ti-check" /> Complete</button>
           <button onClick={bulkDelete} className="fn-bulk-del" title="Delete all"><Icon name="ti-trash" /> Delete</button>
           <button className="fn-bulk-x" onClick={() => setMultiSel(new Set())} aria-label="Clear selection"><Icon name="ti-x" /></button>
+        </div>
+      ) : null}
+
+      {layout.nodes.length > 3 ? (
+        <div className="flow-minimap" style={{ width: MM_W, height: MM_H }} onPointerDown={mmDown} onPointerMove={mmMove} onPointerUp={mmUp} onPointerCancel={mmUp} title="Minimap — click or drag to jump">
+          {layout.nodes.map(n => {
+            const p = n.node.pos ?? { x: n.x, y: n.y }
+            return <div key={n.id} className="mm-node" style={{ left: MM_PAD + (p.x - bounds.minX) * mmScale, top: MM_PAD + (p.y - bounds.minY) * mmScale, width: Math.max(3, n.w * mmScale), height: Math.max(2, n.h * mmScale), background: hex(n.node.color) }} />
+          })}
+          {(() => {
+            const vp = vpRef.current; if (!vp) return null
+            return <div className="mm-view" style={{ left: MM_PAD + (-tf.x / tf.k - bounds.minX) * mmScale, top: MM_PAD + (-tf.y / tf.k - bounds.minY) * mmScale, width: (vp.clientWidth / tf.k) * mmScale, height: (vp.clientHeight / tf.k) * mmScale }} />
+          })()}
         </div>
       ) : null}
 
