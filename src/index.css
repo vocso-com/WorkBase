@@ -931,7 +931,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .fn.is-sel{box-shadow:0 0 0 2px var(--card),0 0 0 4px color-mix(in srgb,var(--board-accent,var(--blue)) 60%,transparent);z-index:15;}
 .fn.is-dim{opacity:.2;filter:saturate(.55);transition:opacity .15s ease,filter .15s ease;}
 .fn.is-linktarget{box-shadow:0 0 0 3px color-mix(in srgb,var(--amber) 78%,transparent)!important;}
-.fn-link{position:absolute;right:-9px;top:calc(50% - 9px);width:18px;height:18px;border:none;background:none;padding:0;cursor:crosshair;opacity:0;display:flex;align-items:center;justify-content:center;z-index:6;transition:opacity .12s;touch-action:none;}
+/* Bottom-centre, so it never collides with the expand toggle on the right edge. */
+.fn-link{position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);width:18px;height:18px;border:none;background:none;padding:0;cursor:crosshair;opacity:0;display:flex;align-items:center;justify-content:center;z-index:6;transition:opacity .12s;touch-action:none;}
 .fn:hover .fn-link,.fn.is-sel .fn-link{opacity:1;}
 .fn-link-dot{width:11px;height:11px;border-radius:50%;background:var(--card);border:2px solid color-mix(in srgb,var(--amber) 85%,var(--ink));box-shadow:var(--shadow-flat);transition:background .12s,transform .12s;}
 .fn-link:hover .fn-link-dot{background:var(--amber);transform:scale(1.15);}
