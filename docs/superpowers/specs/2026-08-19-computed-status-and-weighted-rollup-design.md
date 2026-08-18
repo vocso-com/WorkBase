@@ -103,6 +103,67 @@ Inferred weight is leaf count because people decompose big things more than smal
 share is filled.** These are independent, so an explicit size on a node with children is
 never in conflict with its subtree.
 
+### 4.1 Comparison is always local
+
+Weights are compared **between siblings only, never globally**. "Build is XXL" is a claim
+about Build versus the three modules beside it — it says nothing about the project, and
+nothing about any level below. Global share is the product down the path:
+
+```
+Build is XXL among 3 M siblings   →  8/11  =  73% of the project
+API   is XXL among 3 M siblings   →  8/11  =  73% of Build
+                                          =  53% of the project
+```
+
+Nobody computes that 53%; it falls out. This is what makes unlimited depth free — a person
+sizing a sibling set holds only that set in their head, so cognitive load never grows with
+depth.
+
+It is also why mixing is safe *across* levels though forbidden *within* one: shares
+normalise to 100% inside each sibling set, so a level using inferred weights composes
+correctly with a level below it using explicit sizes.
+
+### 4.2 Evidence may challenge a declaration
+
+A size set at kickoff is a guess made when least was known. Left alone it permanently
+suppresses everything learned since — a module marked **L** that later holds 60 of a
+project's 66 items would still claim 40% of the weight.
+
+**The declaration wins, but the system surfaces the disagreement:**
+
+> "Build is marked **L**, but it now holds 60 of the project's 66 items. Resize to XXL?"
+
+One click. Structure never silently overrides a human — that is the untrustworthy behaviour
+this feature exists to eliminate — but a stale judgment is never left unchallenged either.
+Same shape as ready-to-close (§6): **the system detects, the human confirms.**
+
+Threshold for raising it: the inferred share differs from the declared share by more than
+one size step.
+
+### 4.3 Sizing stabilises the bar
+
+Because a sized node's share is fixed by its size rather than its leaf count, decomposing
+*inside* it does not move the parent's percentage. The scope-growth trap (§9) does not fire
+below a sized node — so sizing the modules once at kickoff buys a project bar that stays
+steady while the plan fills in underneath. That is exactly the behaviour wanted when a
+client is looking at it.
+
+### 4.4 Optional hour calibration
+
+Agencies think in hours because they bill in hours. But naming the sizes in hours breaks
+three things: an hour attached to a task becomes a **commitment** people pad against; a
+senior's L and a junior's L are different numbers; and it forces absolute estimation
+through the back door, destroying the relative comparison that makes sizing fast.
+
+Instead, **one optional number per workspace**: *"an M is about 4 hours here."* Input stays
+a three-second sibling comparison; display can speak hours where hours help — tooltips,
+project totals, quoting conversations.
+
+- **Off by default**, and always rendered with `≈`
+- One number set once, never a field on a task
+- Forward-compatible: once completion history exists this calibration **learns itself**
+  from real data, which is how the deferred learned-priors work arrives
+
 ---
 
 ## 5. Progress rollup
@@ -153,6 +214,13 @@ state never cascades up a tree of unconfirmed parents.
 **It is pushed, not left to be discovered.** `NudgeWidget` surfaces "Homepage design — all
 3 items complete. Close it?" with a one-click confirm. Cost when the parent is a pure
 container: one click. Value when it isn't: we didn't lie.
+
+### A completed node that later gains children
+
+Explicit `done` stays authoritative and reads 100% regardless of children — a human said so,
+and finishing is a judgment. But adding open items beneath a completed node surfaces the
+same detect-and-confirm prompt: *"Homepage design was marked done but has 3 new open items —
+reopen?"* Never a silent flip.
 
 ### Interaction with dependencies
 
@@ -261,6 +329,16 @@ asks which is the big one — humans are excellent at relative comparison across
 and poor at absolute estimation. It appears at project setup and wherever the numbers look
 wrong; it is never a required field on a card.
 
+**Hover explains effect, not just value.** A size chip's tooltip reads:
+
+> **L** — twice the default size.
+> This module is **40%** of the project (8 of 20 weight).
+> *Inferred from 8 sub-items · click to set explicitly*
+
+With hour calibration on (§4.4), it adds `≈8h here`. The progress bar gets the same
+treatment: hovering shows which children contribute what, so a number nobody can explain
+never appears on screen.
+
 **Inferred weights must be inspectable.** If a bar says 40% and nobody can see why, they
 stop trusting it — the exact failure this feature exists to fix. Every computed weight
 shows its reasoning and is overridable in one click.
@@ -280,6 +358,12 @@ coverage is unit-level and cheap.
 - Health — precedence order; each state's evidence string
 - Staleness — tempo scaling for due-dated and undated nodes
 - Scope growth — baseline captured once at kickoff; growth arithmetic
+- Composition — nested sizes multiply down the path; a level using inferred weights
+  composes with a level below using explicit sizes
+- Stale-declaration challenge — fires when inferred and declared shares differ by more than
+  one size step; never mutates the node on its own
+- A completed node gaining open children stays 100% and raises a reopen prompt
+- Hour calibration — display only; absent by default; never affects weight arithmetic
 - **Regression:** dependencies satisfy on explicit `done`, not on 100% progress (§6)
 
 ---
