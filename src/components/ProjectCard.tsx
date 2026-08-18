@@ -9,6 +9,7 @@ import { useVocab } from '../hooks/useVocab'
 import { toText } from '../lib/text'
 import { Tag } from './ui/Tag'
 import { Icon } from './ui/Icon'
+import { HealthBadge } from './ui/HealthBadge'
 
 export function ProjectCard({ node, onOpen }: { node: Node; onOpen: (e: MouseEvent) => void }) {
   const color = node.color ?? 'gray'
@@ -42,6 +43,7 @@ export function ProjectCard({ node, onOpen }: { node: Node; onOpen: (e: MouseEve
           {node.title}
         </div>
         {toText(node.description) ? <div className="sub">{toText(node.description)}</div> : null}
+        <HealthBadge node={node} showEvidence />
         {node.tags && node.tags.length > 0 ? (
           <div className="tags">
             {node.tags.map(t => <Tag key={t.name} tag={t} />)}
