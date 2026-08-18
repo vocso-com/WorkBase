@@ -99,10 +99,18 @@ test('expanding a card grows it to fit more of the description', () => {
   expect(hOf(tree(open), open.id)).toBeGreaterThan(hOf(tree(shut), shut.id))
 })
 
-test('an expanded description clamps at the open limit', () => {
-  const atLimit = newNode('T', { description: 'y'.repeat(30 * 38), cardOpen: true }) // well past the ~20-line cap
-  const huge = newNode('T', { description: 'y'.repeat(6000), cardOpen: true })
-  expect(hOf(tree(huge), huge.id)).toBe(hOf(tree(atLimit), atLimit.id))
+test('an expanded card keeps growing well past a single screenful', () => {
+  // A long note (a pasted log, say) must not be clipped at some low line cap —
+  // opening a card is a request to read all of it.
+  const short = newNode('T', { description: 'y'.repeat(30 * 20), cardOpen: true }) // ~20 lines
+  const long = newNode('T', { description: 'y'.repeat(30 * 45), cardOpen: true }) // ~45 lines
+  expect(hOf(tree(long), long.id)).toBeGreaterThan(hOf(tree(short), short.id))
+})
+
+test('an expanded description clamps only at the sanity ceiling', () => {
+  const atCeiling = newNode('T', { description: 'y'.repeat(30 * 400), cardOpen: true }) // exactly the cap
+  const absurd = newNode('T', { description: 'y'.repeat(30 * 900), cardOpen: true }) // far past it
+  expect(hOf(tree(absurd), absurd.id)).toBe(hOf(tree(atCeiling), atCeiling.id))
 })
 
 test('level-of-detail drops a collapsed teaser but never an opened card', () => {

@@ -90,9 +90,12 @@ const TITLE_CPL = 30 // characters per line at the title's size
 // the card's full width suggests.
 const DESC_CPL = 30
 const MAX_TITLE_LINES = 2
-/** Collapsed cards get a one-line teaser; expanding one reveals up to four. */
+/** Collapsed cards get a one-line teaser; expanding one reveals the whole note. */
 const TEASER_LINES = 1
-const OPEN_DESC_LINES = 20 // an expanded card shows the full description (~150 words) before clamping
+// An expanded card shows its *entire* description — the point of opening it is to
+// read all of it. The cap is only a sanity ceiling so a pasted megabyte of text
+// can't make an absurd card; normal notes (even long logs) never reach it.
+const OPEN_DESC_LINES = 400
 
 const titleLines = (text: string): number =>
   Math.min(MAX_TITLE_LINES, Math.max(1, Math.ceil(text.trim().length / TITLE_CPL)))
