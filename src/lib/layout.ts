@@ -21,8 +21,15 @@ export type ExpandPredicate = (node: Node, depth: number) => boolean
 export type Orientation = 'h' | 'v'
 
 export interface LayoutOpts {
-  /** Canvas-wide: show the one-line description teaser. Defaults to true. */
+  /** Canvas-wide: show descriptions/meta at all. Defaults to true. */
   showDesc?: boolean
+  /**
+   * Level-of-detail: are we zoomed in enough to show the teaser + meta on
+   * *collapsed* cards? Zoomed out, those drop so the canvas reads as clean
+   * labelled boxes. A card the user explicitly opened ignores this — its full
+   * content stays legible at any zoom. Defaults to true.
+   */
+  lod?: boolean
 }
 
 const DEFAULT_EXPAND: ExpandPredicate = (_n, depth) => depth < 2
@@ -99,13 +106,16 @@ const titleLines = (text: string): number =>
  * counting — otherwise a short sentence wrapped in markup would reserve far
  * more room than it needs.
  */
-function descLines(text: string, open: boolean, showDesc: boolean): number {
+function descLines(text: string, open: boolean, showDesc: boolean, lod: boolean): number {
   // The canvas-wide switch wins: with content off there is no expand control to
   // undo a card left open, so an expanded card must collapse with the rest. The
   // `cardOpen` flag survives, so flipping the switch back restores it.
   if (!text || !showDesc) return 0
+  // An explicitly opened card shows its full description at any zoom — the whole
+  // point of opening it is to read it. Level-of-detail only trims the automatic
+  // one-line teaser on *collapsed* cards when zoomed far out.
   if (open) return Math.min(OPEN_DESC_LINES, Math.max(1, Math.ceil(text.length / DESC_CPL)))
-  return TEASER_LINES
+  return lod ? TEASER_LINES : 0
 }
 
 /**
@@ -117,14 +127,17 @@ function descLines(text: string, open: boolean, showDesc: boolean): number {
  * empty footer div still occupies its CSS height, so a row measured away but
  * rendered anyway overflows the card.
  */
-export function cardHasMeta(n: Node, showDesc: boolean): boolean {
+export function cardHasMeta(n: Node, showDesc: boolean, lod = true): boolean {
   if (!showDesc) return false
+  // Zoomed out, a collapsed card sheds its meta chips too — but an opened card
+  // keeps them, so its "Less" control stays reachable at any zoom.
+  if (!lod && !n.cardOpen) return false
   return !!(toText(n.description) || n.attachments?.length || n.dependsOn?.length || n.comments?.length)
 }
 
 /** Whether a task card's footer row earns its place. Pairs with `cardHasMeta`. */
-export function cardHasFooter(n: Node, showDesc: boolean): boolean {
-  return !!n.dueDate || cardHasMeta(n, showDesc)
+export function cardHasFooter(n: Node, showDesc: boolean, lod = true): boolean {
+  return !!n.dueDate || cardHasMeta(n, showDesc, lod)
 }
 
 /** Sum a card's present rows, with a gap between each, plus padding and border. */
@@ -136,26 +149,26 @@ const stack = (rows: number[], min: number): number => {
   return Math.max(min, h)
 }
 
-function taskH(n: Node, showDesc: boolean): number {
+function taskH(n: Node, showDesc: boolean, lod: boolean): number {
   const text = toText(n.description)
   return stack(
     [
       HEAD_H,
       titleLines(n.title) * TITLE_LINE_H,
-      descLines(text, !!n.cardOpen, showDesc) * DESC_LINE_H,
-      cardHasFooter(n, showDesc) ? FOOTER_H : 0,
+      descLines(text, !!n.cardOpen, showDesc, lod) * DESC_LINE_H,
+      cardHasFooter(n, showDesc, lod) ? FOOTER_H : 0,
       n.tags && n.tags.length > 0 ? TAGS_H : 0,
     ],
     MIN_TASK_H,
   )
 }
 
-function containerH(n: Node, showDesc: boolean): number {
+function containerH(n: Node, showDesc: boolean, lod: boolean): number {
   const text = toText(n.description)
   // A container always keeps its rollup row — the sub-item counts are the point
   // of the card — so the content strip rides along in it for free.
   return stack(
-    [HEAD_H, MOD_TITLE_H, descLines(text, !!n.cardOpen, showDesc) * DESC_LINE_H, MOD_ROLLUP_H, MOD_BAR_H],
+    [HEAD_H, MOD_TITLE_H, descLines(text, !!n.cardOpen, showDesc, lod) * DESC_LINE_H, MOD_ROLLUP_H, MOD_BAR_H],
     MIN_MOD_H,
   )
 }
@@ -166,10 +179,10 @@ function containerH(n: Node, showDesc: boolean): number {
  * depth is unbounded, so a task three levels down that grew sub-tasks becomes a
  * container like any other — and a childless node gets the task card.
  */
-export function nodeH(n: Node, depth: number, showDesc = true): number {
+export function nodeH(n: Node, depth: number, showDesc = true, lod = true): number {
   if (depth === 0) return ROOT_H
-  if (n.children.length > 0) return containerH(n, showDesc)
-  return taskH(n, showDesc)
+  if (n.children.length > 0) return containerH(n, showDesc, lod)
+  return taskH(n, showDesc, lod)
 }
 
 /**
@@ -184,6 +197,7 @@ export function layoutTree(
   opts: LayoutOpts = {},
 ): FlowLayout {
   const showDesc = opts.showDesc !== false
+  const lod = opts.lod !== false
   const nodes: FlowNode[] = []
   const edges: FlowEdge[] = []
   // Extent of each node's whole subtree band…
@@ -193,7 +207,7 @@ export function layoutTree(
   const kids = new Map<string, number>()
 
   const isExpandable = (n: Node, depth: number) => n.children.length > 0 && isExpanded(n, depth)
-  const hOf = (n: Node, depth: number) => nodeH(n, depth, showDesc)
+  const hOf = (n: Node, depth: number) => nodeH(n, depth, showDesc, lod)
 
   // Cards vary in height, so a vertical layout's rows are spaced by the tallest
   // card at each depth. Collect those maxima up front, over the visible nodes.

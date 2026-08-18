@@ -1048,6 +1048,9 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .fn-tag{font-size:9.5px;font-weight:600;padding:1px 6px;border-radius:5px;white-space:nowrap;}
 /* Dependency links: dashed, muted, and drawn under the hierarchy edges. */
 .fedge-dep{stroke:var(--amber);stroke-width:2;fill:none;stroke-dasharray:6 5;opacity:.72;stroke-linecap:round;}
+/* Fat, invisible click target over the thin dashed line so it's easy to grab. */
+.fedge-hit{stroke:transparent;stroke-width:16;fill:none;pointer-events:stroke;cursor:pointer;}
+.fedge-dep-g:hover .fedge-dep{opacity:1;stroke-width:3;}
 .flow-ctl{position:absolute;right:14px;bottom:14px;display:flex;align-items:center;gap:4px;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:11px;padding:5px;box-shadow:var(--shadow-flat);}
 .flow-ctl button{border:none;background:transparent;color:var(--muted);width:28px;height:28px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:background .12s,color .12s;}
 .flow-ctl button:hover{background:var(--chip);color:var(--ink);}

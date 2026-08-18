@@ -105,6 +105,19 @@ test('an expanded description clamps at the open limit', () => {
   expect(hOf(tree(huge), huge.id)).toBe(hOf(tree(atLimit), atLimit.id))
 })
 
+test('level-of-detail drops a collapsed teaser but never an opened card', () => {
+  const shut = newNode('T', { description: 'A note that shows as a one-line teaser when collapsed.' })
+  const open = newNode('T', { description: 'A note the user opened to read in full at any zoom.', cardOpen: true })
+  const hAt = (n: typeof shut, lod: boolean) =>
+    layoutTree(tree(n), undefined, 'h', { showDesc: true, lod }).nodes.find(x => x.id === n.id)!.h
+  // Zoomed out, the collapsed card sheds its teaser…
+  expect(hAt(shut, false)).toBeLessThan(hAt(shut, true))
+  expect(hAt(shut, false)).toBe(BARE_TASK_H)
+  // …but the opened card keeps its full height regardless of level-of-detail.
+  expect(hAt(open, false)).toBe(hAt(open, true))
+  expect(hAt(open, false)).toBeGreaterThan(BARE_TASK_H)
+})
+
 test('switching descriptions off reclaims the row entirely', () => {
   const t = newNode('T', { description: 'Some note.' })
   const root = tree(t)

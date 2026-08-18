@@ -50,14 +50,17 @@ export function FlowView({ node }: { node: Node }) {
   const vpRef = useRef<HTMLDivElement>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
   const [tf, setTf] = useState<Transform>({ x: 0, y: 0, k: 1 })
-  // Level-of-detail: zoomed far out, drop the description/meta rows so the canvas
-  // reads as clean labelled boxes (and lays out tighter). The card render gets
-  // the same effective flag, so measured and rendered heights stay in step.
+  // Level-of-detail: zoomed far out, drop the teaser/meta rows on *collapsed*
+  // cards so the canvas reads as clean labelled boxes (and lays out tighter).
+  // Cards the user explicitly opened keep their full content at any zoom. The
+  // card render gets the same flags, so measured and rendered heights stay in
+  // step.
   const LOD_K = 0.5
-  const showDesc = flowDescOn && tf.k >= LOD_K
+  const showDesc = flowDescOn
+  const lod = tf.k >= LOD_K
   // Restore the remembered orientation when switching to a different project.
   useEffect(() => { setOrient(node.flowOrientation ?? 'h') }, [node.id, node.flowOrientation])
-  const layout = useMemo(() => layoutTree(node, expandPred, orient, { showDesc }), [node, orient, showDesc])
+  const layout = useMemo(() => layoutTree(node, expandPred, orient, { showDesc, lod }), [node, orient, showDesc, lod])
   const byId = useMemo(() => new Map(layout.nodes.map(n => [n.id, n])), [layout])
   const accent = hex(node.color)
 
@@ -458,6 +461,19 @@ export function FlowView({ node }: { node: Node }) {
       onConfirm: () => { ids.forEach(id => useStore.getState().remove(id)); setMultiSel(new Set()) },
     })
   }
+  // Remove a dependency by clicking its dashed edge. `from` blocks `to`, so the
+  // link is `to.dependsOn` → `from`; removing it lets `to` proceed.
+  const removeDep = (fromId: string, toId: string) => {
+    const from = findNode([node], fromId)
+    const to = findNode([node], toId)
+    askConfirm({
+      title: 'Remove dependency',
+      confirmLabel: 'Remove link',
+      message: `“${to?.title ?? 'This item'}” will no longer wait on “${from?.title ?? 'the other item'}”.`,
+      onConfirm: () => useStore.getState().removeDependency(toId, fromId),
+    })
+  }
+
   // Minimap: click or drag to recenter the main view on that point.
   const mmDrag = useRef(false)
   const mmTo = (e: React.PointerEvent) => {
@@ -512,13 +528,21 @@ export function FlowView({ node }: { node: Node }) {
               const a = byId.get(e.from)
               const b = byId.get(e.to)
               if (!a || !b) return null
+              const d = depPath(posOf(a), a, posOf(b), b)
+              // A wide, invisible hit path makes the thin dashed line easy to
+              // grab; clicking it offers to remove the dependency.
               return (
-                <path
-                  key={e.id}
-                  className="fedge-dep"
-                  d={depPath(posOf(a), a, posOf(b), b)}
-                  markerEnd="url(#fdep-arrow)"
-                />
+                <g key={e.id} className="fedge-dep-g">
+                  <path className="fedge-dep" d={d} markerEnd="url(#fdep-arrow)" />
+                  <path
+                    className="fedge-hit"
+                    d={d}
+                    onPointerDown={ev => ev.stopPropagation()}
+                    onClick={() => removeDep(e.from, e.to)}
+                  >
+                    <title>Click to remove this dependency</title>
+                  </path>
+                </g>
               )
             }) : null}
             {layout.edges.filter(e => e.kind === 'child').map(e => {
@@ -553,6 +577,7 @@ export function FlowView({ node }: { node: Node }) {
               stageLabels={stageLabels}
               kicker={kickerFor(fn, byId, vocab)}
               showDesc={showDesc}
+              lod={lod}
               pos={posOf(fn)}
               dragging={live?.id === fn.id}
               isDropTarget={dropTarget === fn.id}
@@ -704,6 +729,7 @@ interface CardProps {
   stageLabels?: Record<string, string>
   kicker: string
   showDesc: boolean
+  lod: boolean
   pos: { x: number; y: number }
   dragging: boolean
   isDropTarget: boolean
@@ -725,7 +751,7 @@ interface CardProps {
   multi: boolean
 }
 
-function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onOpen, onToggle, onAdd, onDelete, selected, dimmed, editing, onCommitTitle, onCancelEdit, linkTarget, onLinkStart, multi }: CardProps) {
+function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onOpen, onToggle, onAdd, onDelete, selected, dimmed, editing, onCommitTitle, onCancelEdit, linkTarget, onLinkStart, multi }: CardProps) {
   const { node, depth } = fn
   const drop = isDropTarget ? ' fn-droptarget' : ''
   // Named distinctly: the container branch below has its own `done` count, and
@@ -780,15 +806,17 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging
   )
 
   // Descriptions are stored as rich-text HTML; the card shows the flattened
-  // text, one line when collapsed and up to four when this card is expanded.
-  const description = desc && showDesc ? (
+  // text, one line when collapsed and the full note when this card is opened.
+  // Level-of-detail trims the collapsed teaser when zoomed out, but an opened
+  // card always shows — mirrors `descLines` so heights stay in step.
+  const description = desc && showDesc && (node.cardOpen || lod) ? (
     <div className={`fn-desc${node.cardOpen ? ' fn-desc-open' : ''}`}>{desc}</div>
   ) : null
 
   // Compact indicators for what a card carries but has no room to show, plus
   // the per-card expand control. Rendered in the footer of both card kinds, and
   // hidden wholesale by the canvas-wide content switch.
-  const meta = !cardHasMeta(node, showDesc) ? null : (
+  const meta = !cardHasMeta(node, showDesc, lod) ? null : (
     <span className="fn-meta">
       {node.attachments?.length ? (
         <span className="fn-chip" title={`${node.attachments.length} attachment${node.attachments.length === 1 ? '' : 's'}`}>
@@ -934,7 +962,7 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging
       {description}
       {/* Rendered only when measured: an empty footer div still occupies its
           CSS height and would spill out of the card. */}
-      {cardHasFooter(node, showDesc) ? (
+      {cardHasFooter(node, showDesc, lod) ? (
         <div className="fn-task-foot">
           <DueChip dueDate={node.dueDate} />
           {meta}
