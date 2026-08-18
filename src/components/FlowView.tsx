@@ -4,7 +4,7 @@ import { hex, stageMeta, PRIORITY_META } from '../theme'
 import { layoutTree, cardHasMeta, cardHasFooter, type FlowNode, type ExpandPredicate } from '../lib/layout'
 import { progressOf, statusCounts } from '../lib/progress'
 import { leaves, findNode, findParent } from '../lib/tree'
-import { dependents } from '../lib/deps'
+import { dependents, isComplete, isBlocked } from '../lib/deps'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { toText } from '../lib/text'
 import { useStore } from '../store/useStore'
@@ -59,6 +59,9 @@ export function FlowView({ node }: { node: Node }) {
   const [selId, setSel] = useState<string | null>(null)   // keyboard-focused node
   const [editId, setEditId] = useState<string | null>(null) // node being renamed inline
   const [spotlight, setSpotlight] = useState(false)        // dim all but the selected dependency chain
+  const [readyMode, setReadyMode] = useState(false)        // dim done + blocked, so actionable work stands out
+  const [linkDrag, setLinkDrag] = useState<{ sourceId: string; x: number; y: number } | null>(null) // drag-to-connect a dependency
+  const [linkTarget, setLinkTarget] = useState<string | null>(null)
 
   // Spotlight: the selected node's full dependency chain — everything it
   // (transitively) depends on, plus everything that depends on it. Non-chain
@@ -275,6 +278,52 @@ export function FlowView({ node }: { node: Node }) {
     })
   }
 
+  // ── Drag-to-connect dependencies ──────────────────────────────────────────
+  // Start from a card's link handle; window listeners (below) track the cursor
+  // and drop, so the gesture survives leaving the source card. Dragging
+  // source → target reads as "source, then target": target depends on source.
+  const startLink = (e: React.PointerEvent, fn: FlowNode) => {
+    e.stopPropagation()
+    const vp = vpRef.current; if (!vp) return
+    const r = vp.getBoundingClientRect()
+    setLinkDrag({ sourceId: fn.id, x: (e.clientX - r.left - tf.x) / tf.k, y: (e.clientY - r.top - tf.y) / tf.k })
+    setLinkTarget(null)
+  }
+  const linkRef = useRef({ linkDrag, linkTarget, tf, layout, node })
+  linkRef.current = { linkDrag, linkTarget, tf, layout, node }
+  const linking = !!linkDrag
+  useEffect(() => {
+    if (!linking) return
+    const canvas = (e: PointerEvent) => {
+      const vp = vpRef.current; if (!vp) return null
+      const r = vp.getBoundingClientRect(); const { tf } = linkRef.current
+      return { x: (e.clientX - r.left - tf.x) / tf.k, y: (e.clientY - r.top - tf.y) / tf.k }
+    }
+    const onMove = (e: PointerEvent) => {
+      const p = canvas(e); if (!p) return
+      const { layout, linkDrag } = linkRef.current; if (!linkDrag) return
+      let target: string | null = null
+      for (const other of layout.nodes) {
+        if (other.id === linkDrag.sourceId) continue
+        const q = other.node.pos ?? { x: other.x, y: other.y }
+        if (p.x >= q.x && p.x <= q.x + other.w && p.y >= q.y && p.y <= q.y + other.h) { target = other.id; break }
+      }
+      setLinkTarget(target)
+      setLinkDrag(d => (d ? { ...d, x: p.x, y: p.y } : d))
+    }
+    const onUp = () => {
+      const { linkDrag, linkTarget, node } = linkRef.current
+      if (linkDrag && linkTarget) {
+        const ok = useStore.getState().addDependency(linkTarget, linkDrag.sourceId) // guards self/dupe/cycle
+        if (ok && node.flowDeps === false) useStore.getState().patch(node.id, { flowDeps: true })
+      }
+      setLinkDrag(null); setLinkTarget(null)
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    return () => { window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp) }
+  }, [linking])
+
   // ── Selection, keyboard navigation & inline editing ───────────────────────
   // Pan (keeping zoom) so a node sits in the middle of the viewport.
   const centerNode = useCallback((id: string) => {
@@ -426,6 +475,11 @@ export function FlowView({ node }: { node: Node }) {
               }
               return <path key={e.id} d={d} stroke={e.color} strokeWidth={3} fill="none" opacity={0.8} strokeLinecap="round" />
             })}
+            {linkDrag ? (() => {
+              const s = byId.get(linkDrag.sourceId); if (!s) return null
+              const sp = s.node.pos ?? { x: s.x, y: s.y }
+              return <line x1={sp.x + s.w / 2} y1={sp.y + s.h / 2} x2={linkDrag.x} y2={linkDrag.y} stroke={hex('amber')} strokeWidth={3} strokeDasharray="6 5" strokeLinecap="round" markerEnd="url(#fdep-arrow)" />
+            })() : null}
           </svg>
           {layout.nodes.map(fn => (
             <FlowNodeCard
@@ -447,10 +501,12 @@ export function FlowView({ node }: { node: Node }) {
               onAdd={() => addChild(fn)}
               onDelete={() => del(fn)}
               selected={selId === fn.id}
-              dimmed={!!spotSet && !spotSet.has(fn.id)}
+              dimmed={(!!spotSet && !spotSet.has(fn.id)) || (readyMode && (isComplete(fn.node) || isBlocked([node], fn.node)))}
               editing={editId === fn.id}
               onCommitTitle={title => { const t = title.trim(); if (t) useStore.getState().patch(fn.id, { title: t }); setEditId(null) }}
               onCancelEdit={() => setEditId(null)}
+              linkTarget={linkTarget === fn.id}
+              onLinkStart={e => startLink(e, fn)}
             />
           ))}
         </div>
@@ -490,6 +546,15 @@ export function FlowView({ node }: { node: Node }) {
           title="Spotlight the selected item's dependency chain (dim the rest)"
         >
           <Icon name="ti-bulb" />
+        </button>
+        <button
+          className={readyMode ? 'on' : undefined}
+          onClick={() => setReadyMode(s => !s)}
+          aria-label="Highlight actionable work"
+          aria-pressed={readyMode}
+          title="Highlight what's actionable now (dim done + blocked)"
+        >
+          <Icon name="ti-target-arrow" />
         </button>
         <span className="flow-sep" />
         <button onClick={collapseAll} aria-label="Collapse all" title="Collapse all"><Icon name="ti-fold" /></button>
@@ -565,9 +630,11 @@ interface CardProps {
   editing: boolean
   onCommitTitle: (title: string) => void
   onCancelEdit: () => void
+  linkTarget: boolean
+  onLinkStart: (e: React.PointerEvent) => void
 }
 
-function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onOpen, onToggle, onAdd, onDelete, selected, dimmed, editing, onCommitTitle, onCancelEdit }: CardProps) {
+function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onOpen, onToggle, onAdd, onDelete, selected, dimmed, editing, onCommitTitle, onCancelEdit, linkTarget, onLinkStart }: CardProps) {
   const { node, depth } = fn
   const drop = isDropTarget ? ' fn-droptarget' : ''
   // Named distinctly: the container branch below has its own `done` count, and
@@ -678,7 +745,15 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging
   // Every card is outlined in its own color — status for tasks, identity for
   // modules and the root — so the canvas reads as a set of tagged objects.
   const outline: React.CSSProperties = { borderColor: hex(color) }
-  const sel = (selected ? ' is-sel' : '') + (dimmed ? ' is-dim' : '')
+  const sel = (selected ? ' is-sel' : '') + (dimmed ? ' is-dim' : '') + (linkTarget ? ' is-linktarget' : '')
+  const linkHandle = (
+    <button
+      className="fn-link"
+      onPointerDown={onLinkStart}
+      aria-label="Drag to link a dependency"
+      title="Drag to another card to add a dependency"
+    ><span className="fn-link-dot" /></button>
+  )
 
   // The title, swapped for an inline editor when this node is being renamed
   // (F2, or right after a keyboard add). Commits on Enter/blur, reverts on Esc.
@@ -717,6 +792,7 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging
         <ProgressRing value={progressOf(node)} color={hex(color)} size={54} />
         {actions}
         {toggle}
+        {linkHandle}
       </div>
     )
   }
@@ -748,6 +824,7 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging
         <ProgressBar node={node} className="fn-bar" />
         {actions}
         {toggle}
+        {linkHandle}
       </div>
     )
   }
@@ -779,6 +856,7 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging
       ) : null}
       {actions}
       {toggle}
+      {linkHandle}
     </div>
   )
 }

@@ -932,6 +932,11 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .fn-droptarget{box-shadow:0 0 0 3px color-mix(in srgb,var(--board-accent,var(--blue)) 65%,transparent)!important;}
 .fn.is-sel{box-shadow:0 0 0 2px var(--card),0 0 0 4px color-mix(in srgb,var(--board-accent,var(--blue)) 60%,transparent);z-index:15;}
 .fn.is-dim{opacity:.2;filter:saturate(.55);transition:opacity .15s ease,filter .15s ease;}
+.fn.is-linktarget{box-shadow:0 0 0 3px color-mix(in srgb,var(--amber) 78%,transparent)!important;}
+.fn-link{position:absolute;right:-9px;top:calc(50% - 9px);width:18px;height:18px;border:none;background:none;padding:0;cursor:crosshair;opacity:0;display:flex;align-items:center;justify-content:center;z-index:6;transition:opacity .12s;touch-action:none;}
+.fn:hover .fn-link,.fn.is-sel .fn-link{opacity:1;}
+.fn-link-dot{width:11px;height:11px;border-radius:50%;background:var(--card);border:2px solid color-mix(in srgb,var(--amber) 85%,var(--ink));box-shadow:var(--shadow-flat);transition:background .12s,transform .12s;}
+.fn-link:hover .fn-link-dot{background:var(--amber);transform:scale(1.15);}
 .fn-title-edit{font:inherit;font-weight:inherit;font-size:inherit;line-height:inherit;color:inherit;width:100%;box-sizing:border-box;border:none;background:var(--card);border-radius:6px;padding:1px 5px;margin:-1px -5px;outline:2px solid color-mix(in srgb,var(--board-accent,var(--blue)) 50%,transparent);}
 .fn-act{position:absolute;top:-13px;right:-7px;display:flex;gap:5px;opacity:0;transition:opacity .12s;z-index:3;}
 .fn:hover .fn-act{opacity:1;}
