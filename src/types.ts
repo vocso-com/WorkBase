@@ -78,6 +78,10 @@ export interface Node {
   // Root-level only: show a one-line description teaser on every Flow card.
   // Absent means on.
   flowDesc?: boolean
+  // Root-level only: expand every Flow card's full description by default. A
+  // card's own `cardOpen` still overrides this, so you can collapse specific
+  // cards with "Less" while the rest stay open. Absent means off.
+  flowDescExpanded?: boolean
   // This card is expanded on the Flow canvas, showing its full description and
   // detail counts. Absent means collapsed. Distinct from `collapsed`, which
   // controls whether the node's *children* are laid out.

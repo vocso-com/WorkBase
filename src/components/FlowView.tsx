@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { Node, Stage } from '../types'
 import { hex, stageMeta, PRIORITY_META } from '../theme'
-import { layoutTree, cardHasMeta, cardHasFooter, type FlowNode, type ExpandPredicate } from '../lib/layout'
+import { layoutTree, cardHasMeta, cardHasFooter, isCardOpen, type FlowNode, type ExpandPredicate } from '../lib/layout'
 import { progressOf, statusCounts } from '../lib/progress'
 import { leaves, findNode, findParent } from '../lib/tree'
 import { dependents, isComplete, isBlocked } from '../lib/deps'
@@ -69,6 +69,9 @@ export function FlowView({ node }: { node: Node }) {
   const [orient, setOrient] = useState<'h' | 'v'>(node.flowOrientation ?? 'h')
   const showDeps = node.flowDeps !== false
   const flowDescOn = node.flowDesc !== false
+  // Canvas-wide "expand all": every card opens by default; a card's own
+  // `cardOpen` still overrides, so "Less" collapses that one card.
+  const descExpanded = node.flowDescExpanded === true
   const vpRef = useRef<HTMLDivElement>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
   const [tf, setTf] = useState<Transform>({ x: 0, y: 0, k: 1 })
@@ -82,7 +85,7 @@ export function FlowView({ node }: { node: Node }) {
   const lod = tf.k >= LOD_K
   // Restore the remembered orientation when switching to a different project.
   useEffect(() => { setOrient(node.flowOrientation ?? 'h') }, [node.id, node.flowOrientation])
-  const layout = useMemo(() => layoutTree(node, expandPred, orient, { showDesc, lod }), [node, orient, showDesc, lod])
+  const layout = useMemo(() => layoutTree(node, expandPred, orient, { showDesc, lod, descOpenDefault: descExpanded }), [node, orient, showDesc, lod, descExpanded])
   const byId = useMemo(() => new Map(layout.nodes.map(n => [n.id, n])), [layout])
   const accent = hex(node.color)
 
@@ -548,6 +551,16 @@ export function FlowView({ node }: { node: Node }) {
   const mmUp = (e: React.PointerEvent) => { mmDrag.current = false; try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId) } catch { /* ok */ } }
 
   const resetLayout = () => { refit.current = true; useStore.getState().clearPositions(node.id) }
+  // Descriptions cycle through three states from one button: 0 hidden,
+  // 1 one-line teaser, 2 fully expanded. Derived from the two stored flags.
+  const descMode: 0 | 1 | 2 = !flowDescOn ? 0 : descExpanded ? 2 : 1
+  const cycleDesc = () => {
+    refit.current = true
+    const s = useStore.getState()
+    if (descMode === 0) s.patch(node.id, { flowDesc: true, flowDescExpanded: false })
+    else if (descMode === 1) s.patch(node.id, { flowDescExpanded: true })
+    else s.patch(node.id, { flowDesc: false, flowDescExpanded: false })
+  }
   const toggleOrient = () => {
     const next = orient === 'h' ? 'v' : 'h'
     refit.current = true
@@ -638,6 +651,7 @@ export function FlowView({ node }: { node: Node }) {
               kicker={kickerFor(fn, byId, vocab)}
               showDesc={showDesc}
               lod={lod}
+              descOpenDefault={descExpanded}
               pos={posOf(fn)}
               dragging={live?.id === fn.id}
               isDropTarget={dropTarget === fn.id}
@@ -695,14 +709,15 @@ export function FlowView({ node }: { node: Node }) {
         >
           <Icon name={orient === 'h' ? 'ti-layout-distribute-vertical' : 'ti-layout-distribute-horizontal'} />
         </button>
+        {/* One description control, cycling: hidden → one-line → expanded → hidden.
+            (Per-card "More/Less" still overrides an individual card.) */}
         <button
-          className={flowDescOn ? 'on' : undefined}
-          onClick={() => { refit.current = true; useStore.getState().patch(node.id, { flowDesc: !flowDescOn }) }}
-          aria-label="Toggle descriptions"
-          aria-pressed={flowDescOn}
-          title={flowDescOn ? 'Hide descriptions' : 'Show descriptions'}
+          className={descMode ? 'on' : undefined}
+          onClick={cycleDesc}
+          aria-label="Descriptions"
+          title={descMode === 0 ? 'Descriptions: hidden — show one line' : descMode === 1 ? 'Descriptions: one line — expand all' : 'Descriptions: expanded — hide'}
         >
-          <Icon name="ti-align-left" />
+          <Icon name={descMode === 2 ? 'ti-align-justified' : 'ti-align-left'} />
         </button>
         <button
           className={showDeps ? 'on' : undefined}
@@ -790,6 +805,7 @@ interface CardProps {
   kicker: string
   showDesc: boolean
   lod: boolean
+  descOpenDefault: boolean
   pos: { x: number; y: number }
   dragging: boolean
   isDropTarget: boolean
@@ -811,7 +827,7 @@ interface CardProps {
   multi: boolean
 }
 
-function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onOpen, onToggle, onAdd, onDelete, selected, dimmed, editing, onCommitTitle, onCancelEdit, linkTarget, onLinkStart, multi }: CardProps) {
+function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, descOpenDefault, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onOpen, onToggle, onAdd, onDelete, selected, dimmed, editing, onCommitTitle, onCancelEdit, linkTarget, onLinkStart, multi }: CardProps) {
   const { node, depth } = fn
   const drop = isDropTarget ? ' fn-droptarget' : ''
   // Named distinctly: the container branch below has its own `done` count, and
@@ -829,6 +845,8 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, pos, dra
   const stop = (e: React.PointerEvent) => e.stopPropagation()
   const prio = node.priority ? PRIORITY_META[node.priority] : null
   const desc = toText(node.description)
+  // Effective open: this card's own flag wins, else the canvas-wide default.
+  const isOpen = isCardOpen(node, descOpenDefault)
 
   const actions = (
     <div className="fn-act">
@@ -869,14 +887,14 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, pos, dra
   // text, one line when collapsed and the full note when this card is opened.
   // Level-of-detail trims the collapsed teaser when zoomed out, but an opened
   // card always shows — mirrors `descLines` so heights stay in step.
-  const description = desc && showDesc && (node.cardOpen || lod) ? (
-    <div className={`fn-desc${node.cardOpen ? ' fn-desc-open' : ''}`}>{desc}</div>
+  const description = desc && showDesc && (isOpen || lod) ? (
+    <div className={`fn-desc${isOpen ? ' fn-desc-open' : ''}`}>{desc}</div>
   ) : null
 
   // Compact indicators for what a card carries but has no room to show, plus
   // the per-card expand control. Rendered in the footer of both card kinds, and
   // hidden wholesale by the canvas-wide content switch.
-  const meta = !cardHasMeta(node, showDesc, lod) ? null : (
+  const meta = !cardHasMeta(node, showDesc, lod, isOpen) ? null : (
     <span className="fn-meta">
       {node.attachments?.length ? (
         <span className="fn-chip" title={`${node.attachments.length} attachment${node.attachments.length === 1 ? '' : 's'}`}>
@@ -897,11 +915,11 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, pos, dra
         <button
           className="fn-more"
           onPointerDown={stop}
-          onClick={() => useStore.getState().patch(node.id, { cardOpen: !node.cardOpen })}
-          aria-expanded={!!node.cardOpen}
-          title={node.cardOpen ? 'Show less' : 'Show more'}
+          onClick={() => useStore.getState().patch(node.id, { cardOpen: !isOpen })}
+          aria-expanded={isOpen}
+          title={isOpen ? 'Show less' : 'Show more'}
         >
-          {node.cardOpen ? 'Less' : 'More'}<Icon name={node.cardOpen ? 'ti-chevron-up' : 'ti-chevron-down'} />
+          {isOpen ? 'Less' : 'More'}<Icon name={isOpen ? 'ti-chevron-up' : 'ti-chevron-down'} />
         </button>
       ) : null}
     </span>
@@ -1022,7 +1040,7 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, pos, dra
       {description}
       {/* Rendered only when measured: an empty footer div still occupies its
           CSS height and would spill out of the card. */}
-      {cardHasFooter(node, showDesc, lod) ? (
+      {cardHasFooter(node, showDesc, lod, isOpen) ? (
         <div className="fn-task-foot">
           <DueChip dueDate={node.dueDate} />
           {meta}

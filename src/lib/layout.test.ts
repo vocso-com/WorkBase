@@ -126,6 +126,17 @@ test('level-of-detail drops a collapsed teaser but never an opened card', () => 
   expect(hAt(open, false)).toBeGreaterThan(BARE_TASK_H)
 })
 
+test('descOpenDefault opens every card, but a per-card flag still overrides', () => {
+  const plain = newNode('T', { description: 'A note that would be a teaser when collapsed.' })
+  const pinnedShut = newNode('T', { description: 'A note that would be a teaser when collapsed.', cardOpen: false })
+  const hDefault = (n: typeof plain, descOpenDefault: boolean) =>
+    layoutTree(tree(n), undefined, 'h', { showDesc: true, descOpenDefault }).nodes.find(x => x.id === n.id)!.h
+  // Global expand opens a card with no explicit flag…
+  expect(hDefault(plain, true)).toBeGreaterThan(hDefault(plain, false))
+  // …but a card the user collapsed (cardOpen:false) ignores the global default.
+  expect(hDefault(pinnedShut, true)).toBe(hDefault(pinnedShut, false))
+})
+
 test('switching descriptions off reclaims the row entirely', () => {
   const t = newNode('T', { description: 'Some note.' })
   const root = tree(t)
