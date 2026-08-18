@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { Icon } from './ui/Icon'
 import { linkifyHtml } from '../lib/linkify'
 
@@ -11,11 +11,31 @@ function placeCaretEnd(el: HTMLElement) {
   sel?.addRange(range)
 }
 
+/** Insert an <img> (data URL) at the current caret, inside the editor. */
+function insertImageAtCaret(editor: HTMLElement, dataUrl: string) {
+  editor.focus()
+  const sel = window.getSelection()
+  const img = `<img src="${dataUrl}" class="rt-img" alt="" />`
+  if (sel && sel.rangeCount && editor.contains(sel.anchorNode)) {
+    document.execCommand('insertHTML', false, img)
+  } else {
+    editor.insertAdjacentHTML('beforeend', img)
+  }
+}
+
+const fileToDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const r = new FileReader()
+    r.onload = () => resolve(r.result as string)
+    r.onerror = reject
+    r.readAsDataURL(file)
+  })
+
 /**
  * Notion/Trello-style rich text: shows the rendered content with a click-to-edit
- * affordance; the toolbar + editable box only appear while editing. Content is
- * stored as HTML. Uncontrolled while editing (to avoid caret jumps) — remount
- * via `key` to load a different value.
+ * affordance. While editing, a floating "bubble" toolbar follows the text
+ * selection so you format the selected part in place; images can be pasted,
+ * dropped, or added from the insert bar. Content is stored as HTML.
  */
 export function RichText({
   initial,
@@ -28,7 +48,10 @@ export function RichText({
 }) {
   const [html, setHtml] = useState(initial ?? '')
   const [editing, setEditing] = useState(false)
+  const [bubble, setBubble] = useState<{ top: number; left: number } | null>(null)
   const ref = useRef<HTMLDivElement>(null)
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (editing && ref.current) {
@@ -39,16 +62,55 @@ export function RichText({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editing])
 
-  const emit = () => {
+  const emit = useCallback(() => {
     const h = ref.current?.innerHTML ?? ''
     setHtml(h)
     onChange(h)
-  }
+  }, [onChange])
+
+  // Position the bubble over the current selection while editing.
+  const updateBubble = useCallback(() => {
+    const editor = ref.current, wrap = wrapRef.current
+    const sel = window.getSelection()
+    if (!editor || !wrap || !sel || sel.rangeCount === 0 || sel.isCollapsed || !editor.contains(sel.anchorNode)) {
+      setBubble(null); return
+    }
+    const rect = sel.getRangeAt(0).getBoundingClientRect()
+    if (rect.width === 0 && rect.height === 0) { setBubble(null); return }
+    const wr = wrap.getBoundingClientRect()
+    setBubble({ top: rect.top - wr.top - 46, left: Math.min(Math.max(rect.left - wr.left + rect.width / 2 - 130, 0), wr.width - 260) })
+  }, [])
+
+  useEffect(() => {
+    if (!editing) { setBubble(null); return }
+    const on = () => updateBubble()
+    document.addEventListener('selectionchange', on)
+    return () => document.removeEventListener('selectionchange', on)
+  }, [editing, updateBubble])
+
   const exec = (cmd: string, value?: string) => {
     ref.current?.focus()
     document.execCommand(cmd, false, value)
-    emit()
+    emit(); updateBubble()
   }
+  const addLink = () => {
+    const url = window.prompt('Link URL')
+    if (url) exec('createLink', /^https?:\/\//i.test(url) ? url : `https://${url}`)
+  }
+  const addImages = async (files: FileList | File[]) => {
+    const imgs = [...files].filter(f => f.type.startsWith('image/'))
+    for (const f of imgs) insertImageAtCaret(ref.current!, await fileToDataUrl(f))
+    if (imgs.length) emit()
+  }
+  const onPaste = (e: React.ClipboardEvent) => {
+    const imgs = [...e.clipboardData.files].filter(f => f.type.startsWith('image/'))
+    if (imgs.length) { e.preventDefault(); void addImages(imgs) }
+  }
+  const onDrop = (e: React.DragEvent) => {
+    const imgs = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/'))
+    if (imgs.length) { e.preventDefault(); void addImages(imgs) }
+  }
+
   const Btn = ({ cmd, icon, value, label }: { cmd: string; icon: string; value?: string; label: string }) => (
     <button type="button" title={label} aria-label={label} onMouseDown={e => { e.preventDefault(); exec(cmd, value) }}>
       <Icon name={icon} />
@@ -64,20 +126,36 @@ export function RichText({
   }
 
   return (
-    <div className="rt rt-focus" onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) { setEditing(false); emit() } }}>
-      <div className="rt-bar">
-        <Btn cmd="bold" icon="ti-bold" label="Bold" />
-        <Btn cmd="italic" icon="ti-italic" label="Italic" />
-        <span className="rt-sep" />
-        <Btn cmd="formatBlock" value="H3" icon="ti-heading" label="Heading" />
-        <Btn cmd="insertUnorderedList" icon="ti-list" label="Bulleted list" />
-        <Btn cmd="insertOrderedList" icon="ti-list-numbers" label="Numbered list" />
-        <Btn cmd="formatBlock" value="BLOCKQUOTE" icon="ti-quote" label="Quote" />
-        <span className="rt-sep" />
-        <Btn cmd="removeFormat" icon="ti-clear-formatting" label="Clear formatting" />
+    <div ref={wrapRef} className="rt rt-focus" onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) { setEditing(false); emit() } }}>
+      {bubble ? (
+        <div className="rt-bubble" style={{ top: bubble.top, left: bubble.left }} onMouseDown={e => e.preventDefault()}>
+          <Btn cmd="bold" icon="ti-bold" label="Bold" />
+          <Btn cmd="italic" icon="ti-italic" label="Italic" />
+          <Btn cmd="underline" icon="ti-underline" label="Underline" />
+          <Btn cmd="strikeThrough" icon="ti-strikethrough" label="Strikethrough" />
+          <button type="button" title="Link" aria-label="Link" onMouseDown={e => { e.preventDefault(); addLink() }}><Icon name="ti-link" /></button>
+          <span className="rt-sep" />
+          <Btn cmd="formatBlock" value="H3" icon="ti-heading" label="Heading" />
+          <Btn cmd="formatBlock" value="BLOCKQUOTE" icon="ti-quote" label="Quote" />
+          <Btn cmd="insertUnorderedList" icon="ti-list" label="Bulleted list" />
+          <Btn cmd="removeFormat" icon="ti-clear-formatting" label="Clear formatting" />
+        </div>
+      ) : null}
+      <div
+        ref={ref}
+        className="rt-editor"
+        contentEditable
+        suppressContentEditableWarning
+        data-placeholder={placeholder}
+        onInput={emit}
+        onPaste={onPaste}
+        onDrop={onDrop}
+      />
+      <div className="rt-insert">
+        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => fileRef.current?.click()}><Icon name="ti-photo" /> Image</button>
+        <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={e => { if (e.target.files) void addImages(e.target.files); e.target.value = '' }} />
         <button type="button" className="rt-done" onMouseDown={e => { e.preventDefault(); setEditing(false); emit() }}>Done</button>
       </div>
-      <div ref={ref} className="rt-editor" contentEditable suppressContentEditableWarning data-placeholder={placeholder} onInput={emit} />
     </div>
   )
 }

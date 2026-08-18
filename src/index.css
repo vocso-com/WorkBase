@@ -1274,8 +1274,16 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .cm-desc:focus{outline:none;border-color:color-mix(in srgb,var(--ink) 20%,var(--line));}
 
 /* Rich-text editor */
-.rt{border:1px solid var(--line);border-radius:10px;background:var(--panel);overflow:hidden;transition:border-color .12s;}
-.rt.rt-focus{border-color:color-mix(in srgb,var(--ink) 24%,var(--line));background:var(--card);}
+.rt{position:relative;border:1px solid var(--line);border-radius:10px;background:var(--panel);overflow:hidden;transition:border-color .12s;}
+.rt.rt-focus{border-color:color-mix(in srgb,var(--ink) 24%,var(--line));background:var(--card);overflow:visible;}
+.rt-bubble{position:absolute;z-index:30;display:flex;align-items:center;gap:1px;background:var(--card);border:1px solid var(--line);border-radius:9px;padding:4px 5px;box-shadow:var(--shadow-crisp);}
+.rt-bubble button{width:28px;height:28px;border:none;background:none;border-radius:7px;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:background .12s,color .12s;}
+.rt-bubble button:hover{background:var(--chip);color:var(--ink);}
+.rt-insert{display:flex;align-items:center;gap:8px;padding:6px 8px;border-top:1px solid var(--line);}
+.rt-insert button{display:inline-flex;align-items:center;gap:5px;border:none;background:var(--chip);color:var(--muted);font:inherit;font-size:12.5px;font-weight:600;border-radius:8px;padding:5px 10px;cursor:pointer;transition:background .12s,color .12s;}
+.rt-insert button:hover{background:var(--btn);color:var(--ink);}
+.rt-insert .rt-done{margin-left:auto;background:var(--ink);color:var(--card);}
+.rt-img{max-width:100%;border-radius:8px;margin:4px 0;display:block;}
 .rt-bar{display:flex;align-items:center;gap:1px;padding:4px 6px;border-bottom:1px solid var(--line);background:var(--card);}
 .rt-bar button{width:28px;height:28px;border:none;background:none;border-radius:7px;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:background .12s,color .12s;}
 .rt-bar button:hover{background:var(--chip);color:var(--ink);}
