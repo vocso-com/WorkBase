@@ -25,6 +25,36 @@ test('a task is blocked while a dependency is incomplete, ready once it is done'
   expect(isBlocked(roots, a)).toBe(false)
 })
 
+test('a container dependency is complete once ticked done, even with an open child', () => {
+  const { roots, a } = setup()
+  const c1 = newNode('c1', { shortId: 'P-3' })
+  const c2 = newNode('c2', { shortId: 'P-4' })
+  const c = newNode('Foundations', { shortId: 'P-5' })
+  c.children = [c1, c2]
+  roots[0].children.push(c)
+  a.dependsOn = [c.id]
+
+  // One of two children done → 50% → still blocking.
+  c1.status = 'done'
+  expect(isComplete(c)).toBe(false)
+  expect(isBlocked(roots, a)).toBe(true)
+
+  // Tick the container itself done → it counts as complete; a is unblocked.
+  c.status = 'done'
+  expect(isComplete(c)).toBe(true)
+  expect(isBlocked(roots, a)).toBe(false)
+})
+
+test('a container auto-completes when every child is done', () => {
+  const c = newNode('C', { shortId: 'P-6' })
+  const c1 = newNode('c1', { shortId: 'P-7' })
+  const c2 = newNode('c2', { shortId: 'P-8' })
+  c.children = [c1, c2]
+  expect(isComplete(c)).toBe(false)
+  c1.status = 'done'; c2.status = 'done'
+  expect(isComplete(c)).toBe(true)
+})
+
 test('dependents returns the reverse edge', () => {
   const { roots, a, b } = setup()
   a.dependsOn = [b.id]

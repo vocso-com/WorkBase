@@ -2,9 +2,16 @@ import type { Node } from '../types'
 import { findNode } from './tree'
 import { progressOf } from './progress'
 
-/** A node is "complete" when a leaf is done, or a container is 100%. */
+/**
+ * A node is "complete" when it's explicitly marked done — the case that matters
+ * for a container someone ticked off directly — or, failing that, when it's a
+ * container whose children are all done (auto-complete). Without the first
+ * clause, checking off a parent (status 'done') left anything that depended on
+ * it still blocked whenever a child was unfinished.
+ */
 export function isComplete(n: Node): boolean {
-  return n.children.length > 0 ? progressOf(n) === 100 : n.status === 'done'
+  if (n.status === 'done') return true
+  return n.children.length > 0 && progressOf(n) === 100
 }
 
 /** Resolved nodes this node is blocked by (skips ids that no longer exist). */
