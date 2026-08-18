@@ -12,7 +12,7 @@ import { progressOf } from '../lib/progress'
 import { linkifyText } from '../lib/linkify'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { uploadFile } from '../lib/uploads'
-import { askConfirm } from '../hooks/useConfirm'
+import { confirmDeleteNode } from '../lib/confirmDelete'
 import { RichText } from './RichText'
 import { ChecklistTree } from './ChecklistTree'
 import { ProgressBar } from './ui/ProgressBar'
@@ -192,17 +192,9 @@ export function CardModal({ inlineNode }: { inlineNode?: Node } = {}) {
   }
   const del = () => {
     const id = node.id
-    const title = node.title
-    askConfirm({
-      title: 'Delete',
-      message: `Delete "${title}" and all its sub-items? This can't be undone.`,
-      confirmLabel: 'Delete',
-      danger: true,
-      onConfirm: () => {
-        useStore.getState().remove(id)
-        close()
-        if (useNav.getState().path.includes(id)) useNav.getState().home()
-      },
+    confirmDeleteNode(node, () => {
+      close()
+      if (useNav.getState().path.includes(id)) useNav.getState().home()
     })
   }
 

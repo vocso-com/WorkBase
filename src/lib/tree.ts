@@ -53,6 +53,23 @@ export function deleteNode(roots: Node[], id: string): Node[] {
   return filtered.map(n => ({ ...n, children: deleteNode(n.children, id) }))
 }
 
+/**
+ * Remove a node but splice its children into its place in the parent's list, so
+ * the sub-tree is promoted one level rather than deleted along with it. A root
+ * node's children become roots.
+ */
+export function deleteKeepingChildren(roots: Node[], id: string): Node[] {
+  const walk = (list: Node[]): Node[] => {
+    const out: Node[] = []
+    for (const n of list) {
+      if (n.id === id) out.push(...n.children)
+      else out.push({ ...n, children: walk(n.children) })
+    }
+    return out
+  }
+  return walk(roots)
+}
+
 export function moveNode(roots: Node[], id: string, newParentId: string | null, index: number): Node[] {
   const node = findNode(roots, id)
   if (!node) return roots

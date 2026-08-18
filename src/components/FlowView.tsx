@@ -11,6 +11,7 @@ import { useDetail } from '../hooks/useDetail'
 import { useVocab } from '../hooks/useVocab'
 import type { Vocab } from '../lib/vocab'
 import { askConfirm } from '../hooks/useConfirm'
+import { confirmDeleteNode } from '../lib/confirmDelete'
 import { ProgressBar } from './ui/ProgressBar'
 import { Icon } from './ui/Icon'
 import { ProgressRing } from './ui/ProgressRing'
@@ -250,15 +251,8 @@ export function FlowView({ node }: { node: Node }) {
     useDetail.getState().open(id)
   }
   const del = (fn: FlowNode) => {
-    askConfirm({
-      title: 'Delete',
-      message: `Delete "${fn.node.title}" and all its sub-items?`,
-      confirmLabel: 'Delete',
-      danger: true,
-      onConfirm: () => {
-        useStore.getState().remove(fn.id)
-        if (useDetail.getState().openId === fn.id) useDetail.getState().close()
-      },
+    confirmDeleteNode(fn.node, () => {
+      if (useDetail.getState().openId === fn.id) useDetail.getState().close()
     })
   }
   const resetLayout = () => { refit.current = true; useStore.getState().clearPositions(node.id) }

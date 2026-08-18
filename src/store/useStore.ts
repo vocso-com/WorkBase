@@ -7,7 +7,7 @@ import { mergeProjectExport, type ProjectExport } from '../lib/export/json'
 import { applyImport as applyImportPlan, type ParsedImport, type ImportCandidate } from '../lib/export/importPlan'
 import { newNode } from '../lib/factory'
 import { projectPrefix, nextShortId } from '../lib/shortid'
-import { addChild, updateNode, deleteNode, moveNode, reorderChildren, findNode, findParent, pathTo } from '../lib/tree'
+import { addChild, updateNode, deleteNode, deleteKeepingChildren, moveNode, reorderChildren, findNode, findParent, pathTo } from '../lib/tree'
 import { wouldCycle, dependents } from '../lib/deps'
 import { instantiateTemplate, projectToTemplate } from '../lib/templates'
 import { playComplete } from '../lib/sound'
@@ -61,6 +61,7 @@ interface State {
   addDependency: (id: string, dependsOnId: string) => boolean
   removeDependency: (id: string, dependsOnId: string) => void
   remove: (id: string) => void
+  removeKeepingChildren: (id: string) => void
   duplicate: (id: string) => string | null
   move: (id: string, newParentId: string | null, index: number) => void
   reorder: (parentId: string | null, from: number, to: number) => void
@@ -497,6 +498,19 @@ export const useStore = create<State>((set, get) => ({
     })
     // Log the removal on the surviving parent so it shows in its activity feed.
     if (n && parent) get().logActivity(parent.id, `Removed “${n.title}”`)
+    schedulePersist(get)
+  },
+  removeKeepingChildren(id) {
+    const roots = get().doc.roots
+    const n = findNode(roots, id)
+    const parent = n ? findParent(roots, id) : null
+    const blockers = dependents(roots, id)
+    set(s => {
+      let roots2 = deleteKeepingChildren(s.doc.roots, id)
+      for (const d of blockers) roots2 = updateNode(roots2, d.id, { dependsOn: (d.dependsOn ?? []).filter(x => x !== id) })
+      return { doc: { ...s.doc, roots: roots2 } }
+    })
+    if (n && parent) get().logActivity(parent.id, `Removed “${n.title}”, kept its sub-items`)
     schedulePersist(get)
   },
   duplicate(id) {

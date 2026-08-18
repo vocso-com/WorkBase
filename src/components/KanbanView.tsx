@@ -4,7 +4,7 @@ import type { ColorKey, Node, Status } from '../types'
 import { COLORS, hex, mergedStages } from '../theme'
 import { useStore } from '../store/useStore'
 import { findNode } from '../lib/tree'
-import { askConfirm } from '../hooks/useConfirm'
+import { confirmDeleteNode } from '../lib/confirmDelete'
 import { KanbanColumn, type TaskRow } from './KanbanColumn'
 import { Icon } from './ui/Icon'
 
@@ -55,8 +55,8 @@ export function KanbanView({ node }: { node: Node }) {
     const overId = e.over ? String(e.over.id) : null
     const id = String(e.active.id)
     if (overId === TRASH_ID) {
-      const title = findNode(useStore.getState().doc.roots, id)?.title ?? 'this card'
-      askConfirm({ title: 'Delete', message: `Delete "${title}"?`, danger: true, confirmLabel: 'Delete', onConfirm: () => useStore.getState().remove(id) })
+      const n = findNode(useStore.getState().doc.roots, id)
+      if (n) confirmDeleteNode(n)
       return
     }
     if (overId && validIds.has(overId)) useStore.getState().setStatus(id, overId as Status)

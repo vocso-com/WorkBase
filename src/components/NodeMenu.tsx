@@ -4,7 +4,7 @@ import type { Node } from '../types'
 import { useStore } from '../store/useStore'
 import { useDetail } from '../hooks/useDetail'
 import { useNav } from '../hooks/useNav'
-import { askConfirm } from '../hooks/useConfirm'
+import { confirmDeleteNode } from '../lib/confirmDelete'
 import { findNode, findParent, pathTo } from '../lib/tree'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { Icon } from './ui/Icon'
@@ -60,13 +60,8 @@ export function NodeMenu({ id, className }: { id: string; className?: string }) 
   const moveTo = (value: string | null) => { useStore.getState().move(id, value, 99999); close() }
   const del = () => {
     close()
-    askConfirm({
-      title: 'Delete', danger: true, confirmLabel: 'Delete',
-      message: `Delete "${node.title}"${isContainer ? ' and all its sub-items' : ''}? This can't be undone.`,
-      onConfirm: () => {
-        useStore.getState().remove(id)
-        if (useNav.getState().path.includes(id)) useNav.getState().home()
-      },
+    confirmDeleteNode(node, () => {
+      if (useNav.getState().path.includes(id)) useNav.getState().home()
     })
   }
 

@@ -1,4 +1,4 @@
-import { findNode, findParent, leaves, updateNode, addChild, deleteNode, moveNode, reorderChildren } from './tree'
+import { findNode, findParent, leaves, updateNode, addChild, deleteNode, deleteKeepingChildren, moveNode, reorderChildren } from './tree'
 import type { Node } from '../types'
 
 const leaf = (id: string, title = id): Node => ({
@@ -19,6 +19,20 @@ test('findNode finds nested', () => {
 test('findParent returns the parent', () => {
   expect(findParent(sample(), 't1')!.id).toBe('m1')
   expect(findParent(sample(), 'p')).toBeNull()
+})
+
+test('deleteKeepingChildren promotes children into the deleted node’s place', () => {
+  // Deleting m1 should splice t1,t2 where m1 sat, before m2.
+  const roots = deleteKeepingChildren(sample(), 'm1')
+  expect(findNode(roots, 'm1')).toBeNull()
+  expect(roots[0].children.map(n => n.id)).toEqual(['t1', 't2', 'm2'])
+  expect(findParent(roots, 't1')!.id).toBe('p')
+})
+
+test('deleteKeepingChildren on a root promotes its children to roots', () => {
+  const roots = deleteKeepingChildren(sample(), 'p')
+  expect(findNode(roots, 'p')).toBeNull()
+  expect(roots.map(n => n.id)).toEqual(['m1', 'm2'])
 })
 
 test('leaves collects descendant leaves', () => {
