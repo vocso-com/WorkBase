@@ -14,6 +14,7 @@ import { Tag } from './ui/Tag'
 import { DueChip } from './DueChip'
 import { DepBadges } from './DepBadges'
 import { NodeMenu } from './NodeMenu'
+import { confirmToggleDone } from '../lib/confirmToggleDone'
 
 // A single board checklist row (leaf task or a sub-module) that can be dragged
 // to reorder within its card, moved to another card, or dropped onto a card
@@ -50,7 +51,7 @@ export function BoardItemRow({ child, color, parentId }: { child: Node; color: s
       >
         {grip}
         <span className="check-cb" onClick={e => e.stopPropagation()}>
-          <Checkbox status={child.status} color={color} onToggle={() => useStore.getState().toggleDone(child.id)} />
+          <Checkbox status={child.status} color={color} onToggle={() => confirmToggleDone(child)} />
         </span>
         <span className="check-parent-title">{child.title}</span>
         <div className="check-parent-meta">
@@ -81,7 +82,7 @@ export function BoardItemRow({ child, color, parentId }: { child: Node; color: s
       onClick={e => e.stopPropagation()}
     >
       {grip}
-      <Checkbox status={child.status} color={color} onToggle={() => useStore.getState().toggleDone(child.id)} />
+      <Checkbox status={child.status} color={color} onToggle={() => confirmToggleDone(child)} />
       <span className="grow" style={{ cursor: 'pointer' }} onClick={e => { e.stopPropagation(); useDetail.getState().open(child.id) }}>
         {child.title}
       </span>

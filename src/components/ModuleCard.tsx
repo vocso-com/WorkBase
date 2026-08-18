@@ -14,6 +14,7 @@ import { ProgressBar } from './ui/ProgressBar'
 import { DepBadges } from './DepBadges'
 import { BoardItemRow } from './BoardItemRow'
 import { NodeMenu } from './NodeMenu'
+import { confirmToggleDone } from '../lib/confirmToggleDone'
 
 function AddItemRow({ node }: { node: Node }) {
   const [adding, setAdding] = useState(false)
@@ -71,7 +72,7 @@ export function ModuleCard({ node, onOpen }: { node: Node; onOpen: () => void })
         <div ref={nest.setNodeRef} className={`row1 mc-head${nest.isOver ? ' mc-nesting' : ''}`} {...attributes} {...listeners}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
             <span className="mc-check" onClick={e => e.stopPropagation()} onPointerDown={e => e.stopPropagation()}>
-              <Checkbox status={node.status} onToggle={() => useStore.getState().toggleDone(node.id)} />
+              <Checkbox status={node.status} onToggle={() => confirmToggleDone(node)} />
             </span>
             <div className="ic" style={{ width: 32, height: 32, fontSize: 17, background: tagBg(color), color: tagFg(color) }}>
               <Icon name={node.icon ?? 'ti-folder'} />

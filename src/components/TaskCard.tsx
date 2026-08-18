@@ -12,6 +12,7 @@ import { Checkbox } from './ui/Checkbox'
 import { DueChip } from './DueChip'
 import { DepBadges } from './DepBadges'
 import { NodeMenu } from './NodeMenu'
+import { confirmToggleDone } from '../lib/confirmToggleDone'
 
 export function TaskCard({ node, color }: { node: Node; color: string; label?: string }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: node.id })
@@ -41,7 +42,7 @@ export function TaskCard({ node, color }: { node: Node; color: string; label?: s
       <NodeMenu id={node.id} className="tcard-menu" />
       <div className="tt-row">
         <span className={`tcheck${done ? ' done' : ''}`} onPointerDown={stop} onClick={stop}>
-          <Checkbox status={node.status} onToggle={() => useStore.getState().toggleDone(node.id)} />
+          <Checkbox status={node.status} onToggle={() => confirmToggleDone(node)} />
         </span>
         <div className="tt" onClick={e => { e.stopPropagation(); useDetail.getState().open(node.id) }}>
           {node.title}

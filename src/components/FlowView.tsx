@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import type { Node, Stage } from '../types'
 import { hex, stageMeta, PRIORITY_META } from '../theme'
 import { layoutTree, cardHasMeta, cardHasFooter, type FlowNode, type ExpandPredicate } from '../lib/layout'
-import { progressOf, statusCounts, openDescendants } from '../lib/progress'
+import { progressOf, statusCounts } from '../lib/progress'
 import { leaves } from '../lib/tree'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { toText } from '../lib/text'
@@ -10,8 +10,8 @@ import { useStore } from '../store/useStore'
 import { useDetail } from '../hooks/useDetail'
 import { useVocab } from '../hooks/useVocab'
 import type { Vocab } from '../lib/vocab'
-import { askConfirm } from '../hooks/useConfirm'
 import { confirmDeleteNode } from '../lib/confirmDelete'
+import { confirmToggleDone } from '../lib/confirmToggleDone'
 import { ProgressBar } from './ui/ProgressBar'
 import { Icon } from './ui/Icon'
 import { ProgressRing } from './ui/ProgressRing'
@@ -475,23 +475,9 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging
   // Completing something whose sub-items are still open is usually a mistake,
   // but sometimes it is exactly right — so this warns and then gets out of the
   // way rather than refusing.
-  const onTick = () => {
-    const toggle = () => useStore.getState().toggleDone(node.id)
-    const open = openDescendants(node)
-    if (node.status === 'done' || open === 0) { toggle(); return }
-    askConfirm({
-      title: 'Sub-items still open',
-      message: `“${node.title}” has ${open} sub-item${open === 1 ? '' : 's'} that ${open === 1 ? 'is' : 'are'} not done yet. Mark it complete anyway?`,
-      confirmLabel: 'Mark complete',
-      onConfirm: toggle,
-      altLabel: 'Complete all sub-items too',
-      onAlt: () => useStore.getState().completeSubtree(node.id),
-    })
-  }
-
   const tick = (
     <span className="fn-tick" onPointerDown={stop} title={node.status === 'done' ? 'Mark not done' : 'Mark done'}>
-      <Checkbox status={node.status} onToggle={onTick} />
+      <Checkbox status={node.status} onToggle={() => confirmToggleDone(node)} />
     </span>
   )
 

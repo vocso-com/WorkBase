@@ -6,6 +6,7 @@ import { DepBadges } from './DepBadges'
 import { Icon } from './ui/Icon'
 import { Checkbox } from './ui/Checkbox'
 import { NodeMenu } from './NodeMenu'
+import { confirmToggleDone } from '../lib/confirmToggleDone'
 import { CardModal } from './CardModal'
 
 interface Row { node: Node; depth: number }
@@ -58,7 +59,7 @@ export function ColumnsView({ node }: { node: Node }) {
                   <span className="ol-spacer" />
                 )}
                 <span className="ol-row-check" onClick={e => e.stopPropagation()}>
-                  <Checkbox status={c.status} onToggle={() => useStore.getState().toggleDone(c.id)} />
+                  <Checkbox status={c.status} onToggle={() => confirmToggleDone(c)} />
                 </span>
                 <span className="ol-row-title">{c.title}</span>
                 <DepBadges node={c} roots={roots} compact />

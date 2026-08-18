@@ -13,6 +13,7 @@ import { linkifyText } from '../lib/linkify'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { uploadFile } from '../lib/uploads'
 import { confirmDeleteNode } from '../lib/confirmDelete'
+import { confirmToggleDone } from '../lib/confirmToggleDone'
 import { RichText } from './RichText'
 import { ChecklistTree } from './ChecklistTree'
 import { ProgressBar } from './ui/ProgressBar'
@@ -401,7 +402,7 @@ export function CardModal({ inlineNode }: { inlineNode?: Node } = {}) {
                   </div>
                 ) : (
                   <span className="cm-title-check">
-                    <Checkbox status={node.status} onToggle={() => useStore.getState().toggleDone(node.id)} />
+                    <Checkbox status={node.status} onToggle={() => confirmToggleDone(node)} />
                   </span>
                 )}
                 {titleField}
