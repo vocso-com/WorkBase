@@ -31,6 +31,17 @@ const fileToDataUrl = (file: File) =>
     r.readAsDataURL(file)
   })
 
+// Embedded files live inline as data URLs (local-first, no backend). Small ones
+// render in place; larger ones become a rich file card so a big blob never
+// bloats a card's saved data or slows rendering. Beyond the hard cap we decline.
+const MAX_EMBED = 12 * 1024 * 1024
+const INLINE_PDF_MAX = 3 * 1024 * 1024
+const DOC_ICON: Record<string, string> = { pdf: 'ti-file-type-pdf', doc: 'ti-file-type-doc', docx: 'ti-file-type-docx', ppt: 'ti-file-type-ppt', pptx: 'ti-file-type-ppt', xls: 'ti-file-type-xls', xlsx: 'ti-file-type-xls', zip: 'ti-file-zip' }
+const escHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+const sizeLabel = (b: number) => (b < 1024 * 1024 ? `${Math.round(b / 1024)} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`)
+const fileCardHtml = (url: string, name: string, size: number, icon: string) =>
+  `<a class="rt-filecard" contenteditable="false" href="${url}" download="${escHtml(name)}" target="_blank" rel="noopener"><span class="rt-file-ic"><i class="ti ${icon}"></i></span><span class="rt-file-meta"><b>${escHtml(name)}</b><small>${sizeLabel(size)}</small></span><i class="ti ti-external-link rt-file-open"></i></a>`
+
 /**
  * Notion/Trello-style rich text: shows the rendered content with a click-to-edit
  * affordance. While editing, a floating "bubble" toolbar follows the text
@@ -52,6 +63,7 @@ export function RichText({
   const ref = useRef<HTMLDivElement>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  const docRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (editing && ref.current) {
@@ -97,18 +109,31 @@ export function RichText({
     const url = window.prompt('Link URL')
     if (url) exec('createLink', /^https?:\/\//i.test(url) ? url : `https://${url}`)
   }
-  const addImages = async (files: FileList | File[]) => {
-    const imgs = [...files].filter(f => f.type.startsWith('image/'))
-    for (const f of imgs) insertImageAtCaret(ref.current!, await fileToDataUrl(f))
-    if (imgs.length) emit()
+  // Images embed inline; PDFs inline when small (else a card); other docs are
+  // always a rich card. Everything is stored as a data URL — see MAX_EMBED.
+  const embedFiles = async (files: FileList | File[]) => {
+    const editor = ref.current; if (!editor) return
+    let any = false
+    for (const f of files) {
+      if (f.type.startsWith('image/')) { insertImageAtCaret(editor, await fileToDataUrl(f)); any = true; continue }
+      if (f.size > MAX_EMBED) { window.alert(`“${f.name}” is ${sizeLabel(f.size)} — too large to embed (max ${sizeLabel(MAX_EMBED)}). Add it as an attachment instead.`); continue }
+      const url = await fileToDataUrl(f)
+      const ext = (f.name.split('.').pop() || '').toLowerCase()
+      editor.focus()
+      const block = f.type === 'application/pdf' && f.size <= INLINE_PDF_MAX
+        ? `<div class="rt-embed" contenteditable="false"><embed src="${url}" type="application/pdf" /><div class="rt-embed-cap"><i class="ti ti-file-type-pdf"></i> ${escHtml(f.name)}</div></div>`
+        : fileCardHtml(url, f.name, f.size, DOC_ICON[ext] || 'ti-file')
+      document.execCommand('insertHTML', false, block + '<p><br></p>')
+      any = true
+    }
+    if (any) emit()
   }
   const onPaste = (e: React.ClipboardEvent) => {
     const imgs = [...e.clipboardData.files].filter(f => f.type.startsWith('image/'))
-    if (imgs.length) { e.preventDefault(); void addImages(imgs) }
+    if (imgs.length) { e.preventDefault(); void embedFiles(imgs) }
   }
   const onDrop = (e: React.DragEvent) => {
-    const imgs = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/'))
-    if (imgs.length) { e.preventDefault(); void addImages(imgs) }
+    if (e.dataTransfer.files.length) { e.preventDefault(); void embedFiles(e.dataTransfer.files) }
   }
 
   const Btn = ({ cmd, icon, value, label }: { cmd: string; icon: string; value?: string; label: string }) => (
@@ -153,7 +178,9 @@ export function RichText({
       />
       <div className="rt-insert">
         <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => fileRef.current?.click()}><Icon name="ti-photo" /> Image</button>
-        <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={e => { if (e.target.files) void addImages(e.target.files); e.target.value = '' }} />
+        <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={e => { if (e.target.files) void embedFiles(e.target.files); e.target.value = '' }} />
+        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => docRef.current?.click()}><Icon name="ti-paperclip" /> File</button>
+        <input ref={docRef} type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.zip" multiple hidden onChange={e => { if (e.target.files) void embedFiles(e.target.files); e.target.value = '' }} />
         <button type="button" className="rt-done" onMouseDown={e => { e.preventDefault(); setEditing(false); emit() }}>Done</button>
       </div>
     </div>

@@ -99,10 +99,10 @@ test('expanding a card grows it to fit more of the description', () => {
   expect(hOf(tree(open), open.id)).toBeGreaterThan(hOf(tree(shut), shut.id))
 })
 
-test('an expanded description clamps at four lines', () => {
-  const four = newNode('T', { description: 'y'.repeat(4 * 38), cardOpen: true })
-  const huge = newNode('T', { description: 'y'.repeat(4000), cardOpen: true })
-  expect(hOf(tree(huge), huge.id)).toBe(hOf(tree(four), four.id))
+test('an expanded description clamps at the open limit', () => {
+  const atLimit = newNode('T', { description: 'y'.repeat(30 * 38), cardOpen: true }) // well past the ~20-line cap
+  const huge = newNode('T', { description: 'y'.repeat(6000), cardOpen: true })
+  expect(hOf(tree(huge), huge.id)).toBe(hOf(tree(atLimit), atLimit.id))
 })
 
 test('switching descriptions off reclaims the row entirely', () => {

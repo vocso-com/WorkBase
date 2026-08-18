@@ -85,7 +85,7 @@ const DESC_CPL = 30
 const MAX_TITLE_LINES = 2
 /** Collapsed cards get a one-line teaser; expanding one reveals up to four. */
 const TEASER_LINES = 1
-const OPEN_DESC_LINES = 4
+const OPEN_DESC_LINES = 20 // an expanded card shows the full description (~150 words) before clamping
 
 const titleLines = (text: string): number =>
   Math.min(MAX_TITLE_LINES, Math.max(1, Math.ceil(text.trim().length / TITLE_CPL)))
