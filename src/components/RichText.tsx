@@ -11,18 +11,6 @@ function placeCaretEnd(el: HTMLElement) {
   sel?.addRange(range)
 }
 
-/** Insert an <img> (data URL) at the current caret, inside the editor. */
-function insertImageAtCaret(editor: HTMLElement, dataUrl: string) {
-  editor.focus()
-  const sel = window.getSelection()
-  const img = `<img src="${dataUrl}" class="rt-img" alt="" />`
-  if (sel && sel.rangeCount && editor.contains(sel.anchorNode)) {
-    document.execCommand('insertHTML', false, img)
-  } else {
-    editor.insertAdjacentHTML('beforeend', img)
-  }
-}
-
 const fileToDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
     const r = new FileReader()
@@ -80,6 +68,40 @@ export function RichText({
     onChange(h)
   }, [onChange])
 
+  // The caret is easily lost before an insert lands — pressing a toolbar button
+  // moves focus, and a native file/image picker steals it entirely — and
+  // execCommand('insertHTML') silently does nothing without a live selection
+  // inside the editor. So remember the last caret while editing and insert
+  // against it with the Range API, restoring focus (or falling back to the end
+  // of the editor). This is what makes image/file embeds land after the picker.
+  const savedRange = useRef<Range | null>(null)
+  const rememberSelection = useCallback(() => {
+    const ed = ref.current, sel = window.getSelection()
+    if (ed && sel && sel.rangeCount && ed.contains(sel.anchorNode)) savedRange.current = sel.getRangeAt(0).cloneRange()
+  }, [])
+  const insertHtml = useCallback((markup: string) => {
+    const ed = ref.current; if (!ed) return
+    ed.focus()
+    const sel = window.getSelection(); if (!sel) return
+    let range = savedRange.current
+    if (!range || !ed.contains(range.commonAncestorContainer)) {
+      range = document.createRange(); range.selectNodeContents(ed); range.collapse(false)
+    }
+    sel.removeAllRanges(); sel.addRange(range)
+    range.deleteContents()
+    const frag = range.createContextualFragment(markup)
+    const last = frag.lastChild
+    range.insertNode(frag)
+    // Drop the caret just after what we inserted, so a second embed stacks below.
+    if (last) {
+      const after = document.createRange()
+      after.setStartAfter(last); after.collapse(true)
+      sel.removeAllRanges(); sel.addRange(after)
+      savedRange.current = after.cloneRange()
+    }
+    emit()
+  }, [emit])
+
   // Position the bubble over the current selection while editing.
   const updateBubble = useCallback(() => {
     const editor = ref.current, wrap = wrapRef.current
@@ -95,10 +117,10 @@ export function RichText({
 
   useEffect(() => {
     if (!editing) { setBubble(null); return }
-    const on = () => updateBubble()
+    const on = () => { updateBubble(); rememberSelection() }
     document.addEventListener('selectionchange', on)
     return () => document.removeEventListener('selectionchange', on)
-  }, [editing, updateBubble])
+  }, [editing, updateBubble, rememberSelection])
 
   const exec = (cmd: string, value?: string) => {
     ref.current?.focus()
@@ -112,21 +134,17 @@ export function RichText({
   // Images embed inline; PDFs inline when small (else a card); other docs are
   // always a rich card. Everything is stored as a data URL — see MAX_EMBED.
   const embedFiles = async (files: FileList | File[]) => {
-    const editor = ref.current; if (!editor) return
-    let any = false
+    if (!ref.current) return
     for (const f of files) {
-      if (f.type.startsWith('image/')) { insertImageAtCaret(editor, await fileToDataUrl(f)); any = true; continue }
+      if (f.type.startsWith('image/')) { insertHtml(`<img src="${await fileToDataUrl(f)}" class="rt-img" alt="" />`); continue }
       if (f.size > MAX_EMBED) { window.alert(`“${f.name}” is ${sizeLabel(f.size)} — too large to embed (max ${sizeLabel(MAX_EMBED)}). Add it as an attachment instead.`); continue }
       const url = await fileToDataUrl(f)
       const ext = (f.name.split('.').pop() || '').toLowerCase()
-      editor.focus()
       const block = f.type === 'application/pdf' && f.size <= INLINE_PDF_MAX
         ? `<div class="rt-embed" contenteditable="false"><embed src="${url}" type="application/pdf" /><div class="rt-embed-cap"><i class="ti ti-file-type-pdf"></i> ${escHtml(f.name)}</div></div>`
         : fileCardHtml(url, f.name, f.size, DOC_ICON[ext] || 'ti-file')
-      document.execCommand('insertHTML', false, block + '<p><br></p>')
-      any = true
+      insertHtml(block + '<p><br></p>')
     }
-    if (any) emit()
   }
   const onPaste = (e: React.ClipboardEvent) => {
     const imgs = [...e.clipboardData.files].filter(f => f.type.startsWith('image/'))
@@ -177,9 +195,9 @@ export function RichText({
         onDrop={onDrop}
       />
       <div className="rt-insert">
-        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => fileRef.current?.click()}><Icon name="ti-photo" /> Image</button>
+        <button type="button" onMouseDown={e => { e.preventDefault(); rememberSelection() }} onClick={() => fileRef.current?.click()}><Icon name="ti-photo" /> Image</button>
         <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={e => { if (e.target.files) void embedFiles(e.target.files); e.target.value = '' }} />
-        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => docRef.current?.click()}><Icon name="ti-paperclip" /> File</button>
+        <button type="button" onMouseDown={e => { e.preventDefault(); rememberSelection() }} onClick={() => docRef.current?.click()}><Icon name="ti-paperclip" /> File</button>
         <input ref={docRef} type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.zip" multiple hidden onChange={e => { if (e.target.files) void embedFiles(e.target.files); e.target.value = '' }} />
         <button type="button" className="rt-done" onMouseDown={e => { e.preventDefault(); setEditing(false); emit() }}>Done</button>
       </div>
