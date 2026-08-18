@@ -23,6 +23,10 @@ import { DueChip } from './DueChip'
 
 const MIN_K = 0.3
 const MAX_K = 1.8
+// Fit-to-screen won't zoom out past this — below it the cards stop being
+// readable, so a big tree lands at this floor (anchored on the root) and you
+// pan / use the minimap to reach the rest, rather than shrinking to fit.
+const FIT_FLOOR = 0.55
 const MM_W = 176, MM_H = 128, MM_PAD = 6 // minimap box
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
 
@@ -117,9 +121,28 @@ export function FlowView({ node }: { node: Node }) {
     const vp = vpRef.current
     if (!vp) return
     const pad = 48
-    const k = clamp(Math.min((vp.clientWidth - pad * 2) / layout.width, (vp.clientHeight - pad * 2) / layout.height), MIN_K, 1.4)
-    setTf({ k, x: (vp.clientWidth - layout.width * k) / 2, y: (vp.clientHeight - layout.height * k) / 2 })
-  }, [layout.width, layout.height])
+    const raw = Math.min((vp.clientWidth - pad * 2) / layout.width, (vp.clientHeight - pad * 2) / layout.height)
+    // Land readable: never below the floor (unless even MIN_K can't help), never
+    // more zoomed-in than 1.4×.
+    const k = clamp(Math.max(raw, FIT_FLOOR), MIN_K, 1.4)
+    if (raw >= k) {
+      // The whole tree fits at this zoom — center it.
+      setTf({ k, x: (vp.clientWidth - layout.width * k) / 2, y: (vp.clientHeight - layout.height * k) / 2 })
+      return
+    }
+    // Too big to fit readably: anchor on the project root — flush to the leading
+    // edge on the depth axis so the tree opens away from it, centered on the other.
+    const root = byId.get(node.id)
+    const rp = root ? (root.node.pos ?? { x: root.x, y: root.y }) : { x: 0, y: 0 }
+    const rw = root?.w ?? 0, rh = root?.h ?? 0
+    const cx = vp.clientWidth / 2 - (rp.x + rw / 2) * k
+    const cy = vp.clientHeight / 2 - (rp.y + rh / 2) * k
+    setTf({
+      k,
+      x: orient === 'h' ? pad - rp.x * k : cx,
+      y: orient === 'v' ? pad - rp.y * k : cy,
+    })
+  }, [layout.width, layout.height, byId, node.id, orient])
 
   const fitRef = useRef(fit)
   fitRef.current = fit
