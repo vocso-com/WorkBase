@@ -105,6 +105,15 @@ export function FlowView({ node }: { node: Node }) {
   // When set, focus this node's subtree after the next layout recompute (used so
   // expanding-on-click reveals children before we frame them).
   const focusPending = useRef<string | null>(null)
+  // A single click centers a node — but that must not fire on the first click of
+  // a double-click, or the node slides out from under the cursor and the second
+  // click misses (landing on empty canvas → the add-node flow). So defer the
+  // centering; opening on double-click cancels it first.
+  const centerTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const clearCenter = useCallback(() => {
+    if (centerTimer.current) { clearTimeout(centerTimer.current); centerTimer.current = null }
+  }, [])
+  useEffect(() => clearCenter, [clearCenter]) // clean up on unmount
 
   // Frame on switching to a different project/module.
   useLayoutEffect(() => { fitRef.current() }, [node.id])
@@ -217,13 +226,19 @@ export function FlowView({ node }: { node: Node }) {
         useStore.getState().setPos(fn.id, { x: live.x, y: live.y })
       }
     } else {
-      // Single click: center this node and its sub-nodes. If it's collapsed,
-      // expand one level first, then frame the revealed children.
-      if (fn.hasChildren && !fn.expanded) {
-        useStore.getState().setCollapsed(fn.id, false)
-        focusPending.current = fn.id
-      }
-      focusRef.current(fn.id)
+      // Single click: center this node and its sub-nodes. Deferred, so a
+      // double-click (which opens the node) can cancel it before it moves —
+      // see centerTimer / clearCenter. If it's collapsed, expand one level
+      // first, then frame the revealed children.
+      clearCenter()
+      centerTimer.current = setTimeout(() => {
+        centerTimer.current = null
+        if (fn.hasChildren && !fn.expanded) {
+          useStore.getState().setCollapsed(fn.id, false)
+          focusPending.current = fn.id
+        }
+        focusRef.current(fn.id)
+      }, 240)
     }
     setLive(null)
   }
@@ -325,7 +340,7 @@ export function FlowView({ node }: { node: Node }) {
               onPointerMove={onNodeMove}
               onPointerUp={e => onNodeUp(fn, e)}
               onPointerCancel={e => onNodeUp(fn, e)}
-              onOpen={() => useDetail.getState().open(fn.id)}
+              onOpen={() => { clearCenter(); useDetail.getState().open(fn.id) }}
               onToggle={() => toggle(fn)}
               onAdd={() => addChild(fn)}
               onDelete={() => del(fn)}
