@@ -915,6 +915,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 
 /* Flow / organogram view */
 .flow-wrap{position:relative;margin:-16px -32px -24px;}
+.flow-wrap:fullscreen{margin:0;background:var(--bg);background-image:radial-gradient(var(--dot) 1.3px,transparent 1.3px);background-size:22px 22px;}
+.flow-wrap:fullscreen .flow-vp{height:100vh;}
 .flow-vp{position:relative;height:calc(100vh - var(--wb-top-chrome,104px) - 4px);min-height:360px;overflow:hidden;cursor:grab;touch-action:none;
   background:
     radial-gradient(color-mix(in srgb,var(--ink) 8%,transparent) 1.2px, transparent 1.2px),

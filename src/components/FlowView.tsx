@@ -52,6 +52,7 @@ export function FlowView({ node }: { node: Node }) {
   const accent = hex(node.color)
 
   const vpRef = useRef<HTMLDivElement>(null)
+  const wrapRef = useRef<HTMLDivElement>(null)
   const [tf, setTf] = useState<Transform>({ x: 0, y: 0, k: 1 })
   const [live, setLive] = useState<LiveDrag | null>(null)
   const [dropTarget, setDropTarget] = useState<string | null>(null)
@@ -340,6 +341,7 @@ export function FlowView({ node }: { node: Node }) {
         return
       }
       if (e.key === 'Escape') { setSel(null); return }
+      if ((e.key === 'f' || e.key === 'F') && !e.metaKey && !e.ctrlKey) { e.preventDefault(); if (cur) focusRef.current(cur); return }
       if (e.key === 'Enter' || e.key === 'Tab') {
         e.preventDefault()
         if (!curNode) { if (node.children[0]) selectAndCenter(node.children[0].id); return }
@@ -365,9 +367,14 @@ export function FlowView({ node }: { node: Node }) {
   }
   const collapseAll = () => { refit.current = true; useStore.getState().setCollapsedAll(node.id, true) }
   const expandAll = () => { refit.current = true; useStore.getState().setCollapsedAll(node.id, false) }
+  const toggleFullscreen = () => {
+    const el = wrapRef.current
+    if (!document.fullscreenElement) void el?.requestFullscreen?.().catch(() => {})
+    else void document.exitFullscreen?.()
+  }
 
   return (
-    <div className="flow-wrap" style={{ '--board-accent': accent } as React.CSSProperties}>
+    <div className="flow-wrap" ref={wrapRef} style={{ '--board-accent': accent } as React.CSSProperties}>
       <div
         ref={vpRef}
         className="flow-vp"
@@ -494,7 +501,8 @@ export function FlowView({ node }: { node: Node }) {
         <span className="flow-pct">{Math.round(tf.k * 100)}%</span>
         <button onClick={() => setTf(t => zoomAt(t, vpRef.current, 1))} aria-label="Zoom in"><Icon name="ti-plus" /></button>
         <span className="flow-sep" />
-        <button onClick={fit} aria-label="Fit to screen"><Icon name="ti-maximize" /></button>
+        <button onClick={fit} aria-label="Fit to screen" title="Fit to screen"><Icon name="ti-maximize" /></button>
+        <button onClick={toggleFullscreen} aria-label="Full screen" title="Full screen (presentation)"><Icon name="ti-arrows-maximize" /></button>
       </div>
       <div className="flow-hint"><Icon name="ti-keyboard" /> Arrows move · Tab/Enter add · Space done · F2 rename · double-click opens</div>
     </div>
