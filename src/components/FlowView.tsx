@@ -88,6 +88,14 @@ export function FlowView({ node }: { node: Node }) {
   const layout = useMemo(() => layoutTree(node, expandPred, orient, { showDesc, lod, descOpenDefault: descExpanded }), [node, orient, showDesc, lod, descExpanded])
   const byId = useMemo(() => new Map(layout.nodes.map(n => [n.id, n])), [layout])
   const accent = hex(node.color)
+  // Any card dragged off its tidy position anywhere in the tree? Reset only
+  // earns a spot in the toolbar when there's something to undo.
+  const hasCustomPos = useMemo(() => {
+    let found = false
+    const walk = (n: Node) => { if (n.pos) found = true; else n.children.forEach(walk) }
+    walk(node)
+    return found
+  }, [node])
 
   // Bounding box of all cards, for the minimap's scale.
   const bounds = useMemo(() => {
@@ -749,8 +757,14 @@ export function FlowView({ node }: { node: Node }) {
         <span className="flow-sep" />
         <button onClick={collapseAll} aria-label="Collapse all" title="Collapse all"><Icon name="ti-fold" /></button>
         <button onClick={expandAll} aria-label="Expand all" title="Expand all"><Icon name="ti-list-tree" /></button>
-        <span className="flow-sep" />
-        <button onClick={resetLayout} aria-label="Reset layout" title="Reset layout"><Icon name="ti-refresh" /></button>
+        {/* Only offered once you've dragged cards — with none moved it would
+            just re-fit, duplicating the fit button below. */}
+        {hasCustomPos ? (
+          <>
+            <span className="flow-sep" />
+            <button onClick={resetLayout} aria-label="Re-tidy layout" title="Re-tidy — clear the cards you've dragged"><Icon name="ti-refresh" /></button>
+          </>
+        ) : null}
         <span className="flow-sep" />
         <button onClick={() => setTf(t => zoomAt(t, vpRef.current, -1))} aria-label="Zoom out"><Icon name="ti-minus" /></button>
         <span className="flow-pct">{Math.round(tf.k * 100)}%</span>
