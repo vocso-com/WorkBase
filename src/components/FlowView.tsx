@@ -4,6 +4,7 @@ import { hex, stageMeta, PRIORITY_META } from '../theme'
 import { layoutTree, cardHasMeta, cardHasFooter, type FlowNode, type ExpandPredicate } from '../lib/layout'
 import { progressOf, statusCounts } from '../lib/progress'
 import { leaves, findNode, findParent } from '../lib/tree'
+import { dependents } from '../lib/deps'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { toText } from '../lib/text'
 import { useStore } from '../store/useStore'
@@ -56,6 +57,20 @@ export function FlowView({ node }: { node: Node }) {
   const [dropTarget, setDropTarget] = useState<string | null>(null)
   const [selId, setSel] = useState<string | null>(null)   // keyboard-focused node
   const [editId, setEditId] = useState<string | null>(null) // node being renamed inline
+  const [spotlight, setSpotlight] = useState(false)        // dim all but the selected dependency chain
+
+  // Spotlight: the selected node's full dependency chain — everything it
+  // (transitively) depends on, plus everything that depends on it. Non-chain
+  // cards dim so the path of what blocks what stands out. null when off.
+  const spotSet = useMemo(() => {
+    if (!spotlight || !selId || !findNode([node], selId)) return null
+    const set = new Set<string>([selId])
+    const up = [selId]
+    while (up.length) { const n = findNode([node], up.pop() as string); for (const d of n?.dependsOn ?? []) if (!set.has(d)) { set.add(d); up.push(d) } }
+    const down = [selId]
+    while (down.length) { for (const dep of dependents([node], down.pop() as string)) if (!set.has(dep.id)) { set.add(dep.id); down.push(dep.id) } }
+    return set
+  }, [spotlight, selId, node])
   const pan = useRef<{ sx: number; sy: number; ox: number; oy: number } | null>(null)
   // When the canvas last actually moved under a drag — used to tell a genuine
   // double-click apart from two pans in quick succession.
@@ -425,6 +440,7 @@ export function FlowView({ node }: { node: Node }) {
               onAdd={() => addChild(fn)}
               onDelete={() => del(fn)}
               selected={selId === fn.id}
+              dimmed={!!spotSet && !spotSet.has(fn.id)}
               editing={editId === fn.id}
               onCommitTitle={title => { const t = title.trim(); if (t) useStore.getState().patch(fn.id, { title: t }); setEditId(null) }}
               onCancelEdit={() => setEditId(null)}
@@ -458,6 +474,15 @@ export function FlowView({ node }: { node: Node }) {
           title={showDeps ? 'Hide dependency links' : 'Show dependency links'}
         >
           <Icon name="ti-arrows-split-2" />
+        </button>
+        <button
+          className={spotlight ? 'on' : undefined}
+          onClick={() => setSpotlight(s => !s)}
+          aria-label="Spotlight dependency chain"
+          aria-pressed={spotlight}
+          title="Spotlight the selected item's dependency chain (dim the rest)"
+        >
+          <Icon name="ti-bulb" />
         </button>
         <span className="flow-sep" />
         <button onClick={collapseAll} aria-label="Collapse all" title="Collapse all"><Icon name="ti-fold" /></button>
@@ -528,12 +553,13 @@ interface CardProps {
   onAdd: () => void
   onDelete: () => void
   selected: boolean
+  dimmed: boolean
   editing: boolean
   onCommitTitle: (title: string) => void
   onCancelEdit: () => void
 }
 
-function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onOpen, onToggle, onAdd, onDelete, selected, editing, onCommitTitle, onCancelEdit }: CardProps) {
+function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onOpen, onToggle, onAdd, onDelete, selected, dimmed, editing, onCommitTitle, onCancelEdit }: CardProps) {
   const { node, depth } = fn
   const drop = isDropTarget ? ' fn-droptarget' : ''
   // Named distinctly: the container branch below has its own `done` count, and
@@ -644,7 +670,7 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, pos, dragging
   // Every card is outlined in its own color — status for tasks, identity for
   // modules and the root — so the canvas reads as a set of tagged objects.
   const outline: React.CSSProperties = { borderColor: hex(color) }
-  const sel = selected ? ' is-sel' : ''
+  const sel = (selected ? ' is-sel' : '') + (dimmed ? ' is-dim' : '')
 
   // The title, swapped for an inline editor when this node is being renamed
   // (F2, or right after a keyboard add). Commits on Enter/blur, reverts on Esc.
