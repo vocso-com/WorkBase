@@ -275,7 +275,7 @@ export function CardModal({ inlineNode }: { inlineNode?: Node } = {}) {
   const bandMeta = [
     moduleTotal ? `${moduleTotal} module${moduleTotal > 1 ? 's' : ''}` : null,
     `${taskTotal} task${taskTotal === 1 ? '' : 's'}`,
-    taskTotal ? `${progressOf(node)}% done` : null,
+    taskTotal ? `${progressOf(node, { isProject })}% done` : null,
   ].filter(Boolean).join(' · ')
   const iconPicker = pick === 'icon' ? (
     <>

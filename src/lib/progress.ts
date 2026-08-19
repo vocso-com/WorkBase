@@ -22,8 +22,26 @@ import { weightOf } from './weight'
  *   that moves no number reads as a broken button. So it earns a fixed share of
  *   its own subtree — the last stretch of the bar, never the headline.
  */
-export function progressOf(node: Node): number {
-  return Math.round(rawProgress(node))
+export interface ProgressOpts {
+  /**
+   * Measuring a project, rather than something inside one.
+   *
+   * A project keeps no share of its own. Its percentage is the headline number
+   * — Projects Home, the header, anything a client sees — so "16/16 done" next
+   * to 91% is wrong where it matters most, and the honest answer to "what is
+   * left?" would be "nothing, nobody has clicked a box". A project's sign-off
+   * already shows somewhere else: its status, and the lane it sits in. A module
+   * buried in a canvas has nowhere else, which is why it keeps its tenth.
+   *
+   * The exemption belongs to projects, not to whichever node was asked about —
+   * otherwise a module reads 100 on its own card while the project above counts
+   * it as 91.
+   */
+  isProject?: boolean
+}
+
+export function progressOf(node: Node, opts: ProgressOpts = {}): number {
+  return Math.round(rawProgress(node, opts.isProject === true))
 }
 
 // Rounds once at the top; rounding at every level would drift with depth.
@@ -38,7 +56,7 @@ export function progressOf(node: Node): number {
  */
 const OWN_WORK_SHARE = 0.1
 
-function rawProgress(node: Node): number {
+function rawProgress(node: Node, isProject = false): number {
   const kids = node.children
   if (kids.length === 0) return node.status === 'done' ? 100 : 0
   let weighted = 0
@@ -49,6 +67,7 @@ function rawProgress(node: Node): number {
     weighted += w * rawProgress(c)
   }
   if (total === 0) return node.status === 'done' ? 100 : 0
+  if (isProject) return weighted / total
   const own = total * OWN_WORK_SHARE
   return (weighted + own * (node.status === 'done' ? 100 : 0)) / (total + own)
 }
@@ -88,9 +107,9 @@ export function allLeavesDone(node: Node): boolean {
  * number printed inside it. Counting leaves flat here would put a ring whose
  * arcs say one thing around a label that says another.
  */
-export function statusShares(node: Node): Record<Status, number> {
+export function statusShares(node: Node, opts: ProgressOpts = {}): Record<Status, number> {
   const out: Record<Status, number> = {}
-  const walk = (n: Node, share: number) => {
+  const walk = (n: Node, share: number, isProject = false) => {
     const kids = n.children
     if (kids.length === 0) {
       out[n.status] = (out[n.status] ?? 0) + share
@@ -103,12 +122,12 @@ export function statusShares(node: Node): Record<Status, number> {
       return
     }
     // The container's own work sits in its own status, so the bar shows the
-    // same last stretch the number does.
-    const own = total * OWN_WORK_SHARE
+    // same last stretch the number does. A project keeps none — see ProgressOpts.
+    const own = isProject ? 0 : total * OWN_WORK_SHARE
     const whole = total + own
-    out[n.status] = (out[n.status] ?? 0) + share * (own / whole)
+    if (own > 0) out[n.status] = (out[n.status] ?? 0) + share * (own / whole)
     kids.forEach((c, i) => walk(c, share * (weights[i] / whole)))
   }
-  walk(node, 1)
+  walk(node, 1, opts.isProject === true)
   return out
 }

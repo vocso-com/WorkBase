@@ -179,9 +179,9 @@ function HeaderProgress({ node }: { node: Node }) {
   const total = ls.length
   const counts: Record<string, number> = {}
   for (const l of ls) counts[l.status] = (counts[l.status] ?? 0) + 1
-  const pct = progressOf(node)
+  const pct = progressOf(node, { isProject: true })
   const done = counts['done'] ?? 0
-  const shares = statusShares(node)
+  const shares = statusShares(node, { isProject: true })
   const segments = stages.filter(s => (shares[s.id] ?? 0) > 0)
   // Scope growth is the most commercially useful number here: it is what
   // justifies a change order, and unbilled creep is a top way agencies lose

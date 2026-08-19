@@ -850,7 +850,8 @@ interface CardProps {
  */
 function ringSegments(node: Node, stages: Stage[], stageLabels?: Record<string, string>) {
   if (leaves(node).length === 0) return undefined
-  const shares = statusShares(node)
+  // Only ever called for the root card, which is a project.
+  const shares = statusShares(node, { isProject: true })
   return mergedStages(stages, stageLabels)
     .filter(st => (shares[st.id] ?? 0) > 0)
     .map(st => ({ id: st.id, color: COLORS[st.color], value: shares[st.id] * 100 }))
@@ -1063,7 +1064,7 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, descOpen
           <HealthBadge node={node} />
         </div>
         <ProgressRing
-          value={progressOf(node)}
+          value={progressOf(node, { isProject: true })}
           color={hex(color)}
           size={54}
           segments={ringSegments(node, stages, stageLabels)}

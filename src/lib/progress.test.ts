@@ -160,3 +160,33 @@ test('statusShares gives the container its own share too, so the bar agrees', ()
   const m = newNode('Design', { status: 'done', children: [newNode('a', { status: 'done' }), newNode('b')] })
   expect(Math.round(statusShares(m).done * 100)).toBe(progressOf(m))
 })
+
+test('a project keeps no share of its own — its percentage is the headline number', () => {
+  const kids = () => [newNode('M', { status: 'done', children: [newNode('t', { status: 'done' })] })]
+  const p = newNode('Acme Redesign', { children: kids() })
+  // Everything inside is finished and confirmed; the project itself is not
+  // ticked. A module would read 91 here.
+  expect(progressOf(p, { isProject: true })).toBe(100)
+  expect(progressOf(p)).toBe(91)
+})
+
+test('the exemption belongs to projects, not to whichever node you asked about', () => {
+  // A module reads the same whether you measure it directly or through its
+  // project — otherwise its own card and the rollup above it disagree.
+  const mod = newNode('Design', { children: [newNode('a', { status: 'done' })] })
+  const project = newNode('P', { children: [mod] })
+  expect(progressOf(mod)).toBe(91)
+  expect(progressOf(project, { isProject: true })).toBe(91)
+})
+
+test('a project still reports work that is genuinely unfinished', () => {
+  const p = newNode('P', {
+    children: [newNode('a', { status: 'done' }), newNode('b')],
+  })
+  expect(progressOf(p, { isProject: true })).toBe(50)
+})
+
+test('statusShares takes the same exemption', () => {
+  const p = newNode('P', { children: [newNode('M', { status: 'done', children: [newNode('t', { status: 'done' })] })] })
+  expect(statusShares(p, { isProject: true }).done).toBeCloseTo(1, 6)
+})

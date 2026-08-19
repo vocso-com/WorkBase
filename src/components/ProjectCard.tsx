@@ -18,14 +18,14 @@ export function ProjectCard({ node, onOpen }: { node: Node; onOpen: (e: MouseEve
   const stages = useStore(s => s.doc.stages)
   const stageLabels = useStore(s => s.doc.stageLabels)
   const sm = stageMeta(stages, node.status, stageLabels)
-  const pct = progressOf(node)
+  const pct = progressOf(node, { isProject: true })
 
   // Progress bar segmented by stage color (matches the header roll-up).
   const allStages = mergedStages(stages, stageLabels, useStore(s => s.doc.stageOrder))
   // Weighted, like the number beside it — a bar counting leaves flat would
   // disagree with the percentage it sits next to.
   const total = leaves(node).length
-  const shares = statusShares(node)
+  const shares = statusShares(node, { isProject: true })
   const segments = allStages.filter(s => (shares[s.id] ?? 0) > 0)
 
   // The track lengthens; the fill never shrinks. Decomposing a task adds
