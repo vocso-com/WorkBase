@@ -1038,7 +1038,23 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, descOpen
         </div>
         <div className="fn-root-body">
           {head}
-          <div className="fn-title">{titleContent}</div>
+          {/* The project's own tick. Its sign-off is the last tenth of the bar,
+              so leaving it reachable only from the card modal meant staring at
+              91% with nothing on the card to do about it. */}
+          <div className="fn-root-titlerow">
+            {/* Not the shared `fn-tick`: that one is absolutely positioned to
+                overlay a fixed identity slot on the smaller cards. Here it is an
+                ordinary inline control, and always visible — hiding the only way
+                to close a project until hover is not discoverable. */}
+            <span
+              className="fn-root-tick"
+              onPointerDown={stop}
+              title={node.status === 'done' ? 'Mark not done' : 'Mark done'}
+            >
+              <Checkbox status={node.status} onToggle={() => confirmToggleDone(node)} />
+            </span>
+            <div className="fn-title">{titleContent}</div>
+          </div>
           <div className="fn-sub">
             {node.children.length} {node.children.length === 1 ? v.module : v.modules}
             {' · '}

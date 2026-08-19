@@ -1,7 +1,10 @@
 import type { Node } from '../../types'
 import { healthOf, type HealthState } from '../../lib/health'
+import { readyToClose } from '../../lib/confirm'
 import { useStore } from '../../store/useStore'
 import { COLORS } from '../../theme'
+
+const READY = { label: 'Ready to close', color: COLORS.teal }
 
 const TONE: Record<HealthState, { label: string; color: string }> = {
   'at-risk': { label: 'At risk', color: COLORS.red },
@@ -26,10 +29,17 @@ const TONE: Record<HealthState, { label: string; color: string }> = {
 export function HealthBadge({ node, compact = false }: { node: Node; compact?: boolean }) {
   const roots = useStore(s => s.doc.roots)
   const health = healthOf(roots, node)
-  if (health.state === 'on-track') return null
+  // Everything beneath is finished and only this node's own sign-off is left.
+  // Without saying so, a card reads "16/16" beside "91%" and looks broken —
+  // the missing tenth is this node's own work, waiting on a human.
+  const ready = health.state === 'on-track' && readyToClose(node)
+  if (health.state === 'on-track' && !ready) return null
 
-  const tone = TONE[health.state]
-  const evidence = health.evidence.join(' · ')
+  const tone = ready ? READY : TONE[health.state]
+  const done = node.children.length
+  const evidence = ready
+    ? `all ${done} ${done === 1 ? 'item' : 'items'} done`
+    : health.evidence.join(' · ')
 
   return (
     <span

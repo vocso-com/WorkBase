@@ -1071,6 +1071,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .fn-root-body{min-width:0;padding:8px 0;display:flex;flex-direction:column;justify-content:center;gap:4px;}
 /* Explicit line-height: the inherited 1.25 clipped descenders against the
    line-clamp's overflow:hidden. */
+.fn-root-titlerow{display:flex;align-items:center;gap:8px;min-width:0;}
+.fn-root-tick{flex-shrink:0;display:flex;align-items:center;}
 .fn-root .fn-title{font-size:16px;line-height:22px;font-weight:700;letter-spacing:-.015em;-webkit-line-clamp:1;}
 .fn-sub{font-size:11.5px;color:var(--muted);}
 /* Flow card rows. The heights and gaps below are mirrored by the measurement
