@@ -190,7 +190,7 @@ function HeaderProgress({ node }: { node: Node }) {
 
   return (
     <div className="hprog" title={`${done} of ${total} done`}>
-      <HealthBadge node={node} />
+      <HealthBadge node={node} compact />
       {grew ? (
         <span className="hprog-scope" title={`Scope has grown ${Math.round(growth * 100)}% since this project started`}>
           +{Math.round(growth * 100)}% scope

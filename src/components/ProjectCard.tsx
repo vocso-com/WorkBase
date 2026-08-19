@@ -51,7 +51,7 @@ export function ProjectCard({ node, onOpen }: { node: Node; onOpen: (e: MouseEve
           {node.title}
         </div>
         {toText(node.description) ? <div className="sub">{toText(node.description)}</div> : null}
-        <HealthBadge node={node} showEvidence />
+        <HealthBadge node={node} />
         {node.tags && node.tags.length > 0 ? (
           <div className="tags">
             {node.tags.map(t => <Tag key={t.name} tag={t} />)}

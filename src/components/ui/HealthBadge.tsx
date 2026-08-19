@@ -15,11 +15,15 @@ const TONE: Record<HealthState, { label: string; color: string }> = {
  * is uninterpretable: nobody can say what would make it 73, so nobody believes
  * it. The test for the label is whether a reader can tell what to do next.
  *
+ * The evidence rides along by default. "At risk" on its own fails the test the
+ * badge exists to pass — a reader has to be able to tell what to do next, and
+ * "3 items overdue · 1 blocked" does that where a bare label does not.
+ *
  * Silent when a project is on track. A grid of twelve green badges is noise,
  * and the moment people start ignoring the badge the whole mechanism is lost —
  * so absence is the reassuring signal and presence always means something.
  */
-export function HealthBadge({ node, showEvidence = false }: { node: Node; showEvidence?: boolean }) {
+export function HealthBadge({ node, compact = false }: { node: Node; compact?: boolean }) {
   const roots = useStore(s => s.doc.roots)
   const health = healthOf(roots, node)
   if (health.state === 'on-track') return null
@@ -35,7 +39,7 @@ export function HealthBadge({ node, showEvidence = false }: { node: Node; showEv
     >
       <span className="sdot" style={{ background: tone.color }} />
       {tone.label}
-      {showEvidence && evidence ? <span className="health-ev">{evidence}</span> : null}
+      {!compact && evidence ? <span className="health-ev">{evidence}</span> : null}
     </span>
   )
 }

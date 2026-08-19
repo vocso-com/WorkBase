@@ -1,4 +1,4 @@
-import { layoutTree, MIN_TASK_H, ROOT_H, clampWords, nodeH, OPEN_DESC_WORDS } from './layout'
+import { layoutTree, MIN_TASK_H, ROOT_H, clampWords, nodeH, OPEN_DESC_WORDS, OPEN_DESC_CPL, DESC_LINE_H } from './layout'
 import { instantiateTemplate, BUILTIN_TEMPLATES } from './templates'
 import { newNode } from './factory'
 import type { Node } from '../types'
@@ -134,8 +134,11 @@ test('level-of-detail drops a collapsed teaser but never an opened card', () => 
 })
 
 test('descOpenDefault opens every card, but a per-card flag still overrides', () => {
-  const plain = newNode('T', { description: 'A note that would be a teaser when collapsed.' })
-  const pinnedShut = newNode('T', { description: 'A note that would be a teaser when collapsed.', cardOpen: false })
+  // Long enough to need more than one line at the opened card's width, or
+  // opening it would legitimately add no height and prove nothing.
+  const note = 'A note that would be a one-line teaser when collapsed, but runs to several lines once the card is opened up to read it properly.'
+  const plain = newNode('T', { description: note })
+  const pinnedShut = newNode('T', { description: note, cardOpen: false })
   const hDefault = (n: typeof plain, descOpenDefault: boolean) =>
     layoutTree(tree(n), undefined, 'h', { showDesc: true, descOpenDefault }).nodes.find(x => x.id === n.id)!.h
   // Global expand opens a card with no explicit flag…
@@ -386,4 +389,14 @@ test('a wide card pushes the next column instead of overlapping it', () => {
   // The gap between a card's right edge and the next column never goes negative.
   expect(childX(wide).gap).toBeGreaterThan(0)
   expect(childX(narrow).gap).toBeGreaterThan(0)
+})
+
+test('an opened card measures its text at the width it will actually render at', () => {
+  // DESC_CPL is calibrated for the 280px card. An opened card is wider, so
+  // measuring it at the narrow rate reserves nearly double the lines it needs
+  // and leaves dead space below the text.
+  const line = (n: number) => 'x'.repeat(OPEN_DESC_CPL * n)
+  const one = newNode('T', { description: line(1), cardOpen: true })
+  const two = newNode('T', { description: line(2), cardOpen: true })
+  expect(hOf(tree(two), two.id) - hOf(tree(one), one.id)).toBe(DESC_LINE_H)
 })

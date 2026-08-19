@@ -94,7 +94,7 @@ const CARD_BORDER_Y = 4 // 2px top + 2px bottom; cards are border-box
 const CARD_ROW_GAP = 6
 const HEAD_H = 22 // status dot + kicker + priority + shortId, incl. the hairline
 const TITLE_LINE_H = 19
-const DESC_LINE_H = 18
+export const DESC_LINE_H = 18
 const FOOTER_H = 22 // due, attachment/dependency counts, expand control
 const TAGS_H = 22
 const MOD_TITLE_H = 24 // icon + title, taller than a plain title line
@@ -105,6 +105,12 @@ const TITLE_CPL = 30 // characters per line at the title's size
 // Text sits inset by the mark's gutter, so a line fits fewer characters than
 // the card's full width suggests.
 const DESC_CPL = 30
+/**
+ * Characters per line on an *opened* card, which is wider (OPEN_NODE_W).
+ * Measuring open text at the narrow rate reserves nearly twice the lines it
+ * needs and leaves a slab of dead space under the text.
+ */
+export const OPEN_DESC_CPL = Math.round((DESC_CPL * OPEN_NODE_W) / NODE_W)
 const MAX_TITLE_LINES = 2
 /** Collapsed cards get a one-line teaser; expanding one reveals the whole note. */
 const TEASER_LINES = 1
@@ -152,7 +158,7 @@ function descLines(text: string, open: boolean, showDesc: boolean, lod: boolean)
   // An explicitly opened card shows its full description at any zoom — the whole
   // point of opening it is to read it. Level-of-detail only trims the automatic
   // one-line teaser on *collapsed* cards when zoomed far out.
-  if (open) return Math.max(1, Math.ceil(clampWords(text).length / DESC_CPL))
+  if (open) return Math.max(1, Math.ceil(clampWords(text).length / OPEN_DESC_CPL))
   return lod ? TEASER_LINES : 0
 }
 

@@ -33,10 +33,23 @@ test('an overdue task puts the project at risk and says why', () => {
   act(() => { useStore.getState().patch(tid, { dueDate: yesterday() }) })
 
   const node = findNode(useStore.getState().doc.roots, pid)!
-  render(<HealthBadge node={node} showEvidence />)
+  render(<HealthBadge node={node} />)
 
   expect(screen.getByText('At risk')).toBeInTheDocument()
   expect(screen.getByText(/1 item overdue/)).toBeInTheDocument()
+})
+
+test('compact drops the evidence for dense toolbars but keeps the state', () => {
+  let pid = '', tid = ''
+  act(() => { pid = useStore.getState().addProject('Acme Redesign') })
+  act(() => { tid = useStore.getState().addChildNode(pid, 'Wireframes') })
+  act(() => { useStore.getState().patch(tid, { dueDate: yesterday() }) })
+
+  const node = findNode(useStore.getState().doc.roots, pid)!
+  render(<HealthBadge node={node} compact />)
+
+  expect(screen.getByText('At risk')).toBeInTheDocument()
+  expect(screen.queryByText(/1 item overdue/)).not.toBeInTheDocument()
 })
 
 test('an overdue task that has been completed stops raising the alarm', () => {
