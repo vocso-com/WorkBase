@@ -130,7 +130,10 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .pcover-status .sdot{width:7px;height:7px;border-radius:50%;box-shadow:0 0 0 1.5px rgba(255,255,255,.5);}
 .pcard .pad{padding:15px 18px 8px;}
 .pcard .title{margin-top:0;font-size:18px;}
-.pcard-prog{display:flex;height:8px;margin:12px 18px 0;border-radius:20px;background:var(--chip);overflow:hidden;}
+.pcard-prog{position:relative;display:flex;height:8px;margin:12px 18px 0;border-radius:20px;background:var(--chip);overflow:hidden;}
+.pcard-baseline{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--bg);box-shadow:0 0 0 1px color-mix(in srgb,var(--ink) 22%,transparent);}
+.pcard-done{font-size:11.5px;color:var(--faint);font-weight:600;font-variant-numeric:tabular-nums;}
+.hprog-scope{font-size:11.5px;font-weight:650;color:var(--faint);padding:2px 7px;border-radius:999px;background:var(--chip);white-space:nowrap;}
 .pcard-prog>span{display:block;height:100%;}
 .pcard-prog>span:first-child{border-radius:20px 0 0 20px;}
 .pcard-prog>span:last-child{border-radius:0 20px 20px 0;}

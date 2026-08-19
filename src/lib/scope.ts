@@ -26,3 +26,19 @@ export function scopeGrowth(root: Node): number | null {
   if (!root.baselineWeight) return null
   return (totalScope(root) - root.baselineWeight) / root.baselineWeight
 }
+
+/**
+ * How much of the track was already there at kickoff, 0-1.
+ *
+ * This is what lets the bar grow rightwards instead of the fill shrinking.
+ * Decomposing a task adds leaves, so a naive percentage falls when someone
+ * plans properly — rendering that as lost progress would teach people to stop
+ * planning in the tool. Marking where the original scope ended turns the same
+ * drop into a visible, attributed fact: the job got bigger.
+ */
+export function baselineShare(root: Node): number | null {
+  if (!root.baselineWeight) return null
+  const now = totalScope(root)
+  if (now <= 0) return 1
+  return Math.min(1, root.baselineWeight / now)
+}

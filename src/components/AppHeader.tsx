@@ -3,6 +3,8 @@ import type { Node } from '../types'
 import { COLORS, hex, mergedStages } from '../theme'
 import { findNode, leaves } from '../lib/tree'
 import { progressOf } from '../lib/progress'
+import { scopeGrowth } from '../lib/scope'
+import { HealthBadge } from './ui/HealthBadge'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { useStore } from '../store/useStore'
 import { useNav } from '../hooks/useNav'
@@ -180,9 +182,20 @@ function HeaderProgress({ node }: { node: Node }) {
   const pct = progressOf(node)
   const done = counts['done'] ?? 0
   const segments = stages.filter(s => (counts[s.id] ?? 0) > 0)
+  // Scope growth is the most commercially useful number here: it is what
+  // justifies a change order, and unbilled creep is a top way agencies lose
+  // money. Only worth saying once it is material.
+  const growth = scopeGrowth(node)
+  const grew = growth !== null && growth >= 0.1
 
   return (
     <div className="hprog" title={`${done} of ${total} done`}>
+      <HealthBadge node={node} />
+      {grew ? (
+        <span className="hprog-scope" title={`Scope has grown ${Math.round(growth * 100)}% since this project started`}>
+          +{Math.round(growth * 100)}% scope
+        </span>
+      ) : null}
       <span className="hprog-done">{done}/{total}</span>
       <div className="hprog-bar">
         {total === 0 ? <span style={{ width: '100%', background: 'var(--chip)' }} /> : segments.map(s => (

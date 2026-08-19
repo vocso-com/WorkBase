@@ -1,7 +1,8 @@
 import type { MouseEvent } from 'react'
 import type { Node } from '../types'
 import { COLORS, hex, mergedStages, stageMeta } from '../theme'
-import { progressOf } from '../lib/progress'
+import { progressOf, statusCounts } from '../lib/progress'
+import { baselineShare, scopeGrowth } from '../lib/scope'
 import { leaves } from '../lib/tree'
 import { useStore } from '../store/useStore'
 import { useDetail } from '../hooks/useDetail'
@@ -26,6 +27,13 @@ export function ProjectCard({ node, onOpen }: { node: Node; onOpen: (e: MouseEve
   const counts: Record<string, number> = {}
   for (const l of ls) counts[l.status] = (counts[l.status] ?? 0) + 1
   const segments = allStages.filter(s => (counts[s.id] ?? 0) > 0)
+
+  // The track lengthens; the fill never shrinks. Decomposing a task adds
+  // leaves, and showing that as lost progress would teach people to stop
+  // planning in the tool — so the growth is marked and attributed instead.
+  const mark = baselineShare(node)
+  const growth = scopeGrowth(node)
+  const doneCount = statusCounts(node).done
 
   return (
     <div className="card pcard" onClick={onOpen}>
@@ -54,10 +62,18 @@ export function ProjectCard({ node, onOpen }: { node: Node; onOpen: (e: MouseEve
         {total === 0
           ? <span style={{ width: '100%', background: 'var(--chip)' }} />
           : segments.map(s => <span key={s.id} style={{ width: `${(counts[s.id] / total) * 100}%`, background: COLORS[s.color] }} />)}
+        {mark !== null && mark < 1 ? (
+          <i
+            className="pcard-baseline"
+            style={{ left: `${mark * 100}%` }}
+            title={`Scope grew ${Math.round((growth ?? 0) * 100)}% since kickoff — everything right of this line was added`}
+          />
+        ) : null}
       </div>
       <div className="foot">
         <Icon name="ti-stack-2" /> {node.children.length} {node.children.length === 1 ? v.module : v.modules} · {leaves(node).length} {leaves(node).length === 1 ? v.task : v.tasks}
         <span style={{ flex: 1 }} />
+        <span className="pcard-done">{doneCount} done</span>
         <span className="pcard-id">{node.shortId}</span>
         <span className="pcard-pct" style={{ color: hex(color) }}>{pct}%</span>
       </div>
