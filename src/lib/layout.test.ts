@@ -1,4 +1,4 @@
-import { layoutTree, MIN_TASK_H, ROOT_H, clampWords, nodeH, OPEN_DESC_WORDS, OPEN_DESC_CPL, DESC_LINE_H, THUMB_ROW_H, CARD_ROW_GAP } from './layout'
+import { layoutTree, MIN_TASK_H, ROOT_H, clampWords, nodeH, OPEN_DESC_WORDS, OPEN_DESC_CPL, DESC_LINE_H, THUMB_ROW_H, CARD_ROW_GAP, wrappedLines } from './layout'
 import { instantiateTemplate, BUILTIN_TEMPLATES } from './templates'
 import { newNode } from './factory'
 import type { Node } from '../types'
@@ -444,4 +444,39 @@ test('a root card makes room for a health badge, and stays compact without one',
 
   expect(rootH(healthy)).toBe(ROOT_H)
   expect(rootH(atRisk)).toBeGreaterThan(ROOT_H)
+})
+
+test('wrappedLines counts a greedy wrap, not a character division', () => {
+  // 'aaaa bbbb cccc' at 9 chars a line: "aaaa bbbb" then "cccc".
+  expect(wrappedLines('aaaa bbbb cccc', 9)).toBe(2)
+  // Division would say ceil(14/9) = 2 as well, so make the ragged case bite:
+  // three 6-char words at 13 chars a line pack two per line, never three.
+  expect(wrappedLines('aaaaaa bbbbbb cccccc', 13)).toBe(2)
+})
+
+test('a word longer than the line breaks across lines instead of being ignored', () => {
+  // The real failure: long unbreakable tokens — paths, URLs, CONSTANT_NAMES —
+  // force early breaks that a character count cannot see.
+  expect(wrappedLines('x'.repeat(50), 10)).toBe(5)
+  expect(wrappedLines(`short ${'y'.repeat(30)} tail`, 10)).toBeGreaterThanOrEqual(4)
+})
+
+test('ragged text reserves more lines than dividing its length would', () => {
+  // Ten 9-character words at 10 chars a line: one per line, though the naive
+  // division says ceil(99/10) = 10... which is right only by luck. Add tokens
+  // that cannot share a line and the division under-counts.
+  const ragged = Array.from({ length: 10 }, () => 'abcdefgh').join(' ')
+  expect(wrappedLines(ragged, 10)).toBeGreaterThan(Math.ceil(ragged.length / 10) - 5)
+})
+
+test('an opened card reserves enough rows for text full of unbreakable tokens', () => {
+  const codey = Array.from({ length: 12 }, (_, i) => `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION_${i}`).join(' ')
+  const prose = Array.from({ length: 12 }, () => 'some ordinary words here').join(' ')
+  const h = (d: string) => {
+    const n = newNode('T', { description: d, cardOpen: true })
+    return hOf(tree(n), n.id)
+  }
+  // Same character count, wildly different wrapping — the codey one must be taller.
+  expect(codey.length).toBeGreaterThan(prose.length * 0.9)
+  expect(h(codey)).toBeGreaterThan(h(prose))
 })

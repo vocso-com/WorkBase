@@ -1,5 +1,6 @@
 import type { Node } from '../types'
 import { isComplete, unmetDependencies } from './deps'
+import { readyToClose } from './confirm'
 
 export type HealthState = 'at-risk' | 'blocked' | 'stalled' | 'on-track'
 
@@ -45,8 +46,14 @@ function descendants(node: Node): Node[] {
   return out
 }
 
+/**
+ * A container whose every child is done is waiting on a human, not on work.
+ * Reporting that as late is crying wolf: the project can read 100% complete and
+ * "at risk" in the same breath, which teaches people to ignore the badge. The
+ * ready-to-close prompt is what chases those, not the health state.
+ */
 function isOverdue(n: Node, now: Date): boolean {
-  if (!n.dueDate || isComplete(n)) return false
+  if (!n.dueDate || isComplete(n) || readyToClose(n)) return false
   const due = new Date(`${n.dueDate}T23:59:59`).getTime()
   return !isNaN(due) && due < now.getTime()
 }
@@ -62,7 +69,10 @@ export function healthOf(roots: Node[], node: Node, now: Date = new Date()): Hea
   const open = family.filter(n => !isComplete(n))
 
   const overdue = open.filter(n => isOverdue(n, now))
-  const blocked = open.filter(n => unmetDependencies(roots, n).length > 0)
+  // Same reasoning: waiting on work that is finished but unconfirmed is not
+  // being blocked. The dependency itself still holds until someone confirms —
+  // that part is deliberate — but it is not what the badge should shout about.
+  const blocked = open.filter(n => unmetDependencies(roots, n).some(d => !readyToClose(d)))
   const idleDays = Math.floor((now.getTime() - freshestAt(node)) / DAY)
   const stale = idleDays > staleAfterDays(node, now)
 

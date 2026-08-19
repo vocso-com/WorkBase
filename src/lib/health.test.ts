@@ -72,3 +72,33 @@ test('staleness never drops below the floor for very short horizons', () => {
   const tiny = node('Tomorrow', { createdAt: daysAgo(0), dueDate: dateIn(1) })
   expect(staleAfterDays(tiny, NOW)).toBeGreaterThanOrEqual(3)
 })
+
+test('a container awaiting confirmation is not overdue — that is paperwork, not late work', () => {
+  // Every leaf is done, so the project is 100%. The module is past its date but
+  // has nothing outstanding: it is waiting on a human, not on work.
+  const leaf = node('Wireframes', { status: 'done' })
+  const mod = node('Design', { dueDate: dateIn(-5), children: [leaf] })
+  const p = node('P', { children: [mod] })
+  expect(healthOf([p], p, NOW).state).toBe('on-track')
+})
+
+test('a genuinely unfinished item past its date is still at risk', () => {
+  const leaf = node('Wireframes', { dueDate: dateIn(-5) })
+  const mod = node('Design', { children: [leaf] })
+  const p = node('P', { children: [mod] })
+  expect(healthOf([p], p, NOW).state).toBe('at-risk')
+})
+
+test('waiting on a container that only needs confirming is not being blocked', () => {
+  const finished = node('Design', { children: [node('a', { status: 'done' })] })
+  const waiting = node('Build', { dependsOn: [finished.id] })
+  const p = node('P', { children: [finished, waiting] })
+  expect(healthOf([p], p, NOW).state).toBe('on-track')
+})
+
+test('waiting on a container with real work left is still blocked', () => {
+  const unfinished = node('Design', { children: [node('a')] })
+  const waiting = node('Build', { dependsOn: [unfinished.id] })
+  const p = node('P', { children: [unfinished, waiting] })
+  expect(healthOf([p], p, NOW).state).toBe('blocked')
+})

@@ -106,20 +106,46 @@ const TITLE_CPL = 30 // characters per line at the title's size
 // Text sits inset by the mark's gutter, so a line fits fewer characters than
 // the card's full width suggests.
 /**
- * Characters per line on an *opened* card.
+ * Characters that fit on one line of an *opened* card.
  *
- * Derived from the text column rather than the card, and from a measured
- * character width — scaling DESC_CPL by the card-width ratio ignored the
- * padding and the title indent, and still over-reserved by about a third.
- * Measured in the browser at 12.5px: ~6.2px a character.
- *
- * Rounded down deliberately: over-reserving costs a little whitespace, while
- * under-reserving clips the text against the bottom of the card.
+ * Measured in the browser at 12.5px: ~6.2px a character. The column is the card
+ * less its padding and the gutter on both sides — the module gutter is the
+ * wider of the two, so using it keeps both card types safe.
  */
-const DESC_CHAR_W = 6.5
+const DESC_CHAR_W = 6.2
 const CARD_PAD_X = 13
-const DESC_INDENT = 26
-export const OPEN_DESC_CPL = Math.floor((OPEN_NODE_W - 2 * (CARD_PAD_X + DESC_INDENT)) / DESC_CHAR_W)
+const WIDEST_GUTTER = 32
+export const OPEN_DESC_CPL = Math.floor((OPEN_NODE_W - 2 * (CARD_PAD_X + WIDEST_GUTTER)) / DESC_CHAR_W)
+
+/**
+ * Lines a string takes when wrapped greedily at `cpl` characters.
+ *
+ * Dividing length by characters-per-line assumes text packs perfectly. Real
+ * wrapping is ragged, and long unbreakable tokens — file paths, URLs,
+ * CONSTANT_NAMES — force early breaks a character count cannot see. Under-
+ * counting is the expensive direction: the card renders shorter than its
+ * content, and the footer and progress bar spill out of the bottom.
+ */
+export function wrappedLines(text: string, cpl: number): number {
+  if (cpl <= 0) return 1
+  let lines = 1
+  let used = 0
+  for (const word of text.trim().split(/\s+/)) {
+    if (!word) continue
+    if (used > 0 && used + 1 + word.length > cpl) { lines++; used = 0 }
+    if (word.length > cpl) {
+      // Breaks inside itself. It already occupies the line we are on, so only
+      // the rows beyond the first are new — otherwise a word that divides
+      // exactly claims a spare line it never uses.
+      const rows = Math.ceil(word.length / cpl)
+      lines += rows - 1
+      used = word.length % cpl || cpl
+      continue
+    }
+    used = used > 0 ? used + 1 + word.length : word.length
+  }
+  return lines
+}
 const MAX_TITLE_LINES = 2
 /** Collapsed cards get a one-line teaser; expanding one reveals the whole note. */
 const TEASER_LINES = 1
@@ -167,7 +193,7 @@ function descLines(text: string, open: boolean, showDesc: boolean, lod: boolean)
   // An explicitly opened card shows its full description at any zoom — the whole
   // point of opening it is to read it. Level-of-detail only trims the automatic
   // one-line teaser on *collapsed* cards when zoomed far out.
-  if (open) return Math.max(1, Math.ceil(clampWords(text).length / OPEN_DESC_CPL))
+  if (open) return Math.max(1, wrappedLines(clampWords(text), OPEN_DESC_CPL))
   return lod ? TEASER_LINES : 0
 }
 
