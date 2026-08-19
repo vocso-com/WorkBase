@@ -1014,8 +1014,10 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, descOpen
     return (
       <div className={`fn fn-root${dragging ? ' fn-drag' : ''}${drop}${sel}`} style={{ ...style, ...outline }} {...handlers}>
         <div className="fn-band" style={{ background: `linear-gradient(135deg, ${hex(color)}, ${hex(color)}bb)` }}>
+          {/* An <img> rather than a background, so a wide wordmark keeps its own
+              aspect ratio instead of being cropped to a square tile. */}
           {node.image ? (
-            <div className="fn-band-ic fn-band-ic-img" style={{ backgroundImage: `url(${node.image})` }} />
+            <img className="fn-band-logo" src={node.image} alt="" />
           ) : (
             <div className="fn-band-ic"><Icon name={node.icon ?? 'ti-folder'} /></div>
           )}

@@ -1056,12 +1056,17 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .fn-more:hover{color:var(--ink);}
 .fn-more i{font-size:12px;}
 .fn-root{background:var(--card);border:2px solid var(--line);border-radius:14px;box-shadow:var(--shadow-flat);
-  display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:12px;padding-right:14px;transition:box-shadow .15s, transform .15s;}
+  display:grid;grid-template-columns:1fr auto;grid-template-rows:auto 1fr;align-items:center;
+  column-gap:12px;padding:0 14px 0 14px;transition:box-shadow .15s, transform .15s;}
 .fn-root:hover{box-shadow:var(--shadow-flat-hover);transform:translateY(-2px);}
-.fn-band{align-self:stretch;width:52px;display:flex;align-items:center;justify-content:center;border-radius:9px 0 0 9px;}
-.fn-band-ic{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.24);color:#fff;display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 2px 8px rgba(0,0,0,.15);}
-/* Root node shows the project's own logo in a clean white tile (contained) */
-.fn-band-ic-img{background-color:#fff;background-size:contain;background-repeat:no-repeat;background-position:center;background-origin:content-box;padding:4px;}
+/* The band runs across the top, so a wide wordmark has the whole card to be
+   legible in. A 52px side strip cropped anything that was not roughly square. */
+.fn-band{grid-column:1 / -1;height:42px;margin:0 -14px;padding:0 14px;display:flex;align-items:center;
+  justify-content:flex-start;border-radius:9px 9px 0 0;}
+.fn-band-ic{width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.24);color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+/* The project's own logo, kept at its natural proportions on a clean tile. */
+.fn-band-logo{flex:none;height:30px;width:auto;max-width:62%;object-fit:contain;background:#fff;
+  border-radius:9px;padding:3px 6px;box-shadow:0 2px 8px rgba(0,0,0,.15);}
 .fn-root-body{min-width:0;padding:10px 0;display:flex;flex-direction:column;gap:4px;}
 /* Explicit line-height: the inherited 1.25 clipped descenders against the
    line-clamp's overflow:hidden. */

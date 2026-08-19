@@ -101,7 +101,13 @@ const ROW_GAP = 16
 
 // Tall enough for the 54px progress ring plus the header, title and subtitle
 // without the title's descenders clipping.
-export const ROOT_H = 116
+/**
+ * The project's band sits across the top rather than down the side, so a wide
+ * wordmark has the card's full width to be legible in. A 52px side strip
+ * cropped anything that was not roughly square.
+ */
+export const ROOT_BAND_H = 42
+export const ROOT_H = 116 + ROOT_BAND_H
 export const MIN_TASK_H = 58
 export const MIN_MOD_H = 72
 
