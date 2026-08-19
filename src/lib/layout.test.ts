@@ -1,4 +1,4 @@
-import { layoutTree, MIN_TASK_H, ROOT_H, clampWords, nodeH, OPEN_DESC_WORDS, OPEN_DESC_CPL, DESC_LINE_H } from './layout'
+import { layoutTree, MIN_TASK_H, ROOT_H, clampWords, nodeH, OPEN_DESC_WORDS, OPEN_DESC_CPL, DESC_LINE_H, THUMB_ROW_H, CARD_ROW_GAP } from './layout'
 import { instantiateTemplate, BUILTIN_TEMPLATES } from './templates'
 import { newNode } from './factory'
 import type { Node } from '../types'
@@ -399,4 +399,33 @@ test('an opened card measures its text at the width it will actually render at',
   const one = newNode('T', { description: line(1), cardOpen: true })
   const two = newNode('T', { description: line(2), cardOpen: true })
   expect(hOf(tree(two), two.id) - hOf(tree(one), one.id)).toBe(DESC_LINE_H)
+})
+
+test('an opened card reserves a fixed row for image attachments', () => {
+  const img = (id: string) => ({ id, name: `${id}.png`, type: 'image/png', dataUrl: 'data:image/png;base64,x', at: '' })
+  const withImg = newNode('T', { description: 'A note.', cardOpen: true, attachments: [img('a')] })
+  const without = newNode('T', { description: 'A note.', cardOpen: true })
+  // One extra row, plus the gap `stack` puts between rows.
+  expect(hOf(tree(withImg), withImg.id) - hOf(tree(without), without.id)).toBe(THUMB_ROW_H + CARD_ROW_GAP)
+})
+
+test('the thumbnail row is a fixed height however many images there are', () => {
+  const img = (id: string) => ({ id, name: `${id}.png`, type: 'image/png', dataUrl: 'data:image/png;base64,x', at: '' })
+  const one = newNode('T', { description: 'A note.', cardOpen: true, attachments: [img('a')] })
+  const many = newNode('T', { description: 'A note.', cardOpen: true, attachments: ['a', 'b', 'c', 'd', 'e'].map(img) })
+  expect(hOf(tree(many), many.id)).toBe(hOf(tree(one), one.id))
+})
+
+test('non-image attachments earn no thumbnail row', () => {
+  const pdf = { id: 'p', name: 'brief.pdf', type: 'application/pdf', dataUrl: '', at: '' }
+  const withPdf = newNode('T', { description: 'A note.', cardOpen: true, attachments: [pdf] })
+  const without = newNode('T', { description: 'A note.', cardOpen: true })
+  expect(hOf(tree(withPdf), withPdf.id)).toBe(hOf(tree(without), without.id))
+})
+
+test('a collapsed card shows no thumbnails — the canvas stays a map', () => {
+  const img = { id: 'a', name: 'a.png', type: 'image/png', dataUrl: 'data:image/png;base64,x', at: '' }
+  const shut = newNode('T', { description: 'A note.', attachments: [img] })
+  const without = newNode('T', { description: 'A note.' })
+  expect(hOf(tree(shut), shut.id)).toBe(hOf(tree(without), without.id))
 })

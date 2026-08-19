@@ -91,7 +91,7 @@ export const MIN_MOD_H = 72
 
 const CARD_PAD_Y = 22 // 11 top + 11 bottom
 const CARD_BORDER_Y = 4 // 2px top + 2px bottom; cards are border-box
-const CARD_ROW_GAP = 6
+export const CARD_ROW_GAP = 6
 const HEAD_H = 22 // status dot + kicker + priority + shortId, incl. the hairline
 const TITLE_LINE_H = 19
 export const DESC_LINE_H = 18
@@ -184,6 +184,30 @@ export function cardHasFooter(n: Node, showDesc: boolean, lod = true, open = !!n
   return !!n.dueDate || cardHasMeta(n, showDesc, lod, open)
 }
 
+/**
+ * Height of the image strip on an opened card.
+ *
+ * Fixed, and never inline. The layout measures every card *before* it renders,
+ * and an image's intrinsic height is unknown until it loads — inline images
+ * would either break the measurement or force a re-layout flash. A fixed strip
+ * is measurable, and recognising a mockup by sight beats reading its title.
+ */
+export const THUMB_ROW_H = 48
+const MAX_THUMBS = 3
+
+/** Image attachments a card can preview, capped so the strip stays one row. */
+export function cardImages(n: Node): NonNullable<Node['attachments']> {
+  return (n.attachments ?? []).filter(a => a.type.startsWith('image/')).slice(0, MAX_THUMBS)
+}
+
+/**
+ * Thumbnails ride with the opened card only. Collapsed, the canvas has to stay
+ * a map of labelled boxes — a wall of pictures is a different tool.
+ */
+export function cardHasThumbs(n: Node, showDesc: boolean, open: boolean): boolean {
+  return showDesc && open && cardImages(n).length > 0
+}
+
 /** Sum a card's present rows, with a gap between each, plus padding and border. */
 const stack = (rows: number[], min: number): number => {
   const present = rows.filter(r => r > 0)
@@ -200,6 +224,7 @@ function taskH(n: Node, showDesc: boolean, lod: boolean, open: boolean): number 
       HEAD_H,
       titleLines(n.title) * TITLE_LINE_H,
       descLines(text, open, showDesc, lod) * DESC_LINE_H,
+      cardHasThumbs(n, showDesc, open) ? THUMB_ROW_H : 0,
       cardHasFooter(n, showDesc, lod, open) ? FOOTER_H : 0,
       n.tags && n.tags.length > 0 ? TAGS_H : 0,
     ],
@@ -212,7 +237,14 @@ function containerH(n: Node, showDesc: boolean, lod: boolean, open: boolean): nu
   // A container always keeps its rollup row — the sub-item counts are the point
   // of the card — so the content strip rides along in it for free.
   return stack(
-    [HEAD_H, MOD_TITLE_H, descLines(text, open, showDesc, lod) * DESC_LINE_H, MOD_ROLLUP_H, MOD_BAR_H],
+    [
+      HEAD_H,
+      MOD_TITLE_H,
+      descLines(text, open, showDesc, lod) * DESC_LINE_H,
+      cardHasThumbs(n, showDesc, open) ? THUMB_ROW_H : 0,
+      MOD_ROLLUP_H,
+      MOD_BAR_H,
+    ],
     MIN_MOD_H,
   )
 }

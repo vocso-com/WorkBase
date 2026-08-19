@@ -134,6 +134,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .pcard-baseline{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--bg);box-shadow:0 0 0 1px color-mix(in srgb,var(--ink) 22%,transparent);}
 .pcard-done{font-size:11.5px;color:var(--faint);font-weight:600;font-variant-numeric:tabular-nums;}
 .hprog-scope{font-size:11.5px;font-weight:650;color:var(--faint);padding:2px 7px;border-radius:999px;background:var(--chip);white-space:nowrap;}
+.fn-thumbs{display:flex;gap:6px;height:48px;align-items:stretch;overflow:hidden;}
+.fn-thumb{height:48px;width:64px;object-fit:cover;border-radius:7px;border:1px solid var(--line);background:var(--chip);flex-shrink:0;}
 .pcard-prog>span{display:block;height:100%;}
 .pcard-prog>span:first-child{border-radius:20px 0 0 20px;}
 .pcard-prog>span:last-child{border-radius:0 20px 20px 0;}

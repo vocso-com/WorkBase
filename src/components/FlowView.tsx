@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { Node, Stage } from '../types'
 import { hex, stageMeta, PRIORITY_META } from '../theme'
-import { layoutTree, cardHasMeta, cardHasFooter, isCardOpen, clampWords, type FlowNode, type ExpandPredicate } from '../lib/layout'
+import { layoutTree, cardHasMeta, cardHasFooter, cardHasThumbs, cardImages, isCardOpen, clampWords, type FlowNode, type ExpandPredicate } from '../lib/layout'
 import { progressOf, statusCounts } from '../lib/progress'
 import { HealthBadge } from './ui/HealthBadge'
 import { leaves, findNode, findParent } from '../lib/tree'
@@ -907,6 +907,17 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, descOpen
     <div className={`fn-desc${isOpen ? ' fn-desc-open' : ''}`}>{isOpen ? clampWords(desc) : desc}</div>
   ) : null
 
+  // A fixed strip, never inline: layout measures a card before it renders, and
+  // an image's height is unknown until it loads. Recognising a mockup by sight
+  // beats reading its title — but only on a card someone opened.
+  const thumbs = cardHasThumbs(node, showDesc, isOpen) ? (
+    <div className="fn-thumbs">
+      {cardImages(node).map(a => (
+        <img key={a.id} className="fn-thumb" src={a.dataUrl} alt={a.name} title={a.name} loading="lazy" />
+      ))}
+    </div>
+  ) : null
+
   // Compact indicators for what a card carries but has no room to show, plus
   // the per-card expand control. Rendered in the footer of both card kinds, and
   // hidden wholesale by the canvas-wide content switch.
@@ -1028,6 +1039,7 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, descOpen
           <span className="fn-title">{titleContent}</span>
         </div>
         {description}
+        {thumbs}
         <div className="fn-mod-rollup">
           <span className="fn-count" title={`${kids} direct sub-item${kids === 1 ? '' : 's'}`}>
             <Icon name="ti-subtask" />{kids} · {done}/{total}
@@ -1055,6 +1067,7 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, descOpen
         <div className="fn-title fn-task-title">{titleContent}</div>
       </div>
       {description}
+        {thumbs}
       {/* Rendered only when measured: an empty footer div still occupies its
           CSS height and would spill out of the card. */}
       {cardHasFooter(node, showDesc, lod, isOpen) ? (
