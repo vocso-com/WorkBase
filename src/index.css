@@ -995,8 +995,13 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;}
 /* Header row shared by every card: what this card is, and its shortId. The
    hairline is an inset shadow so the row's height stays exactly HEAD_H. */
-.fn-head{height:22px;display:flex;align-items:center;gap:6px;flex-shrink:0;
+.fn-head{position:relative;height:22px;display:flex;align-items:center;gap:6px;flex-shrink:0;
   box-shadow:inset 0 -1px 0 var(--line);}
+/* Effort, drawn into the rule the header already has. Sizing the card itself
+   would fight the height its content earns, and shrink small cards past the
+   point their titles fit. */
+.fn-share{position:absolute;left:0;bottom:0;height:2px;border-radius:2px;
+  background:color-mix(in srgb,var(--ink) 30%,transparent);pointer-events:auto;}
 /* Status and priority live up here as a dot and a flag, so neither costs the
    card a whole row the way a pair of pills did. */
 /* The completion control lives against the card's own title. Its slot is a

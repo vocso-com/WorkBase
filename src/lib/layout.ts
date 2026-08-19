@@ -1,6 +1,7 @@
 import type { Node, ColorKey } from '../types'
 import { COLORS } from '../theme'
 import { toText } from './text'
+import { sharesOf } from './weight'
 
 export interface FlowNode {
   id: string
@@ -12,6 +13,12 @@ export interface FlowNode {
   h: number
   hasChildren: boolean
   expanded: boolean
+  /**
+   * This node's fraction of its siblings' combined weight, 0-1. Absent on the
+   * root, which has no siblings to be a share of. Computed here because this is
+   * the only place the sibling set is in hand.
+   */
+  share?: number
   // The node this one hangs off, so a card can name its container in the
   // header row. Absent on the root.
   parentId?: string
@@ -378,7 +385,7 @@ export function layoutTree(
   }
   measure(root, 0)
 
-  function place(n: Node, depth: number, start: number, parentId?: string): number {
+  function place(n: Node, depth: number, start: number, parentId?: string, share?: number): number {
     const own = selfExtent(n, depth)
     let center: number
 
@@ -393,8 +400,9 @@ export function layoutTree(
       const band = sub.get(n.id)!
       let cursor = start + Math.max(0, (band - (kids.get(n.id) ?? 0)) / 2)
       const centers: number[] = []
-      for (const c of n.children) {
-        const cc = place(c, depth + 1, cursor, n.id)
+      const childShares = sharesOf(n.children)
+      for (const [ci, c] of n.children.entries()) {
+        const cc = place(c, depth + 1, cursor, n.id, childShares[ci])
         centers.push(cc)
         edges.push({
           id: `${n.id}->${c.id}`,
@@ -413,7 +421,7 @@ export function layoutTree(
     const x = orientation === 'h' ? primary(depth) : center - w / 2
     const y = orientation === 'h' ? center - h / 2 : primary(depth)
     nodes.push({
-      id: n.id, node: n, depth, x, y, w, h, parentId,
+      id: n.id, node: n, depth, x, y, w, h, parentId, share,
       hasChildren: n.children.length > 0, expanded: isExpandable(n, depth),
     })
     return center

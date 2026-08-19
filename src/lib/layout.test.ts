@@ -482,3 +482,17 @@ test('an opened card reserves enough rows for text full of unbreakable tokens', 
   expect(codey.length).toBeGreaterThan(prose.length * 0.9)
   expect(h(codey)).toBeGreaterThan(h(prose))
 })
+
+test('layout hands each card its share of its siblings', () => {
+  const big = newNode('Build', { size: 'XXL' })
+  const rest = ['Design', 'Content', 'QA'].map(t => newNode(t))
+  const root = newNode('Project', { collapsed: false, children: [big, ...rest] })
+  const l = layoutTree(root)
+  const shareOf = (id: string) => l.nodes.find(n => n.id === id)!.share
+
+  // One XXL beside three M takes 73% of the set.
+  expect(shareOf(big.id)).toBeCloseTo(8 / 11, 3)
+  expect(shareOf(rest[0].id)).toBeCloseTo(1 / 11, 3)
+  // The root has no siblings to be a share of.
+  expect(shareOf(root.id)).toBeUndefined()
+})

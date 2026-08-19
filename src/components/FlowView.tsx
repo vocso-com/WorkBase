@@ -888,8 +888,19 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, descOpen
     </span>
   )
 
+  // How much of its siblings' work this card holds, drawn into the rule that
+  // already sits under the header — so effort reads at a glance without the box
+  // changing size, which would fight the height that content already earns.
+  const share = fn.share
   const head = (
     <div className="fn-head">
+      {share !== undefined ? (
+        <i
+          className="fn-share"
+          style={{ width: `${Math.max(2, Math.round(share * 100))}%` }}
+          title={`${Math.round(share * 100)}% of this group's work`}
+        />
+      ) : null}
       <span className="fn-kicker">{kicker}</span>
       {prio ? (
         <span className="fn-flag" style={{ color: hex(prio.color) }} title={`${prio.label} priority`}>
