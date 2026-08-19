@@ -16,17 +16,28 @@ import { weightOf } from './weight'
  *   whole feature exists to remove. Leaves are binary; `blocked` and custom
  *   stages count as not done.
  * - An explicit `done` on a *leaf* reads 100 — there is nothing beneath it to
- *   disagree. On a container the number is always computed, because "100%"
- *   beside "3 blocked" is the exact lie this feature exists to remove. The tick
- *   still stands: the status stays done and dependencies still satisfy. What it
- *   does not do is overrule the work. A container in that state raises a
- *   reopen prompt instead.
+ *   disagree. A container's own tick cannot overrule its children either, or a
+ *   card reads "100%" beside "3 blocked". But it is not worth nothing: a
+ *   container carries real work of its own that nobody decomposed, and a tick
+ *   that moves no number reads as a broken button. So it earns a fixed share of
+ *   its own subtree — the last stretch of the bar, never the headline.
  */
 export function progressOf(node: Node): number {
   return Math.round(rawProgress(node))
 }
 
 // Rounds once at the top; rounding at every level would drift with depth.
+/**
+ * What a container's own completion is worth, as a fraction of its children's
+ * combined weight.
+ *
+ * A fraction rather than a fixed unit, so a module with three children and one
+ * with thirty read the same: its own work is always the final tenth. Big enough
+ * that ticking it visibly moves the bar, small enough that nobody can inflate a
+ * project by ticking headings.
+ */
+const OWN_WORK_SHARE = 0.1
+
 function rawProgress(node: Node): number {
   const kids = node.children
   if (kids.length === 0) return node.status === 'done' ? 100 : 0
@@ -37,7 +48,9 @@ function rawProgress(node: Node): number {
     total += w
     weighted += w * rawProgress(c)
   }
-  return total === 0 ? 0 : weighted / total
+  if (total === 0) return node.status === 'done' ? 100 : 0
+  const own = total * OWN_WORK_SHARE
+  return (weighted + own * (node.status === 'done' ? 100 : 0)) / (total + own)
 }
 
 export function statusCounts(node: Node): Record<Status, number> {
@@ -85,8 +98,16 @@ export function statusShares(node: Node): Record<Status, number> {
     }
     const weights = kids.map(c => weightOf(c, kids))
     const total = weights.reduce((a, w) => a + w, 0)
-    if (total === 0) return
-    kids.forEach((c, i) => walk(c, share * (weights[i] / total)))
+    if (total === 0) {
+      out[n.status] = (out[n.status] ?? 0) + share
+      return
+    }
+    // The container's own work sits in its own status, so the bar shows the
+    // same last stretch the number does.
+    const own = total * OWN_WORK_SHARE
+    const whole = total + own
+    out[n.status] = (out[n.status] ?? 0) + share * (own / whole)
+    kids.forEach((c, i) => walk(c, share * (weights[i] / whole)))
   }
   walk(node, 1)
   return out
