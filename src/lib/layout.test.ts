@@ -429,3 +429,19 @@ test('a collapsed card shows no thumbnails — the canvas stays a map', () => {
   const without = newNode('T', { description: 'A note.' })
   expect(hOf(tree(shut), shut.id)).toBe(hOf(tree(without), without.id))
 })
+
+test('a root card makes room for a health badge, and stays compact without one', () => {
+  const past = new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10)
+  const healthy = newNode('Project', {
+    collapsed: false,
+    children: [newNode('Module', { collapsed: false, children: [newNode('T')] })],
+  })
+  const atRisk = newNode('Project', {
+    collapsed: false,
+    children: [newNode('Module', { collapsed: false, children: [newNode('T', { dueDate: past })] })],
+  })
+  const rootH = (n: Node) => layoutTree(n).nodes.find(x => x.id === n.id)!.h
+
+  expect(rootH(healthy)).toBe(ROOT_H)
+  expect(rootH(atRisk)).toBeGreaterThan(ROOT_H)
+})

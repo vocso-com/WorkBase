@@ -1,6 +1,7 @@
 import type { Node, ColorKey } from '../types'
 import { COLORS } from '../theme'
 import { toText } from './text'
+import { healthOf } from './health'
 
 export interface FlowNode {
   id: string
@@ -104,13 +105,21 @@ const MOD_BAR_H = 6 // ProgressBar
 const TITLE_CPL = 30 // characters per line at the title's size
 // Text sits inset by the mark's gutter, so a line fits fewer characters than
 // the card's full width suggests.
-const DESC_CPL = 30
 /**
- * Characters per line on an *opened* card, which is wider (OPEN_NODE_W).
- * Measuring open text at the narrow rate reserves nearly twice the lines it
- * needs and leaves a slab of dead space under the text.
+ * Characters per line on an *opened* card.
+ *
+ * Derived from the text column rather than the card, and from a measured
+ * character width — scaling DESC_CPL by the card-width ratio ignored the
+ * padding and the title indent, and still over-reserved by about a third.
+ * Measured in the browser at 12.5px: ~6.2px a character.
+ *
+ * Rounded down deliberately: over-reserving costs a little whitespace, while
+ * under-reserving clips the text against the bottom of the card.
  */
-export const OPEN_DESC_CPL = Math.round((DESC_CPL * OPEN_NODE_W) / NODE_W)
+const DESC_CHAR_W = 6.5
+const CARD_PAD_X = 13
+const DESC_INDENT = 26
+export const OPEN_DESC_CPL = Math.floor((OPEN_NODE_W - 2 * (CARD_PAD_X + DESC_INDENT)) / DESC_CHAR_W)
 const MAX_TITLE_LINES = 2
 /** Collapsed cards get a one-line teaser; expanding one reveals the whole note. */
 const TEASER_LINES = 1
@@ -266,8 +275,23 @@ export function nodeW(n: Node, depth: number, showDesc = true, descOpenDefault =
   return toText(n.description) ? OPEN_NODE_W : NODE_W
 }
 
+/**
+ * The root card's health badge carries its evidence — "At risk · 3 items
+ * overdue · 1 blocked" — because the state alone tells a reader nothing they
+ * can act on. That needs a row of its own, so the card grows to hold it rather
+ * than crowding the badge against its bottom edge.
+ *
+ * Resolved against the project itself: dependencies inside it are what the
+ * badge reports on.
+ */
+const ROOT_BADGE_H = 24
+
+function rootHasBadge(n: Node): boolean {
+  return healthOf([n], n).state !== 'on-track'
+}
+
 export function nodeH(n: Node, depth: number, showDesc = true, lod = true, descOpenDefault = false): number {
-  if (depth === 0) return ROOT_H
+  if (depth === 0) return ROOT_H + (rootHasBadge(n) ? ROOT_BADGE_H : 0)
   const open = isCardOpen(n, descOpenDefault)
   if (n.children.length > 0) return containerH(n, showDesc, lod, open)
   return taskH(n, showDesc, lod, open)

@@ -1020,8 +1020,14 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
    and the card keeps a single left edge — otherwise the title alone sits
    indented while the kicker, description and footer stay flush. */
 .fn-task,.fn-mod{--fn-gutter:26px;}
-.fn-task>.fn-head,.fn-task>.fn-desc,.fn-task>.fn-task-foot,.fn-task>.fn-task-tags,
-.fn-mod>.fn-head,.fn-mod>.fn-desc,.fn-mod>.fn-mod-rollup,.fn-mod>.fn-bar{margin-left:var(--fn-gutter);}
+.fn-task>.fn-head,.fn-task>.fn-desc,.fn-task>.fn-task-foot,.fn-task>.fn-task-tags,.fn-task>.fn-thumbs,
+.fn-mod>.fn-head,.fn-mod>.fn-desc,.fn-mod>.fn-mod-rollup,.fn-mod>.fn-bar,.fn-mod>.fn-thumbs{margin-left:var(--fn-gutter);}
+/* An opened card is wide enough that a one-sided gutter reads as the content
+   being shoved right. Mirror it, so the column sits square in the card. A
+   collapsed card keeps the single edge — a right gutter would eat a 280px
+   card for nothing. */
+.fn-open>.fn-head,.fn-open>.fn-desc,.fn-open>.fn-task-foot,.fn-open>.fn-task-tags,
+.fn-open>.fn-thumbs,.fn-open>.fn-mod-rollup,.fn-open>.fn-bar{margin-right:var(--fn-gutter);}
 .fn-mod{--fn-gutter:32px;}
 .fn-kicker{font-size:9.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;}
@@ -1071,7 +1077,10 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
    reserved for it. */
 .fn-desc{font-size:12.5px;line-height:18px;color:var(--muted);overflow:hidden;flex-shrink:0;
   display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;word-break:break-word;}
-.fn-desc-open{-webkit-line-clamp:400;}
+/* Balanced text column: the 26px indent aligns the body under the title, past
+   the tick gutter, so the right edge needs the same inset or the block reads
+   pushed against the card. */
+.fn-desc-open{-webkit-line-clamp:400;margin-right:26px;}
 .fn-task-foot{display:flex;align-items:center;gap:6px;height:22px;flex-shrink:0;overflow:hidden;}
 .fn-task-tags{display:flex;align-items:center;gap:5px;height:22px;flex-shrink:0;overflow:hidden;}
 .fn-tag{font-size:9.5px;font-weight:600;padding:1px 6px;border-radius:5px;white-space:nowrap;}

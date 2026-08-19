@@ -1027,7 +1027,7 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, descOpen
     const done = statusCounts(node).done
     const kids = node.children.length
     return (
-      <div className={`fn fn-mod${dragging ? ' fn-drag' : ''}${drop}${doneCls}${sel}`} style={{ ...style, ...outline }} {...handlers}>
+      <div className={`fn fn-mod${isOpen ? ' fn-open' : ''}${dragging ? ' fn-drag' : ''}${drop}${doneCls}${sel}`} style={{ ...style, ...outline }} {...handlers}>
         {head}
         <div className="fn-mod-title">
           {/* Hovering swaps the identity tile for the tick — same slot, so the
@@ -1057,7 +1057,7 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, descOpen
 
   const tags = node.tags ?? []
   return (
-    <div className={`fn fn-task${dragging ? ' fn-drag' : ''}${drop}${doneCls}${sel}`} style={{ ...style, ...outline }} {...handlers}>
+    <div className={`fn fn-task${isOpen ? ' fn-open' : ''}${dragging ? ' fn-drag' : ''}${drop}${doneCls}${sel}`} style={{ ...style, ...outline }} {...handlers}>
       {head}
       <div className="fn-titlerow">
         <span className="fn-mark">
