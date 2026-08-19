@@ -1,5 +1,6 @@
 import type { Node, SizeKey } from '../types'
 import { leaves } from './tree'
+import { openDescendants } from './progress'
 import { SIZE_WEIGHT } from './weight'
 
 const ORDER: SizeKey[] = ['S', 'M', 'L', 'XL', 'XXL']
@@ -75,6 +76,24 @@ export function readyToCloseNodes(roots: Node[]): Node[] {
   const out: Node[] = []
   const walk = (n: Node) => {
     if (readyToClose(n)) out.push(n)
+    n.children.forEach(walk)
+  }
+  roots.forEach(walk)
+  return out
+}
+
+/**
+ * Anything ticked done that still has open work beneath it.
+ *
+ * The tick stands — status stays done, dependencies still satisfy — but the
+ * percentage reports the work, so such a node shows less than 100% while
+ * claiming to be finished. That contradiction should never sit quietly: it is
+ * either a mistake or scope that arrived after the fact, and both want a human.
+ */
+export function reopenNodes(roots: Node[]): Node[] {
+  const out: Node[] = []
+  const walk = (n: Node) => {
+    if (n.status === 'done' && n.children.length > 0 && openDescendants(n) > 0) out.push(n)
     n.children.forEach(walk)
   }
   roots.forEach(walk)

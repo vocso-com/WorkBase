@@ -9,7 +9,8 @@ import { DEFAULT_WORKSPACE_ID } from '../lib/serialize'
 import { goToNode } from '../lib/goto'
 import { focusMain, setWidgetVisible, quickAddFromWidget, commitToMain, startWidgetDrag, TOGGLE_DONE_EVENT, SNOOZE_EVENT } from '../lib/desktopWidget'
 import { dueInfo } from '../lib/due'
-import { readyToCloseNodes } from '../lib/confirm'
+import { openDescendants } from '../lib/progress'
+import { readyToCloseNodes, reopenNodes } from '../lib/confirm'
 import { hex } from '../theme'
 import { Checkbox } from './ui/Checkbox'
 import { Icon } from './ui/Icon'
@@ -77,6 +78,9 @@ export function NudgeWidget({ standalone }: { standalone?: boolean } = {}) {
   // starting is a fact, finishing is a judgment. So a container whose work is
   // finished is pushed here for a one-click confirm rather than flipping itself.
   const toClose = readyToCloseNodes(wsRoots)
+  // The mirror of the same rule: something ticked done that still has open work
+  // reports under 100% while claiming to be finished. Never leave that sitting.
+  const toReopen = reopenNodes(wsRoots)
   const reminders = [...work.overdue, ...work.today]
   const shown = reminders.slice(0, 5)
   const ready = work.focus.length || work.anytime.length
@@ -87,7 +91,8 @@ export function NudgeWidget({ standalone }: { standalone?: boolean } = {}) {
   // only appears when something else already opened the widget is a prompt that
   // rots unseen, which is the whole failure this is meant to prevent.
   const hasToClose = remindersOn && toClose.length > 0
-  if ((!standalone && closed) || (!hasReminders && !hasNudge && !hasToClose)) return null
+  const hasToReopen = remindersOn && toReopen.length > 0
+  if ((!standalone && closed) || (!hasReminders && !hasNudge && !hasToClose && !hasToReopen)) return null
 
   // In the desktop widget, actions hand off to the main window; in-app they
   // navigate directly.
@@ -136,6 +141,22 @@ export function NudgeWidget({ standalone }: { standalone?: boolean } = {}) {
               </button>
               <button className="nudge-close-go" onClick={() => useStore.getState().setStatus(n.id, 'done')}>
                 Close
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {!collapsed && hasToReopen ? (
+        <div className="nudge-close">
+          {toReopen.slice(0, 3).map(n => (
+            <div className="nudge-close-row nudge-reopen-row" key={n.id}>
+              <Icon name="ti-alert-circle" className="nudge-reopen-ic" />
+              <button className="nudge-close-main" onClick={() => openNode(n.id)}>
+                <b>{n.title}</b> — done, but {openDescendants(n)} still open
+              </button>
+              <button className="nudge-close-go" onClick={() => useStore.getState().setStatus(n.id, 'doing')}>
+                Reopen
               </button>
             </div>
           ))}

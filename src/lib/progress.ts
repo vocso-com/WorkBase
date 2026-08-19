@@ -15,9 +15,12 @@ import { weightOf } from './weight'
  *   when nothing has been finished, which is exactly the false comfort this
  *   whole feature exists to remove. Leaves are binary; `blocked` and custom
  *   stages count as not done.
- * - An explicit `done` is authoritative and reads 100 whatever sits beneath it.
- *   A human said it was finished, and finishing is a judgment. Open children
- *   added afterwards raise a prompt rather than silently reopening it.
+ * - An explicit `done` on a *leaf* reads 100 — there is nothing beneath it to
+ *   disagree. On a container the number is always computed, because "100%"
+ *   beside "3 blocked" is the exact lie this feature exists to remove. The tick
+ *   still stands: the status stays done and dependencies still satisfy. What it
+ *   does not do is overrule the work. A container in that state raises a
+ *   reopen prompt instead.
  */
 export function progressOf(node: Node): number {
   return Math.round(rawProgress(node))
@@ -25,9 +28,8 @@ export function progressOf(node: Node): number {
 
 // Rounds once at the top; rounding at every level would drift with depth.
 function rawProgress(node: Node): number {
-  if (node.status === 'done') return 100
   const kids = node.children
-  if (kids.length === 0) return 0
+  if (kids.length === 0) return node.status === 'done' ? 100 : 0
   let weighted = 0
   let total = 0
   for (const c of kids) {
@@ -64,4 +66,28 @@ export function openDescendants(node: Node): number {
 export function allLeavesDone(node: Node): boolean {
   const ls = leaves(node)
   return ls.length > 0 && ls.every(l => l.status === 'done')
+}
+
+/**
+ * The weighted fraction of a subtree sitting in each status, summing to 1.
+ *
+ * Same arithmetic as `progressOf`, so a ring drawn from these agrees with the
+ * number printed inside it. Counting leaves flat here would put a ring whose
+ * arcs say one thing around a label that says another.
+ */
+export function statusShares(node: Node): Record<Status, number> {
+  const out: Record<Status, number> = {}
+  const walk = (n: Node, share: number) => {
+    const kids = n.children
+    if (kids.length === 0) {
+      out[n.status] = (out[n.status] ?? 0) + share
+      return
+    }
+    const weights = kids.map(c => weightOf(c, kids))
+    const total = weights.reduce((a, w) => a + w, 0)
+    if (total === 0) return
+    kids.forEach((c, i) => walk(c, share * (weights[i] / total)))
+  }
+  walk(node, 1)
+  return out
 }

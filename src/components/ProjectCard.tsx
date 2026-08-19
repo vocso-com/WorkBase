@@ -1,7 +1,7 @@
 import type { MouseEvent } from 'react'
 import type { Node } from '../types'
 import { COLORS, hex, mergedStages, stageMeta } from '../theme'
-import { progressOf, statusCounts } from '../lib/progress'
+import { progressOf, statusCounts, statusShares } from '../lib/progress'
 import { baselineShare, scopeGrowth } from '../lib/scope'
 import { leaves } from '../lib/tree'
 import { useStore } from '../store/useStore'
@@ -22,11 +22,11 @@ export function ProjectCard({ node, onOpen }: { node: Node; onOpen: (e: MouseEve
 
   // Progress bar segmented by stage color (matches the header roll-up).
   const allStages = mergedStages(stages, stageLabels, useStore(s => s.doc.stageOrder))
-  const ls = leaves(node)
-  const total = ls.length
-  const counts: Record<string, number> = {}
-  for (const l of ls) counts[l.status] = (counts[l.status] ?? 0) + 1
-  const segments = allStages.filter(s => (counts[s.id] ?? 0) > 0)
+  // Weighted, like the number beside it — a bar counting leaves flat would
+  // disagree with the percentage it sits next to.
+  const total = leaves(node).length
+  const shares = statusShares(node)
+  const segments = allStages.filter(s => (shares[s.id] ?? 0) > 0)
 
   // The track lengthens; the fill never shrinks. Decomposing a task adds
   // leaves, and showing that as lost progress would teach people to stop
@@ -61,7 +61,7 @@ export function ProjectCard({ node, onOpen }: { node: Node; onOpen: (e: MouseEve
       <div className="pcard-prog">
         {total === 0
           ? <span style={{ width: '100%', background: 'var(--chip)' }} />
-          : segments.map(s => <span key={s.id} style={{ width: `${(counts[s.id] / total) * 100}%`, background: COLORS[s.color] }} />)}
+          : segments.map(s => <span key={s.id} style={{ width: `${shares[s.id] * 100}%`, background: COLORS[s.color] }} />)}
         {mark !== null && mark < 1 ? (
           <i
             className="pcard-baseline"

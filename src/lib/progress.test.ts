@@ -1,4 +1,4 @@
-import { progressOf, statusCounts, allLeavesDone, openDescendants } from './progress'
+import { progressOf, statusCounts, statusShares, allLeavesDone, openDescendants } from './progress'
 import { newNode } from './factory'
 import type { Node } from '../types'
 
@@ -73,12 +73,27 @@ test('blocked and custom stages count as not done', () => {
   expect(progressOf(custom)).toBe(50)
 })
 
-test('an explicitly completed node reads 100 even after it gains open children', () => {
+test('a completed node with open children tells the truth, not 100', () => {
+  // "Finishing is a judgment" earns the tick, but a card reading 100% beside
+  // "3 blocked" is the exact lie this feature exists to remove. The status
+  // stays done — dependencies still satisfy — while the number reports work.
   const closed = newNode('Homepage design', {
     status: 'done',
-    children: [newNode('late addition')],
+    children: [newNode('done bit', { status: 'done' }), newNode('late addition')],
+  })
+  expect(progressOf(closed)).toBe(50)
+})
+
+test('a completed node whose work really is finished still reads 100', () => {
+  const closed = newNode('Homepage design', {
+    status: 'done',
+    children: [newNode('a', { status: 'done' }), newNode('b', { status: 'done' })],
   })
   expect(progressOf(closed)).toBe(100)
+})
+
+test('a completed leaf reads 100', () => {
+  expect(progressOf(newNode('Ship it', { status: 'done' }))).toBe(100)
 })
 
 test('weighting composes down the path without any global calculation', () => {
@@ -92,4 +107,21 @@ test('weighting composes down the path without any global calculation', () => {
   })
   // API is 8/11 of Build, Build is 8/11 of P → 53% of the project, fully done
   expect(progressOf(project)).toBe(53)
+})
+
+test('statusShares weights by size, so a big module dominates the bar', () => {
+  const build = newNode('Build', { size: 'XXL', children: [newNode('b', { status: 'done' })] })
+  const rest = ['Design', 'Content', 'QA'].map(t => newNode(t, { children: [newNode(`${t}-1`)] }))
+  const p = newNode('P', { children: [build, ...rest] })
+  const shares = statusShares(p)
+  // Build holds 8 of 11 weight and is finished: 73% done, 27% to do.
+  expect(shares.done).toBeCloseTo(8 / 11, 3)
+  expect(shares.todo).toBeCloseTo(3 / 11, 3)
+})
+
+test('statusShares agrees with the number progressOf prints', () => {
+  const build = newNode('Build', { size: 'XXL', children: [newNode('b', { status: 'done' })] })
+  const rest = ['Design', 'Content'].map(t => newNode(t, { children: [newNode(`${t}-1`)] }))
+  const p = newNode('P', { children: [build, ...rest] })
+  expect(Math.round(statusShares(p).done * 100)).toBe(progressOf(p))
 })

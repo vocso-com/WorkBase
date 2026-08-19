@@ -1,4 +1,4 @@
-import { readyToClose, readyToCloseNodes, challengeSize } from './confirm'
+import { readyToClose, readyToCloseNodes, reopenNodes, challengeSize } from './confirm'
 import { isComplete } from './deps'
 import { newNode } from './factory'
 import type { Node } from '../types'
@@ -67,4 +67,19 @@ test('readyToCloseNodes finds every container waiting on a human, at any depth',
 test('readyToCloseNodes returns nothing when everything is confirmed', () => {
   const roots = [n('P', { status: 'done', children: [n('a', { status: 'done' })] })]
   expect(readyToCloseNodes(roots)).toEqual([])
+})
+
+test('reopenNodes finds anything ticked done that still has open work under it', () => {
+  const closed = n('Homepage design', {
+    status: 'done',
+    children: [n('a', { status: 'done' }), n('late addition')],
+  })
+  const fine = n('Billing', { status: 'done', children: [n('b', { status: 'done' })] })
+  const roots = [n('P', { children: [closed, fine] })]
+  expect(reopenNodes(roots).map(x => x.title)).toEqual(['Homepage design'])
+})
+
+test('an open container with open work is not a reopen candidate', () => {
+  const roots = [n('P', { children: [n('Design', { children: [n('a')] })] })]
+  expect(reopenNodes(roots)).toEqual([])
 })

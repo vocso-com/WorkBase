@@ -167,6 +167,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .nudge-close-row{display:flex;align-items:center;gap:7px;font-size:12px;
   padding:6px 9px;border-radius:9px;background:var(--chip);border:1px solid var(--line);}
 .nudge-close-ic{color:var(--teal,#14b8a6);flex-shrink:0;}
+.nudge-reopen-ic{color:var(--amber,#f59e0b);flex-shrink:0;}
 .nudge-close-main{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   background:none;border:0;cursor:pointer;color:var(--faint);font-size:12px;}
 .nudge-close-main b{color:var(--text);font-weight:650;}

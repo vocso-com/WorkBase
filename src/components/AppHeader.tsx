@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Node } from '../types'
 import { COLORS, hex, mergedStages } from '../theme'
 import { findNode, leaves } from '../lib/tree'
-import { progressOf } from '../lib/progress'
+import { progressOf, statusShares } from '../lib/progress'
 import { scopeGrowth } from '../lib/scope'
 import { HealthBadge } from './ui/HealthBadge'
 import { tagBg, tagFg } from '../lib/colorMode'
@@ -181,7 +181,8 @@ function HeaderProgress({ node }: { node: Node }) {
   for (const l of ls) counts[l.status] = (counts[l.status] ?? 0) + 1
   const pct = progressOf(node)
   const done = counts['done'] ?? 0
-  const segments = stages.filter(s => (counts[s.id] ?? 0) > 0)
+  const shares = statusShares(node)
+  const segments = stages.filter(s => (shares[s.id] ?? 0) > 0)
   // Scope growth is the most commercially useful number here: it is what
   // justifies a change order, and unbilled creep is a top way agencies lose
   // money. Only worth saying once it is material.
@@ -199,7 +200,7 @@ function HeaderProgress({ node }: { node: Node }) {
       <span className="hprog-done">{done}/{total}</span>
       <div className="hprog-bar">
         {total === 0 ? <span style={{ width: '100%', background: 'var(--chip)' }} /> : segments.map(s => (
-          <span key={s.id} style={{ width: `${(counts[s.id] / total) * 100}%`, background: COLORS[s.color] }} />
+          <span key={s.id} style={{ width: `${shares[s.id] * 100}%`, background: COLORS[s.color] }} />
         ))}
       </div>
       <span className="hprog-pct">{pct}%</span>

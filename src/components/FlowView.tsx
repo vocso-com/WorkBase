@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import type { Node, Stage } from '../types'
 import { hex, stageMeta, mergedStages, COLORS, PRIORITY_META } from '../theme'
 import { layoutTree, cardHasMeta, cardHasFooter, cardHasThumbs, cardImages, isCardOpen, clampWords, type FlowNode, type ExpandPredicate } from '../lib/layout'
-import { progressOf, statusCounts } from '../lib/progress'
+import { progressOf, statusCounts, statusShares } from '../lib/progress'
 import { HealthBadge } from './ui/HealthBadge'
 import { leaves, findNode, findParent } from '../lib/tree'
 import { dependents, isComplete, isBlocked } from '../lib/deps'
@@ -849,13 +849,11 @@ interface CardProps {
  * something different.
  */
 function ringSegments(node: Node, stages: Stage[], stageLabels?: Record<string, string>) {
-  const ls = leaves(node)
-  if (ls.length === 0) return undefined
-  const counts: Record<string, number> = {}
-  for (const l of ls) counts[l.status] = (counts[l.status] ?? 0) + 1
+  if (leaves(node).length === 0) return undefined
+  const shares = statusShares(node)
   return mergedStages(stages, stageLabels)
-    .filter(st => (counts[st.id] ?? 0) > 0)
-    .map(st => ({ id: st.id, color: COLORS[st.color], value: (counts[st.id] / ls.length) * 100 }))
+    .filter(st => (shares[st.id] ?? 0) > 0)
+    .map(st => ({ id: st.id, color: COLORS[st.color], value: shares[st.id] * 100 }))
 }
 
 function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, descOpenDefault, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onOpen, onToggle, onAdd, onDelete, selected, dimmed, editing, onCommitTitle, onCancelEdit, linkTarget, onLinkStart, multi }: CardProps) {
