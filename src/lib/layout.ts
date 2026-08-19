@@ -61,6 +61,13 @@ export interface FlowLayout {
 }
 
 const NODE_W = 280
+/**
+ * An opened card gets more room. At 280px a long note becomes a column of
+ * noodles — roughly four words a line — which is a worse read than anywhere
+ * else in the app despite being the place the user asked to read it. Wider
+ * lines cost nothing when collapsed, because only opened cards take it.
+ */
+const OPEN_NODE_W = 460
 const COL_GAP = 96
 const ROW_GAP = 16
 
@@ -104,7 +111,26 @@ const TEASER_LINES = 1
 // An expanded card shows its *entire* description — the point of opening it is to
 // read all of it. The cap is only a sanity ceiling so a pasted megabyte of text
 // can't make an absurd card; normal notes (even long logs) never reach it.
-const OPEN_DESC_LINES = 400
+/**
+ * An opened card shows at most this many words.
+ *
+ * The canvas is a map. A card carrying a thousand words stops being a landmark
+ * and becomes an essay nailed to the wall — it dwarfs its neighbours, drags the
+ * layout around it, and is harder to read at 280px than it would be anywhere
+ * else. Past the cap the card says there is more and the full text lives in the
+ * card modal, which is built for reading.
+ */
+export const OPEN_DESC_WORDS = 100
+
+/**
+ * Trim to a word count, marking the cut. Measurement and render must pass the
+ * same text through this or the card reserves the wrong height.
+ */
+export function clampWords(text: string, max = OPEN_DESC_WORDS): string {
+  const words = text.trim().split(/\s+/)
+  if (words.length <= max) return text
+  return `${words.slice(0, max).join(' ')} …`
+}
 
 const titleLines = (text: string): number =>
   Math.min(MAX_TITLE_LINES, Math.max(1, Math.ceil(text.trim().length / TITLE_CPL)))
@@ -126,7 +152,7 @@ function descLines(text: string, open: boolean, showDesc: boolean, lod: boolean)
   // An explicitly opened card shows its full description at any zoom — the whole
   // point of opening it is to read it. Level-of-detail only trims the automatic
   // one-line teaser on *collapsed* cards when zoomed far out.
-  if (open) return Math.min(OPEN_DESC_LINES, Math.max(1, Math.ceil(text.length / DESC_CPL)))
+  if (open) return Math.max(1, Math.ceil(clampWords(text).length / DESC_CPL))
   return lod ? TEASER_LINES : 0
 }
 
@@ -191,6 +217,17 @@ function containerH(n: Node, showDesc: boolean, lod: boolean, open: boolean): nu
  * depth is unbounded, so a task three levels down that grew sub-tasks becomes a
  * container like any other — and a childless node gets the task card.
  */
+/**
+ * Width of a node's card. Only an opened card *with something to show* widens —
+ * an empty expanded card would just be a bigger empty card.
+ */
+export function nodeW(n: Node, depth: number, showDesc = true, descOpenDefault = false): number {
+  if (depth === 0) return NODE_W
+  if (!showDesc) return NODE_W
+  if (!isCardOpen(n, descOpenDefault)) return NODE_W
+  return toText(n.description) ? OPEN_NODE_W : NODE_W
+}
+
 export function nodeH(n: Node, depth: number, showDesc = true, lod = true, descOpenDefault = false): number {
   if (depth === 0) return ROOT_H
   const open = isCardOpen(n, descOpenDefault)
@@ -222,21 +259,30 @@ export function layoutTree(
 
   const isExpandable = (n: Node, depth: number) => n.children.length > 0 && isExpanded(n, depth)
   const hOf = (n: Node, depth: number) => nodeH(n, depth, showDesc, lod, descOpenDefault)
+  const wOf = (n: Node, depth: number) => nodeW(n, depth, showDesc, descOpenDefault)
 
   // Cards vary in height, so a vertical layout's rows are spaced by the tallest
   // card at each depth. Collect those maxima up front, over the visible nodes.
   const rowH: number[] = []
+  // Columns are as wide as their widest card, so an opened card pushes the next
+  // column right instead of overlapping it.
+  const colW: number[] = []
   ;(function scan(n: Node, depth: number) {
     rowH[depth] = Math.max(rowH[depth] ?? 0, hOf(n, depth))
+    colW[depth] = Math.max(colW[depth] ?? 0, wOf(n, depth))
     if (isExpandable(n, depth)) n.children.forEach(c => scan(c, depth + 1))
   })(root, 0)
 
   // Extent along the secondary (sibling-stacking) axis: height when horizontal,
   // width when vertical.
-  const selfExtent = (n: Node, depth: number) => (orientation === 'h' ? hOf(n, depth) : NODE_W)
+  const selfExtent = (n: Node, depth: number) => (orientation === 'h' ? hOf(n, depth) : wOf(n, depth))
   // Position along the primary (depth) axis.
   const primary = (depth: number) => {
-    if (orientation === 'h') return depth * (NODE_W + COL_GAP)
+    if (orientation === 'h') {
+      let x = 0
+      for (let d = 0; d < depth; d++) x += (colW[d] ?? NODE_W) + COL_GAP
+      return x
+    }
     let y = 0
     for (let k = 0; k < depth; k++) y += (rowH[k] ?? 0) + COL_GAP
     return y
@@ -290,7 +336,7 @@ export function layoutTree(
       center = (centers[0] + centers[centers.length - 1]) / 2
     }
 
-    const w = NODE_W
+    const w = wOf(n, depth)
     const h = hOf(n, depth)
     const x = orientation === 'h' ? primary(depth) : center - w / 2
     const y = orientation === 'h' ? center - h / 2 : primary(depth)

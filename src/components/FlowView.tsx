@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { Node, Stage } from '../types'
 import { hex, stageMeta, PRIORITY_META } from '../theme'
-import { layoutTree, cardHasMeta, cardHasFooter, isCardOpen, type FlowNode, type ExpandPredicate } from '../lib/layout'
+import { layoutTree, cardHasMeta, cardHasFooter, isCardOpen, clampWords, type FlowNode, type ExpandPredicate } from '../lib/layout'
 import { progressOf, statusCounts } from '../lib/progress'
 import { HealthBadge } from './ui/HealthBadge'
 import { leaves, findNode, findParent } from '../lib/tree'
@@ -859,6 +859,7 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, descOpen
   const style: React.CSSProperties = { left: pos.x, top: pos.y, width: fn.w, height: fn.h, zIndex: dragging ? 20 : undefined }
   const stop = (e: React.PointerEvent) => e.stopPropagation()
   const prio = node.priority ? PRIORITY_META[node.priority] : null
+  // Must match what layout measured, or the text overflows the card it sized.
   const desc = toText(node.description)
   // Effective open: this card's own flag wins, else the canvas-wide default.
   const isOpen = isCardOpen(node, descOpenDefault)
@@ -903,7 +904,7 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, descOpen
   // Level-of-detail trims the collapsed teaser when zoomed out, but an opened
   // card always shows — mirrors `descLines` so heights stay in step.
   const description = desc && showDesc && (isOpen || lod) ? (
-    <div className={`fn-desc${isOpen ? ' fn-desc-open' : ''}`}>{desc}</div>
+    <div className={`fn-desc${isOpen ? ' fn-desc-open' : ''}`}>{isOpen ? clampWords(desc) : desc}</div>
   ) : null
 
   // Compact indicators for what a card carries but has no room to show, plus

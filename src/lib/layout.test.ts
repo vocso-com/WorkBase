@@ -1,4 +1,4 @@
-import { layoutTree, MIN_TASK_H, ROOT_H } from './layout'
+import { layoutTree, MIN_TASK_H, ROOT_H, clampWords, nodeH, OPEN_DESC_WORDS } from './layout'
 import { instantiateTemplate, BUILTIN_TEMPLATES } from './templates'
 import { newNode } from './factory'
 import type { Node } from '../types'
@@ -107,10 +107,17 @@ test('an expanded card keeps growing well past a single screenful', () => {
   expect(hOf(tree(long), long.id)).toBeGreaterThan(hOf(tree(short), short.id))
 })
 
-test('an expanded description clamps only at the sanity ceiling', () => {
-  const atCeiling = newNode('T', { description: 'y'.repeat(30 * 400), cardOpen: true }) // exactly the cap
-  const absurd = newNode('T', { description: 'y'.repeat(30 * 900), cardOpen: true }) // far past it
-  expect(hOf(tree(absurd), absurd.id)).toBe(hOf(tree(atCeiling), atCeiling.id))
+test('an expanded description stops at the word cap, not a height ceiling', () => {
+  // The canvas is a map: past the cap a card says there is more rather than
+  // growing without bound and dragging the layout around it.
+  const words = (n: number) => Array.from({ length: n }, (_, i) => `w${i}`).join(' ')
+  const atCap = newNode('T', { description: words(OPEN_DESC_WORDS), cardOpen: true })
+  const essay = newNode('T', { description: words(OPEN_DESC_WORDS * 40), cardOpen: true })
+  const clamped = newNode('T', { description: clampWords(words(OPEN_DESC_WORDS * 40)), cardOpen: true })
+
+  expect(hOf(tree(essay), essay.id)).toBe(hOf(tree(clamped), clamped.id))
+  // And within a line of a card that is genuinely at the cap.
+  expect(hOf(tree(essay), essay.id)).toBeLessThanOrEqual(hOf(tree(atCap), atCap.id) + 18)
 })
 
 test('level-of-detail drops a collapsed teaser but never an opened card', () => {
@@ -327,4 +334,56 @@ test('no two cards in a column ever overlap, in either orientation', () => {
       expect({ orientation, showDesc, bad }).toEqual({ orientation, showDesc, bad: [] })
     }
   }
+})
+
+test('clampWords keeps short text intact', () => {
+  expect(clampWords('a short note', 100)).toBe('a short note')
+})
+
+test('clampWords trims a long note to the cap and marks the cut', () => {
+  const long = Array.from({ length: 400 }, (_, i) => `w${i}`).join(' ')
+  const out = clampWords(long, 100)
+  expect(out.split(/\s+/)).toHaveLength(101) // 100 words plus the ellipsis
+  expect(out.endsWith('…')).toBe(true)
+  expect(out.startsWith('w0 w1')).toBe(true)
+})
+
+test('an opened card reserves lines for the clamped text, not the whole essay', () => {
+  const essay = Array.from({ length: 4000 }, (_, i) => `w${i}`).join(' ')
+  const openEssay = newNode('Essay', { description: essay, cardOpen: true })
+  const openClamped = newNode('Clamped', { description: clampWords(essay), cardOpen: true })
+  // Measurement and render must agree on the same trimmed text.
+  expect(nodeH(openEssay, 1)).toBe(nodeH(openClamped, 1))
+})
+
+test('an opened card with content is wider than a collapsed one', () => {
+  const shut = newNode('T', { description: 'A note long enough to wrap onto several lines of the card.' })
+  const open = newNode('T', { description: 'A note long enough to wrap onto several lines of the card.', cardOpen: true })
+  const wOf = (n: Node) => layoutTree(tree(n)).nodes.find(x => x.id === n.id)!.w
+  expect(wOf(open)).toBeGreaterThan(wOf(shut))
+})
+
+test('an opened card with no content stays the standard width', () => {
+  const bare = newNode('T', { cardOpen: true })
+  const w = layoutTree(tree(bare)).nodes.find(x => x.id === bare.id)!.w
+  const shut = newNode('T')
+  expect(w).toBe(layoutTree(tree(shut)).nodes.find(x => x.id === shut.id)!.w)
+})
+
+test('a wide card pushes the next column instead of overlapping it', () => {
+  const wide = newNode('Task', {
+    description: 'A note long enough to wrap onto several lines of the card.',
+    cardOpen: true,
+    children: [newNode('Sub')],
+  })
+  const narrow = newNode('Task', { children: [newNode('Sub')] })
+  const childX = (parent: Node) => {
+    const l = layoutTree(tree(parent), () => true)
+    const p = l.nodes.find(n => n.id === parent.id)!
+    const child = l.nodes.find(n => n.depth === p.depth + 1)!
+    return { gap: child.x - (p.x + p.w) }
+  }
+  // The gap between a card's right edge and the next column never goes negative.
+  expect(childX(wide).gap).toBeGreaterThan(0)
+  expect(childX(narrow).gap).toBeGreaterThan(0)
 })
