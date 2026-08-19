@@ -40,6 +40,10 @@ export function SizePicker({ node }: { node: Node }) {
   const suggestion = challengeSize(node, siblings)
 
   const label = node.size ?? 'Size'
+  // A size is a comparison, not a property. "50%" alone reads as something the
+  // task *is*; naming what it is a share of keeps the relativity visible, which
+  // is what stops an XXL here being confused with an XXL in another project.
+  const shareOf = parent ? parent.title : 'the project'
   const approxHours = (key: SizeKey) => (hours ? ` · ≈${Math.round(SIZE_WEIGHT[key] * hours)}h` : '')
 
   return (
@@ -47,7 +51,9 @@ export function SizePicker({ node }: { node: Node }) {
       <button className={`cm-qp${node.size ? ' set' : ''}`} onClick={() => setOpen(o => !o)}>
         <Icon name="ti-scale" className="cm-qp-lead" />
         {label}
-        {currentShare !== undefined ? <span className="size-share">{pct(currentShare)}</span> : null}
+        {currentShare !== undefined
+          ? <span className="size-share" title={`${pct(currentShare)} of ${shareOf}`}>{pct(currentShare)}</span>
+          : null}
         <Icon name="ti-chevron-down" className="cm-qp-caret" />
       </button>
 
@@ -63,6 +69,7 @@ export function SizePicker({ node }: { node: Node }) {
 
       {open ? (
         <div className="cm-qp-pop size-pop" onClick={e => e.stopPropagation()}>
+          <div className="size-pop-head">Share of <b>{shareOf}</b></div>
           <button
             className={`cm-qp-opt${!node.size ? ' on' : ''}`}
             onClick={() => { useStore.getState().setSize(node.id, undefined); setOpen(false) }}

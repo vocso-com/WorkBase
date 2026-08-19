@@ -147,6 +147,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .health-badge .sdot{width:7px;height:7px;}
 .health-ev{font-weight:500;opacity:.8;}
 .size-pop{min-width:268px;}
+.size-pop-head{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--faint);padding:4px 9px 6px;}
 .size-pop .cm-qp-opt{display:flex;align-items:center;gap:8px;}
 .size-key{font-weight:750;font-size:12px;min-width:30px;letter-spacing:-.01em;}
 .size-cap{font-size:11.5px;color:var(--faint);flex:1;text-align:left;white-space:nowrap;}
