@@ -20,6 +20,7 @@ import { ActivityFeed } from './components/ActivityFeed'
 import { NudgeWidget } from './components/NudgeWidget'
 import { VerifyNudge } from './components/VerifyNudge'
 import { ConfirmDialog } from './components/ConfirmDialog'
+import { CompletionSummary } from './components/CompletionSummary'
 import { useOnboarding } from './hooks/useOnboarding'
 import { useQuickCapture } from './hooks/useQuickCapture'
 import { QuickCapture } from './components/QuickCapture'
@@ -137,6 +138,7 @@ export default function App() {
       <ActivityFeed />
       <OnboardingModal />
       <ConfirmDialog />
+      <CompletionSummary />
       {/* In the desktop app the reminder lives in its own always-on-top window;
           in the browser it floats in-app. */}
       {!isTauri() ? <NudgeWidget /> : null}

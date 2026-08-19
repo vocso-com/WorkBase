@@ -1640,3 +1640,25 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
   font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#fff;
   background:rgba(17,24,39,.55);backdrop-filter:blur(4px);border-radius:20px;padding:3px 8px;}
 .tpl-lock i{font-size:12px;}
+
+/* Finishing a project. Quiet and brief — the substance is the summary, which is
+   something an agency can send on, not a burst of confetti that evaporates. */
+.cs-backdrop{position:fixed;inset:0;background:rgba(15,20,30,.34);z-index:80;animation:cs-fade .18s ease-out;}
+.cs{position:fixed;z-index:81;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(360px,calc(100vw - 40px));padding:26px 24px 20px;border-radius:18px;
+  background:var(--card);border:1px solid var(--line);box-shadow:0 24px 60px rgba(15,20,30,.22);
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  animation:cs-rise .26s cubic-bezier(.2,.9,.3,1.1);}
+.cs-ring{width:52px;height:52px;border-radius:50%;border:3px solid;display:flex;align-items:center;
+  justify-content:center;font-size:26px;color:inherit;margin-bottom:14px;animation:cs-pop .34s cubic-bezier(.2,.9,.3,1.3);}
+.cs-title{font-size:19px;font-weight:750;letter-spacing:-.02em;line-height:1.25;}
+.cs-kicker{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:3px;}
+.cs-stats{margin-top:14px;font-size:13.5px;font-weight:600;color:var(--muted);}
+.cs-note{margin-top:6px;font-size:12.5px;color:var(--faint);}
+.cs-note-good{color:var(--teal,#1d9e75);font-weight:600;}
+.cs-done{margin-top:20px;align-self:stretch;padding:9px 0;border-radius:10px;border:1px solid var(--line);
+  background:var(--chip);font-size:13px;font-weight:650;cursor:pointer;}
+.cs-done:hover{border-color:var(--ink);}
+@keyframes cs-fade{from{opacity:0}to{opacity:1}}
+@keyframes cs-rise{from{opacity:0;transform:translate(-50%,-46%) scale(.97)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes cs-pop{0%{transform:scale(.5);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}

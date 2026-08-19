@@ -45,3 +45,15 @@ export function playReminder() {
   blip(587.33, 0, 0.2, 0.1)     // D5
   blip(783.99, 0.13, 0.32, 0.1) // G5
 }
+
+/**
+ * For finishing a whole project. A rising triad rather than the single blip a
+ * task gets — the same vocabulary, more of it, so it reads as the big version
+ * of a familiar sound rather than a different app.
+ */
+export function playProjectComplete(): void {
+  blip(523.25, 0, 0.18, 0.05)      // C5
+  blip(659.25, 0.09, 0.18, 0.05)   // E5
+  blip(783.99, 0.18, 0.26, 0.055)  // G5
+  blip(1046.5, 0.3, 0.42, 0.045)   // C6
+}

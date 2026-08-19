@@ -10,8 +10,10 @@ import { projectPrefix, nextShortId } from '../lib/shortid'
 import { addChild, updateNode, deleteNode, deleteKeepingChildren, moveNode, reorderChildren, findNode, findParent, pathTo } from '../lib/tree'
 import { wouldCycle, dependents } from '../lib/deps'
 import { totalScope } from '../lib/scope'
+import { projectSummary } from '../lib/summary'
+import { useCelebration } from '../hooks/useCelebration'
 import { instantiateTemplate, projectToTemplate } from '../lib/templates'
-import { playComplete } from '../lib/sound'
+import { playComplete, playProjectComplete } from '../lib/sound'
 import { PROJECT_ICONS, mergedStages } from '../theme'
 import { sampleDoc } from '../lib/seed'
 import { demoBucket } from '../lib/demoBucket'
@@ -382,6 +384,18 @@ export const useStore = create<State>((set, get) => ({
     }
     set(s => ({ doc: { ...s.doc, roots: updateNode(s.doc.roots, id, stamped) } }))
     if (patch.status !== undefined && patch.status !== 'todo') captureBaseline(get, set, id)
+    // Finishing a whole project earns a moment. Checked after the write so the
+    // summary sees its own completion date, and only when the project is
+    // genuinely finished — closing one with work still open is a reopen
+    // candidate, not a triumph.
+    if (patch.status === 'done' && !isWidgetWindow()) {
+      const roots = get().doc.roots
+      const finished = roots.find(r => r.id === id)
+      if (finished && projectSummary(finished)) {
+        useCelebration.getState().show(id)
+        if (get().doc.profile?.soundsEnabled !== false) playProjectComplete()
+      }
+    }
     schedulePersist(get)
   },
   setSize(id, size) {
