@@ -4,7 +4,6 @@ import { hex, stageMeta, PRIORITY_META } from '../theme'
 import { layoutTree, cardHasMeta, cardHasFooter, cardHasThumbs, cardImages, isCardOpen, clampWords, type FlowNode, type ExpandPredicate } from '../lib/layout'
 import { progressOf, statusCounts } from '../lib/progress'
 import { HealthBadge } from './ui/HealthBadge'
-import { healthOf } from '../lib/health'
 import { leaves, findNode, findParent } from '../lib/tree'
 import { dependents, isComplete, isBlocked } from '../lib/deps'
 import { tagBg, tagFg } from '../lib/colorMode'
@@ -854,6 +853,7 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, descOpen
   // task that grew sub-tasks becomes a container like any other. Color follows
   // the same rule: tasks take the status color, containers keep their identity
   // color, `labelColor` overrides either.
+  const v = useVocab()
   const isContainerCard = depth > 0 && node.children.length > 0
   const isContainer = depth === 0 || isContainerCard
   const color: string = node.labelColor ?? (isContainer ? (node.color ?? 'gray') : sm.color)
@@ -1023,12 +1023,12 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, descOpen
         <div className="fn-root-body">
           {head}
           <div className="fn-title">{titleContent}</div>
-          {/* One line of metadata, not two. When a project is in trouble that is
-              the more useful of the two — and stacking a fourth row on this card
-              crowds it however much height we reserve. */}
-          {healthOf([node], node).state === 'on-track'
-            ? <div className="fn-sub">{node.children.length} modules · {leaves(node).length} tasks</div>
-            : <HealthBadge node={node} />}
+          <div className="fn-sub">
+            {node.children.length} {node.children.length === 1 ? v.module : v.modules}
+            {' · '}
+            {leaves(node).length} {leaves(node).length === 1 ? v.task : v.tasks}
+          </div>
+          <HealthBadge node={node} />
         </div>
         <ProgressRing value={progressOf(node)} color={hex(color)} size={54} />
         {actions}

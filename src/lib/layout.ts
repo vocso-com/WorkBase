@@ -2,6 +2,7 @@ import type { Node, ColorKey } from '../types'
 import { COLORS } from '../theme'
 import { toText } from './text'
 import { sharesOf } from './weight'
+import { healthOf } from './health'
 
 export interface FlowNode {
   id: string
@@ -68,6 +69,14 @@ export interface FlowLayout {
 }
 
 const NODE_W = 280
+/**
+ * Root cards are wider. Their body is squeezed between the colour band and the
+ * progress ring, leaving barely enough for a count line — and a health badge
+ * carrying its evidence needs more than that. Too narrow, and the badge is
+ * shrunk as a flex item while its text refuses to wrap, so it renders straight
+ * out through its own border.
+ */
+export const ROOT_NODE_W = 320
 /**
  * An opened card gets more room. At 280px a long note becomes a column of
  * noodles — roughly four words a line — which is a worse read than anywhere
@@ -301,14 +310,24 @@ function containerH(n: Node, showDesc: boolean, lod: boolean, open: boolean): nu
  * an empty expanded card would just be a bigger empty card.
  */
 export function nodeW(n: Node, depth: number, showDesc = true, descOpenDefault = false): number {
-  if (depth === 0) return NODE_W
+  if (depth === 0) return ROOT_NODE_W
   if (!showDesc) return NODE_W
   if (!isCardOpen(n, descOpenDefault)) return NODE_W
   return toText(n.description) ? OPEN_NODE_W : NODE_W
 }
 
+/**
+ * The badge carries its evidence — the state alone tells a reader nothing they
+ * can act on — so it needs a row beside the counts rather than instead of them.
+ */
+const ROOT_BADGE_H = 22
+
+function rootHasBadge(n: Node): boolean {
+  return healthOf([n], n).state !== 'on-track'
+}
+
 export function nodeH(n: Node, depth: number, showDesc = true, lod = true, descOpenDefault = false): number {
-  if (depth === 0) return ROOT_H
+  if (depth === 0) return ROOT_H + (rootHasBadge(n) ? ROOT_BADGE_H : 0)
   const open = isCardOpen(n, descOpenDefault)
   if (n.children.length > 0) return containerH(n, showDesc, lod, open)
   return taskH(n, showDesc, lod, open)

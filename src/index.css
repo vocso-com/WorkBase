@@ -142,10 +142,16 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 .pcard-prog>span:only-child{border-radius:20px;}
 .pcard-id{font-size:11.5px;color:var(--faint);font-weight:500;}
 .pcard-pct{font-size:17px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
+/* The badge is a flex item, so it gets squeezed when the row runs out of room.
+   Without these it keeps its text at full width and renders it straight out
+   through its own border. The state must never be the part that gives way —
+   the evidence truncates and the tooltip still carries all of it. */
 .health-badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:650;
-  padding:2px 8px;border-radius:999px;border:1px solid;background:var(--chip);white-space:nowrap;}
-.health-badge .sdot{width:7px;height:7px;}
-.health-ev{font-weight:500;opacity:.8;}
+  padding:2px 8px;border-radius:999px;border:1px solid;background:var(--chip);white-space:nowrap;
+  min-width:0;max-width:100%;overflow:hidden;align-self:flex-start;}
+.health-badge .sdot{width:7px;height:7px;flex-shrink:0;}
+.health-state{flex-shrink:0;}
+.health-ev{font-weight:500;opacity:.8;min-width:0;overflow:hidden;text-overflow:ellipsis;}
 .size-pop{min-width:268px;}
 .size-pop-head{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
   color:var(--faint);padding:4px 9px 6px;}

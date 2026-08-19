@@ -38,7 +38,7 @@ export function HealthBadge({ node, compact = false }: { node: Node; compact?: b
       style={{ borderColor: `${tone.color}55`, color: tone.color }}
     >
       <span className="sdot" style={{ background: tone.color }} />
-      {tone.label}
+      <span className="health-state">{tone.label}</span>
       {!compact && evidence ? <span className="health-ev">{evidence}</span> : null}
     </span>
   )

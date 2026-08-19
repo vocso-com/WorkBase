@@ -1,4 +1,4 @@
-import { layoutTree, MIN_TASK_H, ROOT_H, clampWords, nodeH, OPEN_DESC_WORDS, OPEN_DESC_CPL, DESC_LINE_H, THUMB_ROW_H, CARD_ROW_GAP, wrappedLines } from './layout'
+import { layoutTree, MIN_TASK_H, ROOT_H, clampWords, nodeH, OPEN_DESC_WORDS, OPEN_DESC_CPL, DESC_LINE_H, THUMB_ROW_H, CARD_ROW_GAP, wrappedLines, ROOT_NODE_W } from './layout'
 import { instantiateTemplate, BUILTIN_TEMPLATES } from './templates'
 import { newNode } from './factory'
 import type { Node } from '../types'
@@ -430,7 +430,7 @@ test('a collapsed card shows no thumbnails — the canvas stays a map', () => {
   expect(hOf(tree(shut), shut.id)).toBe(hOf(tree(without), without.id))
 })
 
-test('a root card keeps one height — the badge swaps a row rather than adding one', () => {
+test('a root card reserves a row for its health badge', () => {
   const past = new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10)
   const healthy = newNode('Project', {
     collapsed: false,
@@ -442,10 +442,8 @@ test('a root card keeps one height — the badge swaps a row rather than adding 
   })
   const rootH = (n: Node) => layoutTree(n).nodes.find(x => x.id === n.id)!.h
 
-  // Stacking a fourth row crowds this card however much height is reserved, so
-  // the badge takes the sub-line's place instead of sitting under it.
   expect(rootH(healthy)).toBe(ROOT_H)
-  expect(rootH(atRisk)).toBe(ROOT_H)
+  expect(rootH(atRisk)).toBeGreaterThan(ROOT_H)
 })
 
 test('wrappedLines counts a greedy wrap, not a character division', () => {
@@ -495,4 +493,19 @@ test('layout hands each card its share of its siblings', () => {
   expect(shareOf(rest[0].id)).toBeCloseTo(1 / 11, 3)
   // The root has no siblings to be a share of.
   expect(shareOf(root.id)).toBeUndefined()
+})
+
+test('a root card is wider than a standard card, and grows for its badge', () => {
+  const past = new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10)
+  const kids = (due?: string) => [newNode('Module', { collapsed: false, children: [newNode('T', { dueDate: due })] })]
+  const healthy = newNode('Project', { collapsed: false, children: kids() })
+  const atRisk = newNode('Project', { collapsed: false, children: kids(past) })
+  const at = (n: Node) => layoutTree(n).nodes.find(x => x.id === n.id)!
+
+  // The body has to hold a count line and an evidence badge without squeezing
+  // the badge until its text spills out of it.
+  expect(at(healthy).w).toBeGreaterThan(at(healthy).w === at(atRisk).w ? 280 : 0)
+  expect(at(healthy).w).toBe(ROOT_NODE_W)
+  expect(at(healthy).h).toBe(ROOT_H)
+  expect(at(atRisk).h).toBeGreaterThan(ROOT_H)
 })
