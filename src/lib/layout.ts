@@ -107,7 +107,12 @@ const ROW_GAP = 16
  * cropped anything that was not roughly square.
  */
 export const ROOT_BAND_H = 42
-export const ROOT_H = 116 + ROOT_BAND_H
+/**
+ * 116 was sized for a side band, where the body was centred against the card's
+ * whole height. With the band on top the body only has to hold its own rows —
+ * header, title, counts — so the surplus showed up as a gulf under the band.
+ */
+export const ROOT_H = 92 + ROOT_BAND_H
 export const MIN_TASK_H = 58
 export const MIN_MOD_H = 72
 

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { Node, Stage } from '../types'
-import { hex, stageMeta, PRIORITY_META } from '../theme'
+import { hex, stageMeta, mergedStages, COLORS, PRIORITY_META } from '../theme'
 import { layoutTree, cardHasMeta, cardHasFooter, cardHasThumbs, cardImages, isCardOpen, clampWords, type FlowNode, type ExpandPredicate } from '../lib/layout'
 import { progressOf, statusCounts } from '../lib/progress'
 import { HealthBadge } from './ui/HealthBadge'
@@ -842,6 +842,22 @@ interface CardProps {
   multi: boolean
 }
 
+/**
+ * The ring's arcs, in the same stage colours the card-view bar uses, so the two
+ * read as the same information. The project's own colour identifies the
+ * project; reusing it for progress would make every project's ring mean
+ * something different.
+ */
+function ringSegments(node: Node, stages: Stage[], stageLabels?: Record<string, string>) {
+  const ls = leaves(node)
+  if (ls.length === 0) return undefined
+  const counts: Record<string, number> = {}
+  for (const l of ls) counts[l.status] = (counts[l.status] ?? 0) + 1
+  return mergedStages(stages, stageLabels)
+    .filter(st => (counts[st.id] ?? 0) > 0)
+    .map(st => ({ id: st.id, color: COLORS[st.color], value: (counts[st.id] / ls.length) * 100 }))
+}
+
 function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, descOpenDefault, pos, dragging, isDropTarget, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onOpen, onToggle, onAdd, onDelete, selected, dimmed, editing, onCommitTitle, onCancelEdit, linkTarget, onLinkStart, multi }: CardProps) {
   const { node, depth } = fn
   const drop = isDropTarget ? ' fn-droptarget' : ''
@@ -1032,7 +1048,12 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, descOpen
           </div>
           <HealthBadge node={node} />
         </div>
-        <ProgressRing value={progressOf(node)} color={hex(color)} size={54} />
+        <ProgressRing
+          value={progressOf(node)}
+          color={hex(color)}
+          size={54}
+          segments={ringSegments(node, stages, stageLabels)}
+        />
         {actions}
         {toggle}
         {linkHandle}

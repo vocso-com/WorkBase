@@ -1067,7 +1067,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sa
 /* The project's own logo, kept at its natural proportions on a clean tile. */
 .fn-band-logo{flex:none;height:30px;width:auto;max-width:62%;object-fit:contain;background:#fff;
   border-radius:9px;padding:3px 6px;box-shadow:0 2px 8px rgba(0,0,0,.15);}
-.fn-root-body{min-width:0;padding:10px 0;display:flex;flex-direction:column;gap:4px;}
+.fn-root-body{min-width:0;padding:8px 0;display:flex;flex-direction:column;justify-content:center;gap:4px;}
 /* Explicit line-height: the inherited 1.25 clipped descenders against the
    line-clamp's overflow:hidden. */
 .fn-root .fn-title{font-size:16px;line-height:22px;font-weight:700;letter-spacing:-.015em;-webkit-line-clamp:1;}
