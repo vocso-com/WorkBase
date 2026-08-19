@@ -1,7 +1,6 @@
 import type { Node, ColorKey } from '../types'
 import { COLORS } from '../theme'
 import { toText } from './text'
-import { healthOf } from './health'
 
 export interface FlowNode {
   id: string
@@ -301,23 +300,8 @@ export function nodeW(n: Node, depth: number, showDesc = true, descOpenDefault =
   return toText(n.description) ? OPEN_NODE_W : NODE_W
 }
 
-/**
- * The root card's health badge carries its evidence — "At risk · 3 items
- * overdue · 1 blocked" — because the state alone tells a reader nothing they
- * can act on. That needs a row of its own, so the card grows to hold it rather
- * than crowding the badge against its bottom edge.
- *
- * Resolved against the project itself: dependencies inside it are what the
- * badge reports on.
- */
-const ROOT_BADGE_H = 24
-
-function rootHasBadge(n: Node): boolean {
-  return healthOf([n], n).state !== 'on-track'
-}
-
 export function nodeH(n: Node, depth: number, showDesc = true, lod = true, descOpenDefault = false): number {
-  if (depth === 0) return ROOT_H + (rootHasBadge(n) ? ROOT_BADGE_H : 0)
+  if (depth === 0) return ROOT_H
   const open = isCardOpen(n, descOpenDefault)
   if (n.children.length > 0) return containerH(n, showDesc, lod, open)
   return taskH(n, showDesc, lod, open)

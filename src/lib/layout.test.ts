@@ -430,7 +430,7 @@ test('a collapsed card shows no thumbnails — the canvas stays a map', () => {
   expect(hOf(tree(shut), shut.id)).toBe(hOf(tree(without), without.id))
 })
 
-test('a root card makes room for a health badge, and stays compact without one', () => {
+test('a root card keeps one height — the badge swaps a row rather than adding one', () => {
   const past = new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10)
   const healthy = newNode('Project', {
     collapsed: false,
@@ -442,8 +442,10 @@ test('a root card makes room for a health badge, and stays compact without one',
   })
   const rootH = (n: Node) => layoutTree(n).nodes.find(x => x.id === n.id)!.h
 
+  // Stacking a fourth row crowds this card however much height is reserved, so
+  // the badge takes the sub-line's place instead of sitting under it.
   expect(rootH(healthy)).toBe(ROOT_H)
-  expect(rootH(atRisk)).toBeGreaterThan(ROOT_H)
+  expect(rootH(atRisk)).toBe(ROOT_H)
 })
 
 test('wrappedLines counts a greedy wrap, not a character division', () => {

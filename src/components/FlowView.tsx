@@ -4,6 +4,7 @@ import { hex, stageMeta, PRIORITY_META } from '../theme'
 import { layoutTree, cardHasMeta, cardHasFooter, cardHasThumbs, cardImages, isCardOpen, clampWords, type FlowNode, type ExpandPredicate } from '../lib/layout'
 import { progressOf, statusCounts } from '../lib/progress'
 import { HealthBadge } from './ui/HealthBadge'
+import { healthOf } from '../lib/health'
 import { leaves, findNode, findParent } from '../lib/tree'
 import { dependents, isComplete, isBlocked } from '../lib/deps'
 import { tagBg, tagFg } from '../lib/colorMode'
@@ -1011,8 +1012,12 @@ function FlowNodeCard({ fn, stages, stageLabels, kicker, showDesc, lod, descOpen
         <div className="fn-root-body">
           {head}
           <div className="fn-title">{titleContent}</div>
-          <div className="fn-sub">{node.children.length} modules · {leaves(node).length} tasks</div>
-          <HealthBadge node={node} />
+          {/* One line of metadata, not two. When a project is in trouble that is
+              the more useful of the two — and stacking a fourth row on this card
+              crowds it however much height we reserve. */}
+          {healthOf([node], node).state === 'on-track'
+            ? <div className="fn-sub">{node.children.length} modules · {leaves(node).length} tasks</div>
+            : <HealthBadge node={node} />}
         </div>
         <ProgressRing value={progressOf(node)} color={hex(color)} size={54} />
         {actions}
