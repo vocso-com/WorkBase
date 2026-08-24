@@ -118,8 +118,9 @@ version, no accounts.  These are choices, not a backlog.
 (Apple Silicon and Intel). It is signed with VOCSO's Developer ID and notarised by Apple,
 so it opens without a Gatekeeper warning.
 
-**Windows** — no installer yet. Build from source below; it takes about five minutes.
-[Watch releases](https://github.com/vocso-com/WorkBase/releases) to hear when one lands.
+**Windows and Linux** — no installers yet. Build from source below; it takes about five
+minutes. [Watch releases](https://github.com/vocso-com/WorkBase/releases) to hear when
+they land.
 
 ## Build from source
 
@@ -160,6 +161,17 @@ need your own Apple Developer account and a Developer ID certificate in your key
 ```bash
 npm run tauri build -- --bundles nsis
 ```
+
+**Linux** — Tauri renders through WebKitGTK, so install its development packages first
+(Debian/Ubuntu shown; the equivalents exist on other distributions):
+
+```bash
+sudo apt install libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev \
+  patchelf libxdo-dev build-essential file
+npm run tauri build -- --bundles appimage,deb
+```
+
+That leaves an `.AppImage` and a `.deb` under `src-tauri/target/release/bundle/`.
 
 Tauri cannot cross-compile to Windows from macOS or Linux, so this must run on Windows.
 If you'd rather not keep a Windows machine, `.github/workflows/release.yml` builds both
