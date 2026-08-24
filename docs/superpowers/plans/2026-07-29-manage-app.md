@@ -4,6 +4,13 @@
 
 **Goal:** Build "Manage", a native macOS desktop app (Tauri) for tracking projects → modules → tasks at infinite depth, with a card-first visual UI, status swimlanes, a per-project overview, Board/Kanban views, drag-and-drop, tags, and an enrich-on-demand detail panel — all persisted to a local JSON file.
 
+> **Note on `prototype.html`.** This plan was written against a single-file HTML
+> prototype at the repo root, which it refers to throughout as the visual source of
+> truth. That file held a copy of a real internal project board, so it was removed
+> before this repository was published. Its design decisions live on in
+> `src/index.css` and `src/theme.ts`; the references below are kept as written so the
+> plan still reads as the historical document it is.
+
 **Architecture:** A React + TypeScript + Vite front end runs inside a Tauri v2 shell. All domain logic lives in pure, unit-tested modules under `src/lib` (tree ops, progress, shortId, tags, serialization). A Zustand store holds the node tree in memory and debounce-persists it through a storage adapter that writes JSON via Tauri's fs plugin (with a localStorage fallback so the app also runs in a plain browser during `vitest`/dev). UI components are thin and read/derive from the store. The committed `prototype.html` at the repo root is the visual source of truth — port its markup, tokens, and colors.
 
 **Tech Stack:** Tauri v2, React 18, TypeScript 5, Vite 5, Tailwind CSS 3.4, Zustand 5, @dnd-kit (core + sortable), nanoid, Vitest + @testing-library/react + jsdom.
