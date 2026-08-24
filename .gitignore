@@ -3,6 +3,9 @@ dist
 target
 .DS_Store
 
+# Vite dependency pre-bundle cache
+.vite
+
 # Tauri auto-generated schemas (regenerated on every build)
 src-tauri/gen/
 

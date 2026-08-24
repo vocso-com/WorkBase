@@ -53,7 +53,6 @@
       "icons/icon.ico"
     ],
     "macOS": {
-      "signingIdentity": "Developer ID Application: Vocso Technologies Private Limited (65MNQKTGKG)",
       "hardenedRuntime": true,
       "entitlements": "entitlements.plist",
       "minimumSystemVersion": "10.15"

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# One-command signed + notarized macOS release for WorkBase.
+# One-command signed + notarized macOS release build.
 #
 #   ./scripts/release.sh
 #
@@ -15,9 +15,12 @@
 #
 set -euo pipefail
 
-# --- Non-secret identifiers (safe to commit) ---------------------------------
-APPLE_ID="${APPLE_ID:-info@vocso.com}"
-APPLE_TEAM_ID="${APPLE_TEAM_ID:-65MNQKTGKG}"
+# --- Your Apple Developer account --------------------------------------------
+# Set these for your own team before releasing. The signing certificate itself
+# comes from your login keychain; set APPLE_SIGNING_IDENTITY if you have more
+# than one Developer ID certificate installed.
+APPLE_ID="${APPLE_ID:?set APPLE_ID to your Apple Developer account email}"
+APPLE_TEAM_ID="${APPLE_TEAM_ID:?set APPLE_TEAM_ID to your 10-character team id}"
 TARGET="universal-apple-darwin"
 
 # --- Locate project root (script lives in <root>/scripts) --------------------

@@ -1,9 +1,7 @@
 # Computed Status & Weighted Rollup
 
 **Date:** 2026-08-19
-**Branch:** `feat/cloud-sync-collab`
-**Status:** Spec — awaiting review, not yet implemented
-**Strategy context:** [2026-08-19-product-strategy-and-collaboration-design.md](./2026-08-19-product-strategy-and-collaboration-design.md)
+**Status:** Implemented — this describes the design as shipped.
 
 ---
 
