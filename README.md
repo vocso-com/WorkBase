@@ -73,7 +73,7 @@ version, no accounts.  These are choices, not a backlog.
 
 ## Install
 
-Download a build from [releases](https://github.com/vocso-com/workbase-desktop/releases).
+Download a build from [releases](https://github.com/vocso-com/WorkBase/releases).
 
 ## Build from source
 
@@ -83,8 +83,8 @@ that's Xcode Command Line Tools on macOS, and the Microsoft C++ Build Tools plus
 WebView2 runtime on Windows.
 
 ```bash
-git clone https://github.com/vocso-com/workbase-desktop.git
-cd workbase-desktop
+git clone https://github.com/vocso-com/WorkBase.git
+cd WorkBase
 npm install
 npm run tauri dev
 ```
@@ -199,7 +199,7 @@ sort it out.
 ## Security
 
 Found a vulnerability? Please don't open a public issue — report it through
-[GitHub Security Advisories](https://github.com/vocso-com/workbase-desktop/security/advisories/new).
+[GitHub Security Advisories](https://github.com/vocso-com/WorkBase/security/advisories/new).
 
 ## Who builds this
 

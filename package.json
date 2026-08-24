@@ -6,9 +6,9 @@
   "author": "VOCSO Technologies Pvt Ltd (https://vocso.com)",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vocso-com/workbase.git"
+    "url": "https://github.com/vocso-com/WorkBase.git"
   },
-  "homepage": "https://github.com/vocso-com/workbase",
+  "homepage": "https://github.com/vocso-com/WorkBase",
   "type": "module",
   "scripts": {
     "dev": "vite",
