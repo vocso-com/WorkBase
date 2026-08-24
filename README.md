@@ -7,7 +7,7 @@
 An offline desktop alternative to Trello, Asana and Monday — free, AGPL-licensed,
 and your data never leaves your machine.
 
-[Flow view](#flow-view) · [Screenshots](#the-four-views) · [Install](#install) · [Build from source](#build-from-source) · [Licence](#licence)
+[Flow view](#flow-view) · [Screenshots](#the-four-views) · [Working in it](#working-in-it) · [Install](#install) · [Build from source](#build-from-source) · [Licence](#licence)
 
 </div>
 
@@ -65,9 +65,46 @@ Four views over the same data. Switch freely; nothing is a separate document.
 
 ![Projects home](docs/screenshots/projects.png)
 
+## Working in it
+
+### Any item opens for detail — and takes sub-items of its own
+
+Status, priority, size, due date, colour and tags; dependencies; a description;
+attachments; a checklist you can keep adding sub-items to, seeded from a template if you
+want one; and a comment and activity trail. Nesting is not limited to the tree — a
+checklist item is just another child.
+
+![Card detail with a checklist of sub-items](docs/screenshots/card-detail.png)
+
+### My Work — everything due, across every project
+
+One list, pulled from every project in the WorkBase, each item showing the path it came
+from.
+
+![My Work](docs/screenshots/mywork.png)
+
+### Multiple WorkBases
+
+Keep client work, internal projects and personal things in separate WorkBases and switch
+between them. Each has its own projects, tags and stages.
+
+![Switching between WorkBases](docs/screenshots/workspaces.png)
+
+### Fifteen templates to start from
+
+Client onboarding, website project, monthly retainer, brand identity, SEO engagement,
+mobile app, SaaS product and more — each pre-seeded with modules and tasks. Or start
+blank, or import a `.json`/`.csv` export.
+
+![Project templates](docs/screenshots/templates.png)
+
+### Dark mode
+
+![Flow view in dark mode](docs/screenshots/flow-dark.png)
+
 ## Everything else
 
-Multiple workspaces · project templates · dependencies with blocked-state propagation ·
+Multiple WorkBases · 15 project templates · dependencies with blocked-state propagation ·
 full-text search · a My Work view across every project · tags, sizes and due dates ·
 light and dark themes · export to **PNG, PDF, Markdown, CSV and JSON** · local-only
 storage · macOS and Windows.
