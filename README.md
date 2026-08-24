@@ -201,10 +201,24 @@ sort it out.
 Found a vulnerability? Please don't open a public issue — report it through
 [GitHub Security Advisories](https://github.com/vocso-com/workbase-desktop/security/advisories/new).
 
+## Who builds this
+
+WorkBase is built and maintained by **[VOCSO Technologies Pvt Ltd](https://www.vocso.com)**,
+an ISO 27001-certified software development company founded in 2009, with teams in
+Faridabad (India), Orange (California) and Dubai.
+
+VOCSO builds software for clients across product engineering, custom web and mobile
+application development, and AI development — RAG systems, NLP and generative AI
+features. WorkBase started as an internal tool for tracking our own client projects,
+which is the reason it is shaped the way it is: agencies run many nested projects at
+once, and no column-based board survives that.
+
+If your team needs something like this built, [get in touch](https://www.vocso.com).
+
 ---
 
 <div align="center">
 
-Built by [VOCSO Technologies](https://www.vocso.com) in Faridabad, India.
+Built by [VOCSO Technologies](https://www.vocso.com) — Faridabad · California · Dubai
 
 </div>
