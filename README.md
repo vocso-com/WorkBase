@@ -41,6 +41,10 @@ The reason this exists.
 - **It warns, it doesn't block.** Completing a parent with unfinished children raises a
   flag and offers to complete the children too — then gets out of your way.
 
+The reasoning behind the rollup — how weights are chosen, why completion is never
+automatic, how health and staleness are derived — is written up in
+[docs/design](docs/design/2026-08-19-computed-status-and-weighted-rollup-design.md).
+
 ## The four views
 
 Four views over the same data. Switch freely; nothing is a separate document.
