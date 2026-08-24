@@ -792,7 +792,7 @@ git commit -m "feat: progress derivation from leaf status"
 **Interfaces:**
 - Consumes: `Node` from `../types`; `findNode` from `./tree`.
 - Produces:
-  - `projectPrefix(name: string): string` — uppercase initials of the first two words, else first two letters (e.g. "SampleRoom" → "SR", "Clearwater" → "CL").
+  - `projectPrefix(name: string): string` — uppercase initials of the first two words, else first two letters (e.g. "Acme Website" → "AW", "Handbook" → "HA").
   - `nextShortId(roots: Node[], prefix: string): string` — `PREFIX-N` where N is one greater than the highest existing counter for that prefix anywhere in the tree (starts at 1).
 
 - [ ] **Step 1: Write failing tests**
@@ -808,8 +808,8 @@ const n = (id: string, shortId: string): Node => ({
 })
 
 test('projectPrefix from words then letters', () => {
-  expect(projectPrefix('Sample Room')).toBe('SR')
-  expect(projectPrefix('Clearwater')).toBe('CL')
+  expect(projectPrefix('Acme Website')).toBe('AW')
+  expect(projectPrefix('Handbook')).toBe('HA')
 })
 
 test('nextShortId increments per prefix', () => {
@@ -1622,11 +1622,11 @@ beforeEach(async () => {
 
 test('shows a project under its status lane', () => {
   act(() => {
-    const id = useStore.getState().addProject('SampleRoom')
+    const id = useStore.getState().addProject('Acme Website')
     useStore.getState().setStatus(id, 'doing')
   })
   render(<ProjectsHome />)
-  expect(screen.getByText('SampleRoom')).toBeInTheDocument()
+  expect(screen.getByText('Acme Website')).toBeInTheDocument()
   expect(screen.getByText('In progress')).toBeInTheDocument()
 })
 ```
@@ -1693,11 +1693,11 @@ beforeEach(async () => {
 
 test('renders overview and a module card', () => {
   let pid = ''
-  act(() => { pid = useStore.getState().addProject('SampleRoom') })
+  act(() => { pid = useStore.getState().addProject('Acme Website') })
   act(() => { useStore.getState().addChildNode(pid, 'Testing') })
   act(() => { useNav.getState().home(); useNav.getState().open(pid) })
   render(<ProjectPage />)
-  expect(screen.getByText('SampleRoom')).toBeInTheDocument()
+  expect(screen.getByText('Acme Website')).toBeInTheDocument()
   expect(screen.getByText('Testing')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /^Board$/ })).toBeInTheDocument()
 })
@@ -2028,7 +2028,7 @@ git commit -m "feat: export and import data file"
 - Test: `src/lib/seed.test.ts`
 
 **Interfaces:**
-- Produces `seed.ts`: `sampleDoc(): StoreDoc` — builds the notebook's projects (Clearwater, SampleRoom, ProjectGrid, Streamline) with a couple of modules/tasks each, mirroring `prototype.html`'s `projects` array, with proper `shortId`s and colors. `init` seeds this only on genuine first run.
+- Produces `seed.ts`: `sampleDoc(): StoreDoc` — builds the demo projects (Acme Website, Mobile App v2, Brand Refresh, Team Handbook) with a couple of modules/tasks each, with proper `shortId`s and colors. `init` seeds this only on genuine first run.
 
 - [ ] **Step 1: Write failing test**
 
@@ -2039,7 +2039,7 @@ import { sampleDoc } from './seed'
 
 test('sample doc has the four notebook projects', () => {
   const d = sampleDoc()
-  expect(d.roots.map(r => r.title)).toEqual(['Streamline', 'SampleRoom', 'Clearwater', 'ProjectGrid'])
+  expect(d.roots.map(r => r.title)).toEqual(['Acme Website', 'Mobile App v2', 'Brand Refresh', 'Team Handbook'])
   expect(d.roots.every(r => r.shortId.length > 0)).toBe(true)
   expect(d.roots[0].children.length).toBeGreaterThan(0)
 })

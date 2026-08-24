@@ -14,7 +14,7 @@ beforeEach(async () => {
 
 test('renders the active view (module card in board view)', () => {
   let pid = ''
-  act(() => { pid = useStore.getState().addProject('SampleRoom') })
+  act(() => { pid = useStore.getState().addProject('Acme Website') })
   act(() => { useStore.getState().addChildNode(pid, 'Testing') })
   act(() => { useNav.getState().home(); useNav.getState().open(pid) })
   render(<ProjectPage />)

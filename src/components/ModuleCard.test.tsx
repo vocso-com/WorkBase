@@ -20,7 +20,7 @@ function buildFixture() {
   let moduleWithChildId = ''
   let leafModuleId = ''
   act(() => {
-    pid = useStore.getState().addProject('SampleRoom')
+    pid = useStore.getState().addProject('Acme Website')
     moduleWithChildId = useStore.getState().addChildNode(pid, 'Has Children')
     useStore.getState().addChildNode(moduleWithChildId, 'Sub Item')
     leafModuleId = useStore.getState().addChildNode(pid, 'Leaf Module')
@@ -88,7 +88,7 @@ test('both leaf and non-leaf child rows have a toggle checkbox', async () => {
   let nonLeafChildId = ''
   let leafChildId = ''
   act(() => {
-    pid = useStore.getState().addProject('SampleRoom')
+    pid = useStore.getState().addProject('Acme Website')
     moduleId = useStore.getState().addChildNode(pid, 'Module')
     nonLeafChildId = useStore.getState().addChildNode(moduleId, 'Has Grandchild')
     useStore.getState().addChildNode(nonLeafChildId, 'Grandchild')

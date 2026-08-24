@@ -23,11 +23,11 @@ test('shows the wordmark and a Projects sub-bar at home', () => {
 
 test('shows the project chip and view menu when inside a project', () => {
   let pid = ''
-  act(() => { pid = useStore.getState().addProject('SampleRoom') })
+  act(() => { pid = useStore.getState().addProject('Acme Website') })
   render(headerFor([pid]))
   expect(screen.getByText('Projects')).toBeInTheDocument()
   // Project title appears in the merged identity chip
-  expect(screen.getByText('SampleRoom')).toBeInTheDocument()
+  expect(screen.getByText('Acme Website')).toBeInTheDocument()
   // The view dropdown lives in the header now, showing the default view.
   expect(screen.getByText('Flow')).toBeInTheDocument()
 })

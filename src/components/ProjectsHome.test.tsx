@@ -11,11 +11,11 @@ beforeEach(async () => {
 
 test('shows a project under its status lane', () => {
   act(() => {
-    const id = useStore.getState().addProject('SampleRoom')
+    const id = useStore.getState().addProject('Acme Website')
     useStore.getState().setStatus(id, 'doing')
   })
   const { container } = render(<ProjectsHome />)
-  expect(screen.getByText('SampleRoom')).toBeInTheDocument()
+  expect(screen.getByText('Acme Website')).toBeInTheDocument()
   // Lane header carries the status label (the card now shows one too, hence the scope)
   const laneHead = container.querySelector('.lanehead')
   expect(laneHead?.textContent).toContain('In progress')

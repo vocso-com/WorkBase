@@ -94,7 +94,7 @@ breadcrumb.
    or None (flat grid). Each card: colored top accent, icon, title, optional
    description, progress ring, status dot, footer meta ("3 modules · 12 tasks").
    A dashed "New project" card ends the relevant lane.
-2. **Project overview page:** breadcrumb `Projects › SampleRoom`. Opens with an
+2. **Project overview page:** breadcrumb `Projects › Acme Website`. Opens with an
    overview header — large progress ring + name/description on the left, and a
    row of stat tiles on the right (Modules, Tasks, Done, In progress, Blocked),
    plus a thin status-breakdown bar. Below the header is a **view toggle:

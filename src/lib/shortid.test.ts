@@ -6,14 +6,14 @@ const n = (id: string, shortId: string): Node => ({
 })
 
 test('projectPrefix from words then letters', () => {
-  expect(projectPrefix('Sample Room')).toBe('SR')
-  expect(projectPrefix('Clearwater')).toBe('CL')
+  expect(projectPrefix('Acme Website')).toBe('AW')
+  expect(projectPrefix('Handbook')).toBe('HA')
 })
 
 test('nextShortId increments per prefix', () => {
-  const roots: Node[] = [{ ...n('p', 'SR-1'), children: [n('c', 'SR-3')] }]
-  expect(nextShortId(roots, 'SR')).toBe('SR-4')
-  expect(nextShortId(roots, 'PG')).toBe('PG-1')
+  const roots: Node[] = [{ ...n('p', 'AW-1'), children: [n('c', 'AW-3')] }]
+  expect(nextShortId(roots, 'AW')).toBe('AW-4')
+  expect(nextShortId(roots, 'TH')).toBe('TH-1')
 })
 
 test('nextShortId does not throw for a regex-metacharacter prefix', () => {
