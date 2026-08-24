@@ -14,3 +14,13 @@ src-tauri/gen/
 
 # Local dev overrides (per-machine)
 .env.local
+
+# Secrets — never commit these. Keys go in the OS keychain or CI secrets.
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.key
+*.keystore
+*.mobileprovision

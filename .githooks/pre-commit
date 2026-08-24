@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+#
+# Blocks the two things that are painful to undo once pushed: credential-shaped
+# strings, and environment files. Patterns are deliberately high-confidence —
+# a hook that cries wolf is a hook people disable.
+#
+# Bypass a false positive with:  git commit --no-verify
+#
+set -uo pipefail
+
+staged=$(git diff --cached --name-only --diff-filter=ACM)
+[ -z "$staged" ] && exit 0
+
+fail=0
+note() { printf '\n  \033[31m✗\033[0m %s\n' "$1"; fail=1; }
+
+# 1. Environment files. .env.example / .env.sample are fine — they hold keys, not values.
+while IFS= read -r f; do
+  case "$f" in
+    *.env|.env|.env.*)
+      case "$f" in *.example|*.sample|*.template) continue ;; esac
+      note "$f looks like an environment file. Commit a .env.example with empty values instead."
+      ;;
+  esac
+done <<< "$staged"
+
+# 2. Key material and provider tokens, in the staged content only.
+patterns=(
+  '-----BEGIN [A-Z ]*PRIVATE KEY'                 'a private key'
+  'AKIA[0-9A-Z]{16}'                              'an AWS access key id'
+  'gh[pousr]_[A-Za-z0-9]{36,}'                    'a GitHub token'
+  'xox[baprs]-[A-Za-z0-9-]{10,}'                  'a Slack token'
+  'sk-[A-Za-z0-9]{32,}'                           'an API secret key'
+  'AIza[0-9A-Za-z_-]{35}'                         'a Google API key'
+  'eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.'   'a signed JWT'
+  '(password|passwd|secret|api[_-]?key|auth[_-]?token)["'"'"']?\s*[:=]\s*["'"'"'][^"'"'"'{$][^"'"'"']{7,}' 'a hardcoded credential'
+)
+added=$(git diff --cached -U0 --diff-filter=ACM | grep '^+' | grep -v '^+++')
+for ((i=0; i<${#patterns[@]}; i+=2)); do
+  if printf '%s' "$added" | grep -qaE -e "${patterns[i]}"; then
+    note "staged changes look like they contain ${patterns[i+1]}."
+    printf '%s' "$added" | grep -naE -e "${patterns[i]}" | head -3 | sed 's/^/      /'
+  fi
+done
+
+if [ "$fail" -ne 0 ]; then
+  printf '\n  Commit blocked. Fix the above, or re-run with --no-verify if it is a false positive.\n\n'
+  exit 1
+fi
+exit 0

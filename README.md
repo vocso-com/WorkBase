@@ -125,6 +125,12 @@ directly testable.
 Issues and pull requests are welcome. Please run `npm test` and `npm run typecheck`
 before opening a PR.
 
+`npm install` points git at `.githooks`, which adds a pre-commit scan for
+credential-shaped strings and environment files. It only blocks high-confidence
+matches; if it ever flags something wrongly, `git commit --no-verify` gets past it.
+This repository holds no secrets, and it should stay that way — the app makes no
+network calls, so there is nothing here that needs a key.
+
 ## License
 
 Apache-2.0 — see [LICENSE](LICENSE).
