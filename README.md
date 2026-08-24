@@ -1,142 +1,210 @@
+<div align="center">
+
 # WorkBase
 
-**A local-first desktop project planner whose status is computed from the work, not reported by hand.**
+**A local-first, open source project manager for people who think in trees, not columns.**
 
-Built with React, TypeScript and [Tauri](https://tauri.app). Your data is a single
-document on your own machine. There is no account, no sign-in, and no server.
+An offline desktop alternative to Trello, Asana and Monday — free, AGPL-licensed,
+and your data never leaves your machine.
+
+[Flow view](#flow-view) · [Screenshots](#the-four-views) · [Install](#install) · [Build from source](#build-from-source) · [Licence](#licence)
+
+</div>
 
 ---
 
-## The idea
+Kanban boards are good at showing *what is in progress* and bad at showing *how the work
+fits together*. A board flattens a project into columns. Real projects are nested — a
+project has modules, modules have tasks, tasks have subtasks, and some of those go four
+levels deeper.
 
-Every project tool fails the same way: the board goes stale, so nobody trusts it, so
-people ask in chat instead. The cause is structural — **status is declared**, so a human
-has to remember to move things, and humans don't.
+WorkBase keeps the board and adds a **flow view**: the whole project as a tree you can
+explore at any depth.
 
-WorkBase makes status **computed**. You tick the one leaf task in front of you; every
-ancestor derives its own state from below. The top-level view is true because it is
-derived from the bottom, where the only honest data lives.
+Everything is stored on your own disk. No account, no server, no telemetry, no network
+call. That isn't a promise you have to take on faith — the source is here, and the
+desktop build's content-security policy allows no external origins at all.
 
-What follows from that:
+## Flow view
 
-- **Weighted rollup at any depth.** Progress is a weighted sum of children, not a
-  count of checkboxes.
-- **Sizes declared by comparison.** You size a task against its siblings, not in hours.
-- **Health as a state with evidence.** A project is "at risk" *and it can tell you why*,
-  in plain language.
-- **Staleness scaled to tempo.** A task that normally moves daily is stale after a day;
-  one that moves monthly is not.
-- **Scope growth measured from kickoff**, so "we're behind" can be distinguished from
-  "we added a third more work."
-- **Never automatic completion.** The app advances things to In Progress on its own, but
-  finishing is always a human's call.
+The reason this exists.
 
-The full design rationale is in
-[docs/superpowers/specs/2026-08-19-computed-status-and-weighted-rollup-design.md](docs/superpowers/specs/2026-08-19-computed-status-and-weighted-rollup-design.md).
+![Flow view — a project, its modules, and their tasks on one canvas](docs/screenshots/flow.png)
 
-## Views
+- **Unlimited nesting.** Project → module → task → subtask → as deep as the work goes.
+- **Progress rolls up, weighted.** A parent shows the progress of everything beneath it,
+  so you can see where a project is stuck without opening anything. Above, three modules
+  at 2/3, 1/3 and 0/3 roll into 30% at the root.
+- **Complete in place.** Tick items off in the tree. No modal, no context switch.
+- **Toggleable detail.** Collapse to titles for the shape of the project; expand for the
+  detail, one level at a time.
+- **It warns, it doesn't block.** Completing a parent with unfinished children raises a
+  flag and offers to complete the children too — then gets out of your way.
 
-Projects are one tree, shown four ways — **Flow** (a dependency canvas), **Board**,
-**Kanban**, and **Columns**. Plus a My Work view that pulls what's due across every
-project, full-text search, dependency links with blocked-state propagation, and
-multi-format import/export.
+## The four views
 
-## Getting started
+Four views over the same data. Switch freely; nothing is a separate document.
+
+### Board — modules side by side
+
+![Board view](docs/screenshots/board.png)
+
+### Kanban — by stage, with drag and drop
+
+![Kanban view](docs/screenshots/kanban.png)
+
+### Outline — tree on the left, full detail on the right
+
+![Outline view](docs/screenshots/outline.png)
+
+### Projects home — every project with its rolled-up progress
+
+![Projects home](docs/screenshots/projects.png)
+
+## Everything else
+
+Multiple workspaces · project templates · dependencies with blocked-state propagation ·
+full-text search · a My Work view across every project · tags, sizes and due dates ·
+light and dark themes · export to **PNG, PDF, Markdown, CSV and JSON** · local-only
+storage · macOS and Windows.
+
+**Deliberately not here:** no Gantt charts (probably ever), no calendar view yet, no web
+version, no accounts.  These are choices, not a backlog.
+
+## Install
+
+Download a build from [releases](https://github.com/vocso-com/workbase-desktop/releases).
+
+## Build from source
+
+You need **Node 20+** and **Rust** (stable). Install the
+[Tauri prerequisites](https://tauri.app/start/prerequisites/) for your platform first —
+that's Xcode Command Line Tools on macOS, and the Microsoft C++ Build Tools plus the
+WebView2 runtime on Windows.
 
 ```bash
+git clone https://github.com/vocso-com/workbase-desktop.git
+cd workbase-desktop
 npm install
-npm run dev
-```
-
-That runs the app in a browser at `http://localhost:5173`, where it stores data in
-IndexedDB. For the desktop build you'll need the
-[Tauri prerequisites](https://tauri.app/start/prerequisites/) (Rust and your platform's
-toolchain), then:
-
-```bash
 npm run tauri dev
 ```
 
-Other scripts:
+### Building installers
+
+**macOS** — produces a `.dmg` and `.app` under `src-tauri/target/release/bundle/`:
 
 ```bash
-npm test          # vitest, 291 tests
-npm run typecheck # tsc --noEmit
-npm run build     # production web build
+npm run tauri build
 ```
+
+For a universal binary that runs on both Apple Silicon and Intel:
+
+```bash
+npm run tauri build -- --target universal-apple-darwin
+```
+
+Unsigned builds trigger Gatekeeper. To sign and notarise, set `APPLE_ID`,
+`APPLE_TEAM_ID` and `APPLE_PASSWORD` (an app-specific password) and run
+`./scripts/release.sh`, which signs, notarises and staples the DMG in one step. You will
+need your own Apple Developer account and a Developer ID certificate in your keychain.
+
+**Windows** — produces an NSIS `.exe` installer under
+`src-tauri/target/release/bundle/nsis/`:
+
+```bash
+npm run tauri build -- --bundles nsis
+```
+
+Tauri cannot cross-compile to Windows from macOS or Linux, so this must run on Windows.
+If you'd rather not keep a Windows machine, `.github/workflows/build-windows.yml` builds
+it on a GitHub-hosted Windows runner and uploads the installer as an artifact — push a
+`win-*` or `v*` tag to trigger it. Those builds are unsigned, so SmartScreen will ask
+users to click through "More info → Run anyway".
+
+### Development
+
+```bash
+npm run dev        # web build at localhost:1420, data in IndexedDB
+npm test           # vitest — 291 tests
+npm run typecheck  # tsc --noEmit
+npm run build      # production web build
+```
+
+`npm install` also points git at `.githooks`, which adds a pre-commit scan for
+credential-shaped strings and environment files.
 
 ## Where your data lives
 
 | Build | Location |
 | --- | --- |
-| Desktop (Tauri) | A JSON document in the OS application-data directory |
-| Browser | IndexedDB on that device |
+| Desktop | A JSON document in the OS application-data directory |
+| Web/dev | IndexedDB on that device |
 
-Nothing is uploaded. There is no telemetry and no network call in the app's normal
-operation. Export any time from **About → Export your data**.
-
-## Adding a storage backend
+Nothing is uploaded. Export everything at any time from **About → Export your data**.
 
 Persistence sits behind a two-method interface in
-[`src/lib/storage.ts`](src/lib/storage.ts):
+[`src/lib/storage.ts`](src/lib/storage.ts) — `load()` and `save()`. The app ships a Tauri
+filesystem adapter and an IndexedDB one and picks between them at startup. If you want
+the document to live somewhere else, that's the seam.
 
-```ts
-export interface StorageAdapter {
-  load(): Promise<StoreDoc>
-  save(doc: StoreDoc): Promise<void>
-}
-```
+## Free vs paid
 
-The app ships two implementations — Tauri filesystem and IndexedDB — and picks one at
-startup based on the platform. That's the seam to extend if you want the document to
-live somewhere else.
+**Everything that runs on your machine is free forever and complete. Things that cost
+money to operate are paid.**
 
-A remote backend (S3, Cloudflare R2, a WebDAV box, your own API) is a third
-implementation of the same interface: `save` uploads the serialized document, `load`
-fetches it. Two things to plan for if you build one:
+That's the whole rule. Sync and collaboration need servers, storage and bandwidth — real
+cost, every month, per user. Local features cost nothing to run, so charging for them
+would be rent, not payment.
 
-- **Credentials.** The renderer is the wrong place for long-lived keys. In a Tauri build,
-  keep them in a Rust command; in a browser build, put a small signing endpoint in front
-  and hand out short-lived pre-signed URLs.
-- **Conflicts.** `save` is last-write-wins against a whole document. Two devices writing
-  the same file will clobber each other — this interface has no merge, so a remote adapter
-  wants either a single-writer rule or a conflict strategy of its own.
+Sync and collaboration are planned, and they will be paid. Saying so now rather than
+surprising you later. What it will never mean:
 
-None of that ships here. WorkBase is local-first by design, and the network path is left
-as an extension point rather than a feature.
+- **No feature you can use today ever moves behind a paywall.** No project caps, no task
+  caps, no nesting limits, no watermarks.
+- **Flow view stays free.** The reason to use WorkBase is not going to become the upsell.
+- **The local app never needs an account, and never makes a network request.**
+- **Your data stays portable.** JSON and Markdown export stay free and complete. If you
+  leave, you leave with everything.
 
-## Layout
+## Licence
 
-```
-src/
-  components/   React views and modals
-  lib/          Domain logic — rollup, health, dependencies, layout, export
-  store/        Zustand store; the single writer of the document
-  hooks/        View state (nav, tabs, theme, onboarding)
-src-tauri/      Rust shell, desktop widget, packaging
-docs/           Design specs
-```
+[AGPL-3.0](LICENSE).
 
-Domain logic in `src/lib` is deliberately free of React, which is why most of it is
-directly testable.
+Use it for anything including commercially, read and modify the source, redistribute it.
+If you distribute a modified version it must also be AGPL. **If you run a modified
+version as a network service, you must publish your changes** — that's section 13, and
+it's the reason for AGPL over MIT: nobody can take WorkBase, add sync, and sell it as a
+closed service.
+
+For a local desktop app section 13 never triggers, so day to day this behaves like
+GPL-3.0. A commercial licence is available if AGPL doesn't work for you — open an issue.
+
+The licence covers the source. The WorkBase and VOCSO names and logos are trade marks —
+see [TRADEMARK.md](TRADEMARK.md). Forks are welcome; please pick your own name and mark.
 
 ## Contributing
 
-Issues and pull requests are welcome. Please run `npm test` and `npm run typecheck`
-before opening a PR.
+Open an issue before writing anything substantial — WorkBase has opinions about what it
+is, and it'd be a bad outcome for you to spend a weekend on something that gets declined
+on principle.
 
-`npm install` points git at `.githooks`, which adds a pre-commit scan for
-credential-shaped strings and environment files. It only blocks high-confidence
-matches; if it ever flags something wrongly, `git commit --no-verify` gets past it.
-This repository holds no secrets, and it should stay that way — the app makes no
-network calls, so there is nothing here that needs a key.
+Two things that will always be declined: **any network call from the local app**, and
+**sync or collaboration built into this repo**. The first breaks the only claim the
+product rests on. The second is planned as a paid service.
 
-## License
+Please run `npm test` and `npm run typecheck` before opening a PR. External pull requests
+need a contributor licence agreement signed before merging — ask in an issue and we'll
+sort it out.
 
-Apache-2.0 — see [LICENSE](LICENSE).
+## Security
 
-The license covers the source code. "WorkBase" and "VOCSO", and the logos in `brand/`
-and `public/`, are trademarks of VOCSO Technologies Pvt Ltd and are not licensed for use
-by forks — see [NOTICE](NOTICE). Please pick your own name and mark.
+Found a vulnerability? Please don't open a public issue — report it through
+[GitHub Security Advisories](https://github.com/vocso-com/workbase-desktop/security/advisories/new).
 
-Built by [VOCSO Technologies](https://vocso.com).
+---
+
+<div align="center">
+
+Built by [VOCSO Technologies](https://www.vocso.com) in Faridabad, India.
+
+</div>

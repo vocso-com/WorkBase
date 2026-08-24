@@ -9,8 +9,6 @@ target
 # Tauri auto-generated schemas (regenerated on every build)
 src-tauri/gen/
 
-# Local, per-machine Claude settings
-.claude/settings.local.json
 
 # Local dev overrides (per-machine)
 .env.local
@@ -24,3 +22,6 @@ src-tauri/gen/
 *.key
 *.keystore
 *.mobileprovision
+
+# Editor / assistant local config
+.claude/
