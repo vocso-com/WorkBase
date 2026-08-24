@@ -114,7 +114,9 @@ version, no accounts.  These are choices, not a backlog.
 
 ## Install
 
-Download a build from [releases](https://github.com/vocso-com/WorkBase/releases).
+> **Installers are not published yet.** Signed macOS and Windows builds are being cut from
+> this source; until they land, build from source below — it takes about five minutes.
+> Watch [releases](https://github.com/vocso-com/WorkBase/releases) to be notified.
 
 ## Build from source
 
@@ -157,10 +159,12 @@ npm run tauri build -- --bundles nsis
 ```
 
 Tauri cannot cross-compile to Windows from macOS or Linux, so this must run on Windows.
-If you'd rather not keep a Windows machine, `.github/workflows/build-windows.yml` builds
-it on a GitHub-hosted Windows runner and uploads the installer as an artifact — push a
-`win-*` or `v*` tag to trigger it. Those builds are unsigned, so SmartScreen will ask
-users to click through "More info → Run anyway".
+If you'd rather not keep a Windows machine, `.github/workflows/release.yml` builds both
+platforms on GitHub-hosted runners — push a `v*` tag and it produces a macOS `.dmg` and a
+Windows `.exe`, runs the test suite first, and attaches them to a draft release. Windows
+builds there are unsigned, so SmartScreen asks users to click through
+"More info → Run anyway"; the macOS one is unsigned too, which is why the signed DMG for a
+real release comes from `scripts/release.sh` on a machine with the certificate.
 
 ### Development
 
