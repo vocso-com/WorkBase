@@ -96,6 +96,9 @@ jobs:
 
   release:
     needs: build
+    # Manual runs are for checking that the platforms still build; only a
+    # version tag should ever produce a release.
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
