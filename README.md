@@ -114,9 +114,12 @@ version, no accounts.  These are choices, not a backlog.
 
 ## Install
 
-> **Installers are not published yet.** Signed macOS and Windows builds are being cut from
-> this source; until they land, build from source below — it takes about five minutes.
-> Watch [releases](https://github.com/vocso-com/WorkBase/releases) to be notified.
+**macOS** — [download the signed universal DMG](https://github.com/vocso-com/WorkBase/releases/latest)
+(Apple Silicon and Intel). It is signed with VOCSO's Developer ID and notarised by Apple,
+so it opens without a Gatekeeper warning.
+
+**Windows** — no installer yet. Build from source below; it takes about five minutes.
+[Watch releases](https://github.com/vocso-com/WorkBase/releases) to hear when one lands.
 
 ## Build from source
 
