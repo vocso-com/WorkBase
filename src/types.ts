@@ -141,9 +141,10 @@ export interface Profile {
   vocab?: VocabKey
   // Preferred view for opening a project that has no view of its own.
   defaultView?: 'board' | 'kanban' | 'flow' | 'columns'
-  // First-run account info.
+  // First-run details, captured locally and never sent anywhere.
   userEmail?: string
-  emailVerified?: boolean
+  // Set once the first-run modal has been completed or skipped.
+  onboarded?: boolean
   userType?: string // 'agency' | 'consultant' | 'inhouse' | 'personal'
   // Desktop nudge / reminder widget. `nudgeReminders` shows overdue + due-today
   // tasks (default on); `nudgeMyWork` adds a soft My Work summary (default off).

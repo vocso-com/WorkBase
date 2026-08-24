@@ -17,7 +17,6 @@ export function AvatarMenu({ onExport, onImport }: { onExport: () => void; onImp
   const ref = useRef<HTMLDivElement>(null)
   const themeMode = useTheme(s => s.mode)
   const profile = useStore(s => s.doc.profile)
-  const verified = !!profile?.emailVerified
   const name = profile?.userName?.trim() || 'You'
   const initials = name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'U'
   const avatarStyle: React.CSSProperties = profile?.userAvatar
@@ -35,7 +34,6 @@ export function AvatarMenu({ onExport, onImport }: { onExport: () => void; onImp
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
-      {!verified ? <span title="Email not verified" style={{ position: 'absolute', top: -1, right: -1, width: 11, height: 11, borderRadius: '50%', background: 'var(--amber)', border: '2px solid var(--card)', zIndex: 1 }} /> : null}
       <button
         aria-label="account menu"
         onClick={() => setOpen(o => !o)}
@@ -76,9 +74,8 @@ export function AvatarMenu({ onExport, onImport }: { onExport: () => void; onImp
           </div>
           <div className="avatar-menu-item" onClick={() => { setOpen(false); useOnboarding.getState().show() }}
             style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 8px', borderRadius: 8, fontSize: 13.5, color: 'var(--ink)', cursor: 'pointer' }}>
-            <Icon name={verified ? 'ti-user-check' : 'ti-mail-check'} style={{ fontSize: 17, color: verified ? 'var(--muted)' : 'var(--amber)' }} />
-            {verified ? 'Account' : 'Verify email'}
-            {!verified ? <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, color: 'var(--amber)', background: 'color-mix(in srgb,var(--amber) 16%,transparent)', padding: '1px 7px', borderRadius: 20 }}>Pending</span> : null}
+            <Icon name="ti-user" style={{ fontSize: 17, color: 'var(--muted)' }} />
+            Account
           </div>
           <div className="avatar-menu-item" onClick={() => { setOpen(false); useSettings.getState().show() }}
             style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 8px', borderRadius: 8, fontSize: 13.5, color: 'var(--ink)', cursor: 'pointer' }}>

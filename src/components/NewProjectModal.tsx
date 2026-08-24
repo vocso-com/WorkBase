@@ -8,7 +8,6 @@ import { hex } from '../theme'
 import { tagBg, tagFg } from '../lib/colorMode'
 import { useVocab } from '../hooks/useVocab'
 import { useTransfer } from '../hooks/useTransfer'
-import { fetchCatalog, fetchTemplate, directoryEnabled, type DirectoryEntry } from '../lib/directory'
 import { Icon } from './ui/Icon'
 
 function taskCount(tpl: Template): number {
@@ -21,22 +20,10 @@ export function NewProjectModal() {
   const custom = useStore(s => s.doc.templates)
   const v = useVocab()
   const [name, setName] = useState('')
-  const [dir, setDir] = useState<DirectoryEntry[] | null>(null)
-  const [dirBusy, setDirBusy] = useState(false)
-  const [dirErr, setDirErr] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open) return
     setName('')
-    setDirErr(null)
-    // The catalogue is cached, so opening the modal is never blocked on the
-    // network; a failure just leaves the section out.
-    if (directoryEnabled()) {
-      setDirBusy(true)
-      void fetchCatalog(useStore.getState().doc.profile?.userEmail)
-        .then(c => setDir(c?.templates ?? null))
-        .finally(() => setDirBusy(false))
-    }
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') hide() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -59,27 +46,6 @@ export function NewProjectModal() {
     useTransfer.getState().showImport()
   }
 
-  /**
-   * A directory template is fetched on use, not up front — the gallery only
-   * ever needs the metadata. A locked one explains itself rather than erroring.
-   */
-  const createFromDirectory = async (entry: DirectoryEntry) => {
-    setDirErr(null)
-    if (entry.locked) {
-      setDirErr(`“${entry.name}” is part of the paid catalogue. Upgrade to use it.`)
-      return
-    }
-    setDirBusy(true)
-    try {
-      const tpl = await fetchTemplate(entry.id, entry.version, useStore.getState().doc.profile?.userEmail)
-      createFromTemplate(tpl)
-    } catch (e) {
-      setDirErr((e as Error).message)
-    } finally {
-      setDirBusy(false)
-    }
-  }
-
   const createFromTemplate = (tpl: Template) => {
     const id = useStore.getState().addProjectFromTemplate(tpl, name.trim() || undefined)
     openProject(id)
@@ -89,12 +55,6 @@ export function NewProjectModal() {
     e.stopPropagation()
     useStore.getState().deleteTemplate(id)
   }
-
-  // Demos are for first-run seeding, not the gallery — keep them out. And the
-  // set of directory ids lets the bundled floor de-duplicate against the live
-  // catalogue.
-  const dirTemplates = (dir ?? []).filter(entry => entry.kind !== 'demo')
-  const dirIds = new Set(dirTemplates.map(entry => entry.id))
 
   return (
     <div className="modal-overlay" onClick={hide}>
@@ -141,38 +101,10 @@ export function NewProjectModal() {
 
           <div className="tpl-sechead">Templates</div>
           <div className="tpl-grid">
-            {/* The live directory wins over the bundled floor: hide a built-in
-                once its hosted counterpart (same id) is in the catalogue. */}
-            {BUILTIN_TEMPLATES.filter(tpl => !dirIds.has(tpl.id)).map(tpl => (
+            {BUILTIN_TEMPLATES.map(tpl => (
               <TemplateCard key={tpl.id} tpl={tpl} onPick={() => createFromTemplate(tpl)} />
             ))}
           </div>
-
-          {dirTemplates.length > 0 ? (
-            <>
-              <div className="tpl-sechead">
-                Directory
-                <button
-                  className="tpl-refresh"
-                  disabled={dirBusy}
-                  onClick={() => {
-                    setDirBusy(true)
-                    void fetchCatalog(useStore.getState().doc.profile?.userEmail, true)
-                      .then(c => setDir(c?.templates ?? null))
-                      .finally(() => setDirBusy(false))
-                  }}
-                >
-                  <Icon name={dirBusy ? 'ti-loader-2' : 'ti-refresh'} className={dirBusy ? 'expmenu-spin' : undefined} /> Refresh
-                </button>
-              </div>
-              {dirErr ? <div className="tpl-err"><Icon name="ti-alert-triangle" /> {dirErr}</div> : null}
-              <div className="tpl-grid">
-                {dirTemplates.map(entry => (
-                  <DirectoryCard key={entry.id} entry={entry} busy={dirBusy} onPick={() => void createFromDirectory(entry)} />
-                ))}
-              </div>
-            </>
-          ) : null}
 
           {custom.length > 0 ? (
             <>
@@ -224,34 +156,6 @@ function TemplateCard({
           </span>
           <span className="tpl-pill" style={{ background: 'var(--chip)', color: 'var(--muted)' }}>
             {taskCount(tpl)} tasks
-          </span>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/**
- * A directory template. Locked ones are shown, not hidden: the paid catalogue is
- * the reason to upgrade, so it has to be visible to be wanted.
- */
-function DirectoryCard({ entry, busy, onPick }: { entry: DirectoryEntry; busy: boolean; onPick: () => void }) {
-  const color = entry.color
-  return (
-    <div className={`tpl-card${entry.locked ? ' tpl-card-locked' : ''}`} onClick={busy ? undefined : onPick}>
-      <div className="tpl-cover" style={{ background: `linear-gradient(135deg, ${hex(color)}, ${hex(color)}cc)` }}>
-        <div className="tpl-cover-ic"><Icon name={entry.icon} /></div>
-        {entry.locked ? <span className="tpl-lock"><Icon name="ti-lock" /> Pro</span> : null}
-      </div>
-      <div className="tpl-card-body">
-        <div className="tpl-card-t">{entry.name}</div>
-        <div className="tpl-card-s">{entry.description}</div>
-        <div className="tpl-card-meta">
-          <span className="tpl-pill" style={{ background: tagBg(color), color: tagFg(color) }}>
-            {entry.modules} modules
-          </span>
-          <span className="tpl-pill" style={{ background: 'var(--chip)', color: 'var(--muted)' }}>
-            {entry.tasks} tasks
           </span>
         </div>
       </div>

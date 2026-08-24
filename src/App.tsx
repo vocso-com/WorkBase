@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { useStore } from './store/useStore'
 import { useNav } from './hooks/useNav'
 import { AppHeader } from './components/AppHeader'
@@ -13,12 +13,9 @@ import { ImportModal } from './components/ImportModal'
 import { AboutModal } from './components/AboutModal'
 import { SettingsModal } from './components/SettingsModal'
 import { OnboardingModal } from './components/OnboardingModal'
-import { AppLock } from './components/AppLock'
-import { checkStatus } from './lib/registry'
 import { SearchPalette } from './components/SearchPalette'
 import { ActivityFeed } from './components/ActivityFeed'
 import { NudgeWidget } from './components/NudgeWidget'
-import { VerifyNudge } from './components/VerifyNudge'
 import { ConfirmDialog } from './components/ConfirmDialog'
 import { CompletionSummary } from './components/CompletionSummary'
 import { useOnboarding } from './hooks/useOnboarding'
@@ -39,30 +36,11 @@ export default function App() {
   // Subscribe so a Light/Dark/System change re-renders the tree and refreshes
   // JS-computed tint colors (tags, avatars) alongside the CSS variables.
   useTheme(s => s.dark)
-  const hasEmail = useStore(s => !!s.doc.profile?.userEmail)
-  const email = useStore(s => s.doc.profile?.userEmail)
-  const emailVerified = useStore(s => !!s.doc.profile?.emailVerified)
+  const onboarded = useStore(s => !!s.doc.profile?.onboarded)
   const myWork = useTabs(s => s.tabs.find(t => t.id === s.activeId)?.kind === 'mywork')
-  const [lock, setLock] = useState<string | null>(null)
   useEffect(() => { initTheme(); void useStore.getState().init().then(() => { initRouter(); initTabs() }) }, [])
-  // First launch (no email captured yet) → open onboarding.
-  useEffect(() => { if (ready && !hasEmail) useOnboarding.getState().show() }, [ready, hasEmail])
-  // Once-a-day registry check → lock the app if the server says so (disabled,
-  // or unverified past the grace period). No-ops when there's no endpoint/email.
-  useEffect(() => {
-    if (!ready) return
-    void checkStatus(email).then(r => {
-      setLock(r.blocked ? r.reason : null)
-      // The registry is the authority on verification. Without this the local
-      // flag is written once at OTP time and never revisited, so the two can
-      // drift apart permanently with the app always believing its own copy.
-      // `undefined` means we never got an answer (no endpoint, offline) — leave
-      // the local value alone rather than clearing a real verification.
-      if (r.verified !== undefined && r.verified !== emailVerified) {
-        useStore.getState().setProfile({ emailVerified: r.verified })
-      }
-    })
-  }, [ready, email, emailVerified])
+  // First launch → open onboarding.
+  useEffect(() => { if (ready && !onboarded) useOnboarding.getState().show() }, [ready, onboarded])
   // The reminder widget runs in a separate window and routes its changes here
   // (the main window is the single writer of the data file).
   useEffect(() => {
@@ -90,10 +68,9 @@ export default function App() {
   useEffect(() => { void setDockBadge(badge) }, [badge])
 
   // Fixed-height views (the Flow viewport, the board) size themselves against
-  // the window minus the top chrome. That chrome's height varies — the verify
-  // banner comes and goes — so measure it live into a CSS variable instead of
-  // hard-coding it, or the flow controls at the viewport's bottom edge get
-  // pushed off-screen when the banner is showing.
+  // the window minus the top chrome. Measure that chrome live into a CSS
+  // variable rather than hard-coding it, so the flow controls at the viewport's
+  // bottom edge stay on-screen whatever the header ends up measuring.
   const chromeRef = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => {
     const el = chromeRef.current
@@ -101,19 +78,17 @@ export default function App() {
     const apply = () => document.documentElement.style.setProperty('--wb-top-chrome', `${el.offsetHeight}px`)
     apply()
     if (typeof ResizeObserver === 'undefined') return // e.g. jsdom in tests
-    const ro = new ResizeObserver(apply) // catches the banner mounting/unmounting
+    const ro = new ResizeObserver(apply)
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
 
   if (!ready) return <div style={{ padding: 40, color: 'var(--muted)' }}>Loading…</div>
-  if (lock) return <><AppLock reason={lock} /><OnboardingModal /><ConfirmDialog /></>
 
   return (
     <div style={{ display: 'flex', alignItems: 'stretch', minHeight: '100vh' }}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div ref={chromeRef}>
-          <VerifyNudge />
           <AppHeader
             roots={roots}
             path={path}

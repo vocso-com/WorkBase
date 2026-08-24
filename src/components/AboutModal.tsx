@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { useStore } from '../store/useStore'
 import { useAbout } from '../hooks/useAbout'
 import { useTransfer } from '../hooks/useTransfer'
-import { APP_VERSION } from '../lib/registry'
+import { APP_VERSION } from '../lib/version'
 import { isTauri } from '../lib/platform'
 import { serialize } from '../lib/serialize'
 import { leaves } from '../lib/tree'
@@ -78,10 +78,10 @@ export function AboutModal() {
 
         {profile?.userEmail ? (
           <div className="about-row">
-            <Icon name={profile.emailVerified ? 'ti-user-check' : 'ti-mail-check'} />
+            <Icon name="ti-user" />
             <div>
               <b>{profile.userEmail}</b>
-              <span>{profile.emailVerified ? 'Verified' : 'Not verified yet'}</span>
+              <span>Stored on this device only</span>
             </div>
           </div>
         ) : null}
